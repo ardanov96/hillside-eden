@@ -1,0 +1,76 @@
+# Hillside Eden - local dev stack
+# Dokumentasi: docs/03-architecture.md, docs/08-quality-security-ops.md
+# Usage: docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hillside-eden-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hillside
+      POSTGRES_PASSWORD: hillside
+      POSTGRES_DB: hillside_eden
+      TZ: Asia/Makassar
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hillside -d hillside_eden"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hillside-eden-web
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://hillside:hillside@postgres:5432/hillside_eden?schema=public
+      DIRECT_DATABASE_URL: postgresql://hillside:hillside@postgres:5432/hillside_eden?schema=public
+      APP_BASE_URL: http://localhost:3000
+      TZ: Asia/Makassar
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_PATH: /app/storage
+    ports:
+      - "3000:3000"
+    volumes:
+      - storage_data:/app/storage
+
+  # Worker process untuk ingest terjadwal, iCal fetch, template biaya rutin.
+  # Di Sprint 0 proses ini masih skeleton (sleep loop). Diisi penuh di Sprint 2+.
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hillside-eden-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://hillside:hillside@postgres:5432/hillside_eden?schema=public
+      DIRECT_DATABASE_URL: postgresql://hillside:hillside@postgres:5432/hillside_eden?schema=public
+      TZ: Asia/Makassar
+      WORKER_ENABLED: "true"
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_PATH: /app/storage
+    command:
+      [
+        "node",
+        "-e",
+        "setInterval(() => { console.log(new Date().toISOString(), 'worker heartbeat'); }, 60000);",
+      ]
+    volumes:
+      - storage_data:/app/storage
+
+volumes:
+  postgres_data:
+  storage_data:

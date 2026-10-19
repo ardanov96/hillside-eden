@@ -1,0 +1,2 @@
+# src/adapters - adapter OTA (airbnb, tiket, traveloka, csv-generic, manual, ical)
+# Murni & deterministik, tanpa I/O. Lihat docs/06-ingestion-and-adapters.md

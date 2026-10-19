@@ -1,0 +1,2 @@
+# src/server - akses data (Prisma), service, StorageProvider, InboundEmailSource
+# Hanya boleh dipanggil dari src/app, bukan dari UI langsung

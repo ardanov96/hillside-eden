@@ -1,0 +1,14 @@
+// Skema Prisma - Hillside Eden
+// Sumber kebenaran: docs/04-data-model.md
+// Sprint 0: datasource & generator saja. Skema lengkap di Sprint 1 (S1-01).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl (untuk connection pooler) diaktifkan di Sprint 1.
+  // Lihat DECISIONS.md OD-12.
+}

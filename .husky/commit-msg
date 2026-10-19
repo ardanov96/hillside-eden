@@ -1,0 +1,3 @@
+# Validasi format pesan commit (Conventional Commits)
+# Lihat commitlint.config.mjs
+pnpm exec commitlint --edit "$1"

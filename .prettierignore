@@ -1,0 +1,24 @@
+# Build artifacts
+.next/
+out/
+build/
+dist/
+coverage/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Generated
+next-env.d.ts
+pnpm-lock.yaml
+
+# Misc
+*.log
+.DS_Store
+fixtures/real/**
+
+# Dokumen resmi tidak diformat ulang (preserve layout)
+docs/**
+ROADMAP.md
+AGENTS.md

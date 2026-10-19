@@ -1,48 +1,57 @@
-# Node
-node_modules/
-.pnpm-store/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Next.js
-.next/
-out/
-build/
-dist/
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Environment
-.env
-.env.local
-.env.*.local
-!.env.example
+# testing
+/coverage
 
-# Logs
-*.log
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+.pnpm-debug.log*
 
-# Testing & coverage
-coverage/
-.nyc_output/
+# env files (can opt-in for committing if needed)
+.env*
 
-# OS
-.DS_Store
-Thumbs.db
+# vercel
+.vercel
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs (debug, install, format, dll.)
+*.log
+
+# pnpm
+.pnpm-store/
 
 # Prisma
-prisma/migrations/dev.db*
-prisma/*.db
-prisma/*.db-journal
+/prisma/migrations/dev/
 
-# Local artifacts
-.cache/
-.turbo/
-.tmp/
-*.tsbuildinfo
+# Storage (file upload lokal)
+/storage/
+
+# Environment override (selain .env.example)
+.env.local
+.env.*.local
