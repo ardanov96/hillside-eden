@@ -1,6 +1,12 @@
 // Skema Prisma - Hillside Eden
-// Sumber kebenaran: docs/04-data-model.md
-// Sprint 0: datasource & generator saja. Skema lengkap di Sprint 1 (S1-01).
+// Sumber kebenaran: docs/04-data-model.md (draf v0).
+// Sprint: S1-01. Validasi dengan `prisma validate`; migrasi dengan `prisma migrate dev`.
+// Konvensi:
+//   - Tabel: PascalCase (default Prisma), tanpa @@map untuk konsistensi dengan generated client.
+//   - Uang: Decimal(18,2) untuk nilai, Decimal(18,8) untuk kurs.
+//   - Tanggal menginap: @db.Date; waktu kejadian: @db.Timestamptz.
+//   - Zona waktu operasional: Asia/Makassar (lihat Organization.timezone).
+//   - Audit: koreksi keuangan lewat entri pembalik (reversalOfId), bukan edit/hapus.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +15,554 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // directUrl (untuk connection pooler) diaktifkan di Sprint 1.
-  // Lihat DECISIONS.md OD-12.
+  // directUrl (untuk connection pooler) diaktifkan saat OD-01 diputuskan.
+  // Lihat DECISIONS.md OD-01.
+}
+
+// Enums
+
+enum Role {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+enum ChannelCode {
+  AIRBNB
+  TIKET_COM
+  TRAVELOKA
+  EXPEDIA
+  AGODA
+  BOOKING_COM
+  DIRECT
+  MANUAL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+}
+
+enum CollectType {
+  CHANNEL_COLLECT
+  HOTEL_COLLECT
+  UNKNOWN
+}
+
+enum CommissionBasis {
+  ESTIMATED
+  ACTUAL
+  MANUAL
+}
+
+enum EventType {
+  CREATED
+  MODIFIED
+  CANCELLED
+  NO_SHOW
+  PAYOUT_LINKED
+  MANUAL_EDIT
+}
+
+enum ImportKind {
+  EMAIL
+  CSV
+  ICAL
+  MANUAL
+}
+
+enum ImportItemStatus {
+  PARSED
+  DUPLICATE
+  FAILED
+  NEEDS_REVIEW
+}
+
+enum ExpenseStatus {
+  DRAFT
+  VERIFIED
+}
+
+enum UnitKind {
+  VILLA
+  COTTAGE
+  ROOM
+}
+
+enum OtherIncomeCategory {
+  DIRECT_BOOKING
+  FNB
+  SPA
+  TRANSFER
+  OTHER
+}
+
+enum AllocationMethod {
+  FIXED_PERCENT
+  ROOM_NIGHTS
+}
+
+enum RecurringFrequency {
+  MONTHLY
+  ANNUAL
+}
+
+// ----------------------------------------------------------------------------
+// Core: Organization, User, Property, Unit, InventoryConfig
+// ----------------------------------------------------------------------------
+
+model Organization {
+  id                 String                     @id @default(cuid())
+  name               String
+  timezone           String                     @default("Asia/Makassar")
+  baseCurrency       String                     @default("IDR")
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  users              User[]
+  properties         Property[]
+  expenseCategories  ExpenseCategory[]
+  expenses           Expense[]
+  payouts            Payout[]
+  importBatches      ImportBatch[]
+  mappingProfiles    ImportMappingProfile[]
+  allocationRules    AllocationRule[]
+  recurringTemplates RecurringExpenseTemplate[]
+  otherIncomes       OtherIncome[]
+  periodLocks        PeriodLock[]
+  auditLogs          AuditLog[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  organizationId String
+  email          String       @unique
+  name           String
+  passwordHash   String
+  role           Role         @default(OWNER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model Property {
+  id                 String              @id @default(cuid())
+  organizationId     String
+  name               String
+  slug               String
+  address            String?
+  latitude           Decimal?            @db.Decimal(9, 6)
+  longitude          Decimal?            @db.Decimal(9, 6)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  units              Unit[]
+  listings           Listing[]
+  bookings           Booking[]
+  expenseAllocations ExpenseAllocation[]
+  otherIncomes       OtherIncome[]
+
+  @@unique([organizationId, slug])
+}
+
+model Unit {
+  id             String            @id @default(cuid())
+  organizationId String
+  propertyId     String
+  name           String
+  kind           UnitKind
+  maxGuests      Int
+  bedrooms       Int?
+  baseRate       Decimal?          @db.Decimal(18, 2)
+  isActive       Boolean           @default(true)
+  property       Property          @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  inventory      InventoryConfig[]
+  listingUnits   ListingUnit[]
+  bookingUnits   BookingUnit[]
+
+  @@index([propertyId])
+}
+
+model InventoryConfig {
+  id         String    @id @default(cuid())
+  unitId     String
+  validFrom  DateTime  @db.Date
+  validTo    DateTime? @db.Date
+  isSellable Boolean   @default(true)
+  unit       Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([unitId, validFrom])
+}
+
+// ----------------------------------------------------------------------------
+// Listing: Listing, ListingUnit
+// ----------------------------------------------------------------------------
+
+model Listing {
+  id              String           @id @default(cuid())
+  organizationId  String
+  propertyId      String
+  channel         ChannelCode
+  externalId      String
+  name            String
+  url             String?
+  currency        String           @default("IDR")
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  property        Property         @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  listingUnits    ListingUnit[]
+  bookings        Booking[]
+  commissionRules CommissionRule[]
+  icalFeeds       IcalFeed[]
+  calendarBlocks  CalendarBlock[]
+
+  @@unique([organizationId, channel, externalId])
+}
+
+model ListingUnit {
+  listingId        String
+  unitId           String
+  allocationWeight Decimal? @db.Decimal(10, 4)
+  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  unit             Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@id([listingId, unitId])
+}
+
+// ----------------------------------------------------------------------------
+// Guest & Booking: Guest, Booking, BookingUnit, BookingEvent
+// ----------------------------------------------------------------------------
+
+model Guest {
+  id             String    @id @default(cuid())
+  organizationId String
+  displayName    String?
+  countryCode    String?
+  retentionUntil DateTime?
+  createdAt      DateTime  @default(now())
+  bookings       Booking[]
+}
+
+model Booking {
+  id               String           @id @default(cuid())
+  organizationId   String
+  propertyId       String
+  listingId        String
+  channel          ChannelCode
+  externalId       String
+  status           BookingStatus
+  bookedAt         DateTime?        @db.Timestamptz
+  bookedAtIsApprox Boolean          @default(false)
+  checkIn          DateTime         @db.Date
+  checkOut         DateTime         @db.Date
+  nights           Int
+  guestsCount      Int?
+  guestId          String?
+  currency         String
+  grossAmount      Decimal          @db.Decimal(18, 2)
+  taxesCollected   Decimal          @default(0) @db.Decimal(18, 2)
+  cancellationFee  Decimal          @default(0) @db.Decimal(18, 2)
+  commissionAmount Decimal?         @db.Decimal(18, 2)
+  commissionRate   Decimal?         @db.Decimal(6, 4)
+  commissionBasis  CommissionBasis?
+  collectType      CollectType      @default(UNKNOWN)
+  fxRateToBase     Decimal          @default(1) @db.Decimal(18, 8)
+  fxRateSource     String?
+  rawPayload       Json?
+  importBatchId    String?
+  firstSeenAt      DateTime         @default(now())
+  lastSeenAt       DateTime         @default(now())
+  property         Property         @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  listing          Listing          @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  guest            Guest?           @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  importBatch      ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  units            BookingUnit[]
+  events           BookingEvent[]
+  payouts          PayoutBooking[]
+
+  @@unique([organizationId, channel, externalId])
+  @@index([propertyId, checkIn, checkOut])
+  @@index([listingId, checkIn])
+  @@index([bookedAt])
+}
+
+model BookingUnit {
+  bookingId      String
+  unitId         String
+  allocatedGross Decimal @db.Decimal(18, 2)
+  allocationPct  Decimal @db.Decimal(7, 4)
+  booking        Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  unit           Unit    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@id([bookingId, unitId])
+  @@index([unitId])
+}
+
+model BookingEvent {
+  id           String      @id @default(cuid())
+  bookingId    String
+  type         EventType
+  occurredAt   DateTime    @db.Timestamptz
+  diff         Json?
+  importItemId String?
+  booking      Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  importItem   ImportItem? @relation(fields: [importItemId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, occurredAt])
+}
+
+// ----------------------------------------------------------------------------
+// Calendar & iCal: CalendarBlock, IcalFeed (ADR-012)
+// ----------------------------------------------------------------------------
+
+model CalendarBlock {
+  id        String     @id @default(cuid())
+  listingId String
+  uid       String
+  startDate DateTime   @db.Date
+  endDate   DateTime   @db.Date
+  summary   String?
+  source    ImportKind @default(ICAL)
+  fetchedAt DateTime   @default(now())
+  listing   Listing    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, uid])
+}
+
+model IcalFeed {
+  id            String    @id @default(cuid())
+  listingId     String
+  urlEncrypted  String
+  lastFetchedAt DateTime?
+  lastStatus    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  listing       Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------------------------------
+// Commission & Payout: CommissionRule, Payout, PayoutBooking
+// ----------------------------------------------------------------------------
+
+model CommissionRule {
+  id          String      @id @default(cuid())
+  listingId   String?
+  channel     ChannelCode
+  rate        Decimal     @db.Decimal(6, 4)
+  collectType CollectType @default(UNKNOWN)
+  validFrom   DateTime    @db.Date
+  validTo     DateTime?   @db.Date
+  notes       String?
+  listing     Listing?    @relation(fields: [listingId], references: [id], onDelete: SetNull)
+
+  @@index([channel, validFrom])
+}
+
+model Payout {
+  id             String          @id @default(cuid())
+  organizationId String
+  channel        ChannelCode
+  payoutDate     DateTime        @db.Date
+  currency       String
+  amount         Decimal         @db.Decimal(18, 2)
+  reference      String?
+  importBatchId  String?
+  createdAt      DateTime        @default(now())
+  importBatch    ImportBatch?    @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  bookings       PayoutBooking[]
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+
+  @@index([channel, payoutDate])
+}
+
+model PayoutBooking {
+  payoutId  String
+  bookingId String
+  amount    Decimal @db.Decimal(18, 2)
+  payout    Payout  @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  @@id([payoutId, bookingId])
+}
+
+// ----------------------------------------------------------------------------
+// Import: ImportBatch, ImportItem, ImportMappingProfile
+// ----------------------------------------------------------------------------
+
+model ImportBatch {
+  id             String       @id @default(cuid())
+  organizationId String
+  kind           ImportKind
+  channel        ChannelCode?
+  filename       String?
+  storageKey     String?
+  receivedAt     DateTime     @default(now())
+  stats          Json?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  items          ImportItem[]
+  bookings       Booking[]
+  payouts        Payout[]
+}
+
+model ImportItem {
+  id            String           @id @default(cuid())
+  batchId       String
+  status        ImportItemStatus
+  contentHash   String
+  errorCode     String?
+  errorMessage  String?
+  rawRef        String?
+  parsedPayload Json?
+  batch         ImportBatch      @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  bookingEvents BookingEvent[]
+
+  @@unique([batchId, contentHash])
+  @@index([status])
+}
+
+model ImportMappingProfile {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  channel        ChannelCode?
+  mapping        Json
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------------------------------
+// Expense: ExpenseCategory, Expense, ExpenseAllocation
+// ----------------------------------------------------------------------------
+
+model ExpenseCategory {
+  id             String       @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  parentId       String?
+  sortOrder      Int          @default(0)
+  isActive       Boolean      @default(true)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  expenses       Expense[]
+
+  @@unique([organizationId, code])
+}
+
+model Expense {
+  id                  String              @id @default(cuid())
+  organizationId      String
+  propertyId          String?
+  categoryId          String
+  amount              Decimal             @db.Decimal(18, 2)
+  currency            String              @default("IDR")
+  fxRateToBase        Decimal             @default(1) @db.Decimal(18, 8)
+  incurredOn          DateTime            @db.Date
+  paidOn              DateTime?           @db.Date
+  vendor              String?
+  description         String?
+  paymentMethod       String?
+  receiptKey          String?
+  status              ExpenseStatus       @default(DRAFT)
+  recurringTemplateId String?
+  reversalOfId        String?             @unique
+  createdById         String
+  verifiedById        String?
+  verifiedAt          DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  category            ExpenseCategory     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  allocations         ExpenseAllocation[]
+  reversalOf          Expense?            @relation("ExpenseReversal", fields: [reversalOfId], references: [id], onDelete: SetNull)
+  reversal            Expense?            @relation("ExpenseReversal")
+
+  @@index([organizationId, incurredOn])
+}
+
+model ExpenseAllocation {
+  expenseId  String
+  propertyId String
+  amountBase Decimal  @db.Decimal(18, 2)
+  expense    Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+
+  @@id([expenseId, propertyId])
+}
+
+model RecurringExpenseTemplate {
+  id             String             @id @default(cuid())
+  organizationId String
+  frequency      RecurringFrequency
+  nextRunOn      DateTime           @db.Date
+  template       Json
+  isActive       Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model AllocationRule {
+  id             String           @id @default(cuid())
+  organizationId String
+  name           String
+  method         AllocationMethod
+  config         Json
+  validFrom      DateTime         @db.Date
+  validTo        DateTime?        @db.Date
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model OtherIncome {
+  id             String              @id @default(cuid())
+  organizationId String
+  propertyId     String?
+  category       OtherIncomeCategory
+  amount         Decimal             @db.Decimal(18, 2)
+  currency       String              @default("IDR")
+  fxRateToBase   Decimal             @default(1) @db.Decimal(18, 8)
+  receivedOn     DateTime            @db.Date
+  description    String?
+  status         ExpenseStatus       @default(DRAFT)
+  reversalOfId   String?             @unique
+  createdById    String
+  createdAt      DateTime            @default(now())
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  property       Property?           @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+}
+
+// ----------------------------------------------------------------------------
+// Period Lock & Audit Log (ADR-008)
+// ----------------------------------------------------------------------------
+
+model PeriodLock {
+  id             String       @id @default(cuid())
+  organizationId String
+  period         DateTime     @db.Date
+  lockedAt       DateTime     @default(now())
+  lockedById     String
+  snapshot       Json
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, period])
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  actorId        String?
+  action         String
+  entityType     String
+  entityId       String
+  before         Json?
+  after          Json?
+  at             DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId])
 }

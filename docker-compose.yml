@@ -11,8 +11,13 @@ services:
       POSTGRES_PASSWORD: hillside
       POSTGRES_DB: hillside_eden
       TZ: Asia/Makassar
+      # Dev only: trust local TCP agar konek tanpa scram-sha-256.
+      # Untuk produksi, pakai secret + scram-sha-256 (lihat DECISIONS OD-01).
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - "5432:5432"
+      # Port host 5433 -> container 5432 untuk menghindari konflik dengan
+      # PostgreSQL lokal di Windows (postgresql-x64-17). Lihat DECISIONS.
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

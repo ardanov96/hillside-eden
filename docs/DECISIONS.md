@@ -25,6 +25,7 @@ Format: **ID · Status · Keputusan · Alasan**. Keputusan final hanya diubah le
 | ID | Pertanyaan | Default sementara | Memengaruhi |
 |---|---|---|---|
 | OD-01 | Hosting database (Neon berbayar tanpa scale-to-zero / RDS / Supabase / Postgres sendiri) | Postgres lokal via docker; kode agnostik | Deploy, pooling, backup |
+| OD-16 | Port Postgres dev lokal di Windows: 5432 bentrok dengan `postgresql-x64-17` (layanan Windows yang tidak bisa dihentikan tanpa admin). Pakai **5433** di host, kontainer tetap 5432 | Pengembangan lokal di Windows tanpa konflik port; .env.example & docker-compose.yml sudah disesuaikan | Lokal dev |
 | OD-02 | Hosting aplikasi (VPS atau serverless) | Kontainer agnostik | Worker, antrean |
 | OD-03 | Antrean: pg-boss atau layanan terkelola | pg-boss di balik `JobRunner` | S2, S5 |
 | OD-04 | Penyedia email masuk (webhook vs IMAP) | Antarmuka `InboundEmailSource`, implementasi menyusul | S5-05 |
