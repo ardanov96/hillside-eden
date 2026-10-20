@@ -311,6 +311,7 @@ model BookingEvent {
   booking      Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   importItem   ImportItem? @relation(fields: [importItemId], references: [id], onDelete: SetNull)
 
+  @@unique([bookingId, type, occurredAt], name: "booking_event_unique_per_type_time")
   @@index([bookingId, occurredAt])
 }
 
