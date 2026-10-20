@@ -20,6 +20,7 @@ import {
 } from "../lib/dates";
 
 export * from "./allocation";
+export * from "./collision";
 
 export type KpiBookingStatus = "CONFIRMED" | "PENDING" | "CANCELLED" | "NO_SHOW";
 
