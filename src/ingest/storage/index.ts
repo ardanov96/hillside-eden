@@ -25,7 +25,9 @@ export const LOCAL_STORAGE_DIR_ENV = "LOCAL_STORAGE_DIR" as const;
  * Factory provider. Pilih driver sesuai env STORAGE_DRIVER.
  * Default: "local". TBD dengan util pengujian.
  */
-export function createStorageProvider(env: NodeJS.ProcessEnv = process.env): StorageProvider {
+export function createStorageProvider(
+  env: Record<string, string | undefined> = process.env,
+): StorageProvider {
   const driver = (env[STORAGE_DRIVER_ENV] ?? LOCAL_DRIVER_NAME).toLowerCase();
   switch (driver) {
     case LOCAL_DRIVER_NAME:

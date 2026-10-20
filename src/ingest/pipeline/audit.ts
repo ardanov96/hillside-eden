@@ -13,23 +13,17 @@
  *   jika caller tidak menyediakan tx, tulis di luar (tapi jangan dipakai
  *   untuk mutasi keuangan utama).
  */
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { Decimal } from "@/lib/decimal";
 
-/** Delegate minimal AuditLog agar bisa dipakai dengan client maupun tx. */
+/**
+ * Delegate minimal AuditLog agar bisa dipakai dengan PrismaClient maupun
+ * Prisma.TransactionClient. Sengaja longgar (unknown pada data) supaya
+ * signature generik Prisma tetap assignable tanpa cast di call site.
+ */
 export interface AuditLogDelegate {
   auditLog: {
-    create(args: {
-      data: {
-        organizationId: string;
-        actorId?: string | null;
-        action: string;
-        entityType: string;
-        entityId: string;
-        before?: Prisma.InputJsonValue | null;
-        after?: Prisma.InputJsonValue | null;
-      };
-    }): Promise<unknown>;
+    create(args: { data: unknown }): Promise<unknown>;
   };
 }
 
