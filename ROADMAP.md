@@ -99,7 +99,7 @@ Kunci idempotensi booking: `source + external_id`.
 - [ ] Repo, lint, format, typecheck, CI, Dockerfile dan docker-compose (app + postgres), `.env.example`.
 - [ ] Skema Prisma v0, migrasi, seed.
 - [ ] Autentikasi satu user owner (Auth.js), enum peran disiapkan.
-- [ ] Generator data dummy: 2 properti, unit sesuai bagian 2, 3 OTA, kasus tepi (modifikasi, pembatalan, booking seluruh estate, hanya 2 kamar disewakan, mata uang berbeda).
+- [x] Generator data dummy: 2 properti, unit sesuai bagian 2, 3 OTA, kasus tepi (modifikasi, pembatalan, booking seluruh estate, hanya 2 kamar disewakan, mata uang berbeda).
 - [ ] Library KPI di `src/domain` dengan unit test.
 - [ ] Deteksi bentrok jadwal, termasuk estate vs unit.
 - [ ] Kontrak adapter dan pipeline ingest idempoten (`import_batch`, dedup, `booking_event`).

@@ -23,6 +23,7 @@ pnpm install
 docker compose up -d        # postgres lokal
 pnpm db:migrate             # prisma migrate dev
 pnpm db:seed                # data awal + data dummy
+pnpm db:seed:dummy          # (opsional) isi tabel transaksional dummy, idempoten
 pnpm dev                    # web
 pnpm worker                 # worker ingest/jadwal
 pnpm lint && pnpm typecheck && pnpm test
@@ -31,8 +32,9 @@ pnpm test:e2e
 
 ## Alur kerja
 
-- Ambil tiket dari `docs/01-development-plan.md` (ID format `S<sprint>-<nomor>`). Satu tiket, satu PR.
-- Nama branch: `feat/S2-05-csv-importer`. Commit mengikuti Conventional Commits.
+- Ambil tiket dari `docs/01-development-plan.md` (ID format `S<sprint>-<nomor>`).
+- **Solo developer (per Dec 2025):** tidak ada branch feature dan tidak ada PR. Kerjakan dan commit langsung ke `main`, lalu `git push origin main`. Tetap satu tiket per commit.
+- Commit mengikuti Conventional Commits.
 - Definition of Done (ringkas): kode + tes hijau, lint/typecheck lulus, dokumen terkait diperbarui, tidak ada TODO tanpa tiket, keputusan baru dicatat di `DECISIONS.md`.
 - Jika spesifikasi ambigu: pilih default yang aman, tulis asumsi di deskripsi PR, dan tambahkan butir di `DECISIONS.md` bagian Open.
 - Jangan memperluas scope. Fitur di backlog (ROADMAP bagian 11) tidak dikerjakan tanpa tiket.
