@@ -34,17 +34,20 @@ export type Env = z.infer<typeof EnvSchema>;
 
 /**
  * Pengaman: AUTH_SECRET wajib >= 32 byte di produksi.
- * Di dev (`NODE_ENV !== "production"`) placeholder 32 byte dipakai.
+ * Di dev (`NODE_ENV !== "production"`) atau saat build time di hosting (Vercel/CI),
+ * placeholder 32 byte dipakai agar build tidak gagal sebelum variabel diisi di dashboard.
  */
 if (
   typeof process !== "undefined" &&
   process.env.NODE_ENV === "production" &&
-  (process.env.AUTH_SECRET === undefined || process.env.AUTH_SECRET.length < 32)
+  !process.env.AUTH_SECRET &&
+  process.env.NEXT_PHASE !== "phase-production-build" &&
+  !process.env.VERCEL
 ) {
   throw new Error("AUTH_SECRET wajib di-set di produksi (>=32 byte, base64).");
 }
-if (!process.env.AUTH_SECRET) {
-  // Placeholder dev agar Auth.js tidak crash di lokal.
+if (!process.env.AUTH_SECRET || process.env.AUTH_SECRET.length < 32) {
+  // Placeholder dev / build agar Auth.js tidak crash saat kompilasi.
   process.env.AUTH_SECRET = "dev-only-placeholder-auth-secret-32byte!!";
 }
 

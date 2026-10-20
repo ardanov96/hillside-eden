@@ -1,0 +1,12 @@
+# Konfigurasi workspace pnpm untuk izin build dependencies (lifecycle scripts)
+# Sumber: penanganan ERR_PNPM_IGNORED_BUILDS pada pnpm v10+ / v12 (Vercel & CI)
+packages:
+  - "."
+
+allowBuilds:
+  "@node-rs/argon2": true
+  "@prisma/client": true
+  "@prisma/engines": true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true
