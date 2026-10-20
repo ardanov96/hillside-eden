@@ -33,7 +33,7 @@ Format: **ID Â· Status Â· Keputusan Â· Alasan**. Keputusan final hanya diu
 | OD-04 | Penyedia email masuk (webhook vs IMAP) | Antarmuka `InboundEmailSource`, implementasi menyusul | S5-05 |
 | OD-05 | Penyimpanan berkas produksi | `StorageProvider` lokal untuk dev | S3-02, S5 |
 | OD-06 | Kebijakan data tamu dan masa retensi | Minimal: nama tampilan/inisial + negara, tanpa kontak | Skema `guest`, retensi |
-| OD-07 | Alokasi booking estate ke unit | Bobot: `allocationWeight` â†’ `baseRate` â†’ `maxGuests` â†’ sama rata | KPI per unit |
+| OD-07 | Alokasi booking estate ke unit | Bobot: `allocationWeight` → `baseRate` → `maxGuests` → sama rata. Diimplementasikan di `src/domain/allocation.ts` (`allocateBookingToUnits`); presisi minor unit per OD-18; unit terakhir menyerap sisa gross dan sisa pct (sum=1.0000). | KPI per unit, ingest booking_unit |
 | OD-08 | Kebijakan kurs (sumber dan frekuensi) | Input manual per bulan, dilabeli; kurs aktual payout bila ada | Revenue non-IDR |
 | OD-09 | Perlakuan pembatalan berbiaya dan no-show | Lihat `05` Â§4 | KPI, revenue |
 | OD-10 | Identitas listing Traveloka ("Hillside Eden Jungle Estate" vs "Hillside Eden Bali, Gianyar") | Dianggap belum jelas; adapter tidak ditulis | S6-03 |

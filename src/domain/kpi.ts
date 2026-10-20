@@ -19,6 +19,8 @@ import {
   type StayDate,
 } from "../lib/dates";
 
+export * from "./allocation";
+
 export type KpiBookingStatus = "CONFIRMED" | "PENDING" | "CANCELLED" | "NO_SHOW";
 
 export interface KpiBooking {
