@@ -35,6 +35,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "fast-check": "3.23.2",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "prettier": "^3.4.2",
