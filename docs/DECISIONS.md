@@ -28,6 +28,7 @@ Format: **ID · Status · Keputusan · Alasan**. Keputusan final hanya diubah le
 | OD-16 | Port Postgres dev lokal di Windows: 5432 bentrok dengan `postgresql-x64-17` (layanan Windows yang tidak bisa dihentikan tanpa admin). Pakai **5433** di host, kontainer tetap 5432 | Pengembangan lokal di Windows tanpa konflik port; .env.example & docker-compose.yml sudah disesuaikan | Lokal dev |
 | OD-02 | Hosting aplikasi (VPS atau serverless) | Kontainer agnostik | Worker, antrean |
 | OD-03 | Antrean: pg-boss atau layanan terkelola | pg-boss di balik `JobRunner` | S2, S5 |
+| OD-17 | Import Decimal: `@prisma/client` tidak mengekspor `Decimal` sebagai top-level (cuma `Prisma.Decimal`). Pakai wrapper `src/lib/decimal.ts` yang re-export `Prisma.Decimal` sebagai `Decimal` (konsisten, satu titik import) | Tipe Decimal selalu identik dengan generator Prisma; modul money/dates tidak perlu tahu path runtime Prisma | Modul `src/lib/*` |
 | OD-04 | Penyedia email masuk (webhook vs IMAP) | Antarmuka `InboundEmailSource`, implementasi menyusul | S5-05 |
 | OD-05 | Penyimpanan berkas produksi | `StorageProvider` lokal untuk dev | S3-02, S5 |
 | OD-06 | Kebijakan data tamu dan masa retensi | Minimal: nama tampilan/inisial + negara, tanpa kontak | Skema `guest`, retensi |
