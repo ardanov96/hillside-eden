@@ -24,8 +24,10 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
     "@prisma/client": "^6.16.2",
     "next": "16.4.2",
+    "next-auth": "5.0.0-beta.32",
     "prisma": "^6.16.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",

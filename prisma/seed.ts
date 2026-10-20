@@ -24,6 +24,7 @@
  */
 import { PrismaClient, ChannelCode, UnitKind, AllocationMethod } from "@prisma/client";
 import { addDays, todayInWITA } from "../src/lib/dates";
+import { hashPassword } from "../src/lib/argon2";
 
 const prisma = new PrismaClient();
 
@@ -360,6 +361,45 @@ async function main() {
   // 6. AllocationRule shared default
   await seedAllocationRuleShared(org.id);
   console.log("[seed] allocation rule: 1");
+
+  // 7. User owner (S1-03: Auth.js).
+  // - ENV override untuk owner@kustom.local & password produksi.
+  // - Hash argon2id (lihat src/lib/argon2.ts).
+  // - Idempoten: bila email sudah ada, refresh hash & nama agar
+  //   perubahan password di ENV langsung berlaku pada seed ulang.
+  const ownerEmail = (process.env.OWNER_EMAIL ?? "owner@hillside.local").trim().toLowerCase();
+  const ownerPassword = process.env.OWNER_PASSWORD ?? "he-dev-2026!";
+  if (ownerPassword.length < 8) {
+    throw new Error("OWNER_PASSWORD minimal 8 karakter (lihat docs/08 §3).");
+  }
+  const passwordHash = await hashPassword(ownerPassword);
+  const existing = await prisma.user.findUnique({
+    where: { email: ownerEmail },
+    select: { id: true },
+  });
+  if (existing) {
+    await prisma.user.update({
+      where: { email: ownerEmail },
+      data: {
+        name: "Pemilik",
+        role: "OWNER",
+        passwordHash,
+        organizationId: org.id,
+      },
+    });
+    console.log(`[seed] user owner diperbarui: ${ownerEmail}`);
+  } else {
+    await prisma.user.create({
+      data: {
+        email: ownerEmail,
+        name: "Pemilik",
+        role: "OWNER",
+        passwordHash,
+        organizationId: org.id,
+      },
+    });
+    console.log(`[seed] user owner dibuat: ${ownerEmail}`);
+  }
 
   console.log("[seed] selesai");
 }

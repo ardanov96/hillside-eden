@@ -43,6 +43,7 @@ Format: **ID Â· Status Â· Keputusan Â· Alasan**. Keputusan final hanya diu
 | OD-13 | Ada tidaknya pemasukan non-OTA dan jenisnya | Disediakan `OtherIncome` manual | S3-06 |
 | OD-14 | RPO/RTO yang disepakati | Backup harian + uji restore bulanan | S8-02 |
 | OD-15 | Panjang sprint | 1 minggu (asumsi) | Jadwal |
+| OD-20 | Konvensi Next.js 16 cacheComponents & route dynamic/instant: Auth.js membaca request cookies/headers, sehingga rute terproteksi (`/` dan `/login`) membutuhkan `export const instant = false` agar Turbopack static prerender tidak gagal di build time | `export const instant = false` dipasang di `src/app/page.tsx` dan `src/app/login/page.tsx`; middleware edge dan server components memverifikasi sesi | S1-03, build |
 
 ## C. Template entri baru
 

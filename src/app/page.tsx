@@ -1,15 +1,28 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { signOutAction } from "./actions/auth";
 
-export default function Home() {
+export const instant = false;
+
+export default async function Home() {
+  const session = await auth();
+  // Middleware sudah seharusnya menahan, tapi lapisan ini menjamin DoD
+  // "Route tanpa login ditolak" meski matcher berubah.
+  if (!session?.user) {
+    redirect("/login");
+  }
+  const user = session.user;
+
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 py-16">
       <div className="w-full max-w-2xl space-y-8">
         <header className="space-y-2 text-center sm:text-left">
           <p className="text-sm font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-            Sprint 0 - Fondasi
+            Hillside Eden Dashboard
           </p>
           <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-5xl">
-            Hillside Eden Dashboard
+            Selamat datang, {user.name ?? user.email}
           </h1>
           <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
             Monitoring booking dan keuangan untuk satu pemilik, banyak properti. Fokus: Tiket.com,
@@ -19,11 +32,20 @@ export default function Home() {
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            Status Sistem
+            Akun Anda
           </h2>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Periksa endpoint health untuk memastikan database terhubung.
-          </p>
+          <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+            <div className="space-y-1">
+              <dt className="text-xs text-zinc-500">Email</dt>
+              <dd className="font-medium text-zinc-900 dark:text-zinc-100">{user.email}</dd>
+            </div>
+            <div className="space-y-1">
+              <dt className="text-xs text-zinc-500">Peran</dt>
+              <dd className="font-medium text-zinc-900 dark:text-zinc-100">
+                {user.role ?? "OWNER"}
+              </dd>
+            </div>
+          </dl>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               href="/api/health"
@@ -31,12 +53,14 @@ export default function Home() {
             >
               Cek /api/health
             </Link>
-            <Link
-              href="/api/health?deep=1"
-              className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-            >
-              /api/health?deep=1
-            </Link>
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Keluar
+              </button>
+            </form>
           </div>
         </section>
 
