@@ -1,14 +1,18 @@
 /**
- * Orchestrator daftar Bookings (S2-07.2).
+ * Orchestrator daftar Bookings (S2-07.2 + S4-01).
  *
  * Server component yang:
  * 1. Memvalidasi searchParams dengan Zod.
- * 2. Memuat opsi dropdown + baris secara paralel.
- * 3. Merakit filter, tabel, dan pagination.
+ *    - Filter lokal (channel/status/search/sort/page) via schema lokal.
+ *    - Filter global (propertyId + rentang tanggal) via
+ *      src/lib/filters/global-filter.ts.
+ * 2. Memuat baris booking.
+ * 3. Merakit filter (lokal + preserved global), tabel, dan pagination.
  *
- * Daftar channel untuk dropdown sengaja hard-coded mengikuti konstanta di
- * schema Prisma (lihat BOOKING_CHANNEL_VALUES). Bila bertambah, akan
- * dihasilkan dari sumber yang sama di Sprint 4 (S4-01 layout/nav).
+ * Filter global bar di layout (atas) kini memiliki dropdown properti
+ * dan rentang tanggal; form lokal di sini menangani OTA, status,
+ * pencarian kode konfirmasi. Hidden inputs menjaga filter global
+ * agar tidak hilang saat submit.
  */
 import Link from "next/link";
 
@@ -17,8 +21,9 @@ import {
   BOOKING_CHANNEL_VALUES,
   BOOKING_STATUS_VALUES,
 } from "@/lib/forms/booking-list-search-schema";
+import { parseGlobalFilter } from "@/lib/filters/global-filter";
+import { todayInWITA } from "@/lib/dates";
 import { getBookings } from "@/server/queries/bookings";
-import { getPropertyOptions } from "@/server/queries/listings";
 
 import { BookingFiltersForm } from "./booking-filters-form";
 import { BookingPagination } from "./booking-pagination";
@@ -54,23 +59,23 @@ export async function BookingList({ organizationId, searchParams }: BookingListP
   }
   const q = parsed.data;
 
-  const [properties, list] = await Promise.all([
-    getPropertyOptions(organizationId),
-    getBookings({
-      organizationId,
-      filters: {
-        channel: q.channel ?? null,
-        propertyId: q.propertyId ?? null,
-        status: q.status ?? null,
-        checkInFrom: q.checkInFrom ?? null,
-        checkInTo: q.checkInTo ?? null,
-        search: q.search ?? null,
-      },
-      sort: q.sort,
-      page: q.page,
-      pageSize: q.pageSize,
-    }),
-  ]);
+  // Filter global (properti + rentang tanggal) dipisah dari filter lokal.
+  const gf = parseGlobalFilter(searchParams, todayInWITA());
+
+  const list = await getBookings({
+    organizationId,
+    filters: {
+      channel: q.channel ?? null,
+      propertyId: gf.propertyId ?? null,
+      status: q.status ?? null,
+      checkInFrom: gf.range?.start ?? null,
+      checkInTo: gf.range?.end ?? null,
+      search: q.search ?? null,
+    },
+    sort: q.sort,
+    page: q.page,
+    pageSize: q.pageSize,
+  });
 
   return (
     <section className="space-y-4">
@@ -100,15 +105,12 @@ export async function BookingList({ organizationId, searchParams }: BookingListP
           value: v,
           label: STATUS_LABEL[v],
         }))}
-        propertyOptions={properties.map((p) => ({ value: p.id, label: p.name }))}
         values={{
           channel: q.channel,
-          propertyId: q.propertyId,
           status: q.status,
-          checkInFrom: q.checkInFrom,
-          checkInTo: q.checkInTo,
           search: q.search,
         }}
+        preserved={gf}
         resultCount={list.total}
       />
 

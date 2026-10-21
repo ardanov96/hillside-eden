@@ -26,8 +26,10 @@ export default async function NewBookingPage() {
 
   const listings = await getListingOptions(organizationId);
 
+  // Shell `(app)/layout.tsx` sudah menyediakan <main>; halaman ini hanya
+  // merender konten (S4-01).
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
+    <div className="mx-auto w-full max-w-3xl">
       <header className="mb-8 space-y-2">
         <p className="text-sm font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
           Hillside Eden
@@ -50,6 +52,6 @@ export default async function NewBookingPage() {
           Kembali ke daftar booking
         </Link>
       </footer>
-    </main>
+    </div>
   );
 }

@@ -1,5 +1,10 @@
 /**
- * Unit test untuk booking-list-search-schema (S2-07.2).
+ * Unit test untuk booking-list-search-schema (S2-07.2 + S4-01).
+ *
+ * Sejak S4-01, filter `propertyId` dan `checkInFrom`/`checkInTo` pindah ke
+ * filter global. Skema lokal hanya memvalidasi channel/status/search/sort/
+ * pagination. Kunci global di URL diabaikan (bukan error) supaya URL
+ * yang masih membawa kunci lama tidak membuat halaman rusak.
  */
 import { describe, expect, it } from "vitest";
 
@@ -34,19 +39,20 @@ describe("parseBookingListSearch", () => {
     expect(r.status).toBeUndefined();
   });
 
-  it("memvalidasi tanggal dengan format YYYY-MM-DD", () => {
-    expect(() => parseBookingListSearch({ checkInFrom: "2026-10-01" })).not.toThrow();
-    const r = safeParseBookingListSearch({ checkInFrom: "10/01/2026" });
-    expect(r.ok).toBe(false);
-  });
-
-  it("memvalidasi rentang tanggal (dibiarkan, hanya parse)", () => {
+  it("mengabaikan (tidak memvalidasi) kunci global: propertyId & tanggal", () => {
+    // Kunci global sekarang ditangani oleh src/lib/filters/global-filter.ts;
+    // schema lokal harus menerimanya tanpa error agar URL lama tidak crash.
     const r = parseBookingListSearch({
+      propertyId: "prop_abc",
       checkInFrom: "2026-10-01",
       checkInTo: "2026-10-31",
+      period: "this_month",
     });
-    expect(r.checkInFrom).toBe("2026-10-01");
-    expect(r.checkInTo).toBe("2026-10-31");
+    expect(r.channel).toBeUndefined();
+    expect(r.status).toBeUndefined();
+    // Kunci global TIDAK bocor ke objek hasil (Zod strip by default).
+    expect((r as Record<string, unknown>).propertyId).toBeUndefined();
+    expect((r as Record<string, unknown>).checkInFrom).toBeUndefined();
   });
 
   it("memangkas spasi pada pencarian", () => {

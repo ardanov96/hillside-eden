@@ -25,9 +25,7 @@ export default async function BookingsPage(props: {
 
   const sp = await props.searchParams;
 
-  return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <BookingList organizationId={organizationId} searchParams={sp} />
-    </main>
-  );
+  // `<main>` dan pembungkus max-width sekarang milik shell
+  // `(app)/layout.tsx` (S4-01).
+  return <BookingList organizationId={organizationId} searchParams={sp} />;
 }

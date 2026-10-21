@@ -1,46 +1,24 @@
 /**
- * Skema parser untuk searchParams halaman Bookings (S2-07.2).
+ * Skema parser untuk searchParams halaman Bookings (S2-07.2 + S4-01).
  *
- * URL query string -> BookingListQuery yang dipakai oleh
- * getBookingList(). Dipisah dari query layer supaya URL parsing dapat
- * diuji tanpa Prisma.
+ * URL query string -> parameter yang dipakai oleh getBookings().
+ * Dipisah dari query layer supaya URL parsing dapat diuji tanpa Prisma.
  *
  * Sumber kebenaran: docs/07-ui-spec.md §3.2.
- * - Filter: OTA, properti, status, rentang tanggal menginap, cari kode konfirmasi.
+ * - Filter lokal halaman: OTA, status, pencarian kode konfirmasi.
+ * - Filter global (properti + rentang tanggal menginap) TIDAK di sini -
+ *   lihat src/lib/filters/global-filter.ts. Halaman Bookings menerima
+ *   DateRange yang sudah diselesaikan dari sana.
  * - Sort: checkIn | checkOut | grossAmount | lastSeenAt (asc/desc).
  */
 import { z } from "zod";
 
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/server/queries/bookings";
 
-const isoDate = /^\d{4}-\d{2}-\d{2}$/;
-
-/** Konstanta channel yang dipakai untuk filter dropdown (subset OTA + manual). */
-export const BOOKING_CHANNEL_VALUES = [
-  "AIRBNB",
-  "TIKET_COM",
-  "TRAVELOKA",
-  "EXPEDIA",
-  "AGODA",
-  "BOOKING_COM",
-  "DIRECT",
-  "MANUAL",
-] as const;
-
-export const BOOKING_STATUS_VALUES = ["PENDING", "CONFIRMED", "CANCELLED", "NO_SHOW"] as const;
-
-/** Parser string opsional (kosong dianggap undefined). */
 const optionalString = z
   .string()
   .trim()
   .optional()
-  .transform((v) => (v === undefined || v === "" ? undefined : v));
-
-const optionalDate = z
-  .string()
-  .trim()
-  .optional()
-  .refine((v) => v === undefined || isoDate.test(v), "Tanggal tidak valid")
   .transform((v) => (v === undefined || v === "" ? undefined : v));
 
 const sortSchema = z
@@ -64,22 +42,34 @@ const sortSchema = z
     }),
   );
 
+/** Konstanta channel yang dipakai untuk filter dropdown (subset OTA + manual). */
+export const BOOKING_CHANNEL_VALUES = [
+  "AIRBNB",
+  "TIKET_COM",
+  "TRAVELOKA",
+  "EXPEDIA",
+  "AGODA",
+  "BOOKING_COM",
+  "DIRECT",
+  "MANUAL",
+] as const;
+
+export const BOOKING_STATUS_VALUES = ["PENDING", "CONFIRMED", "CANCELLED", "NO_SHOW"] as const;
+
 /**
- * Skema untuk searchParams URL halaman Bookings.
- * Mengembalikan objek yang siap diteruskan ke getBookingList.
+ * Skema untuk searchParams URL halaman Bookings. Filter properti
+ * dan rentang tanggal menginap dibaca lewat global filter
+ * (src/lib/filters/global-filter.ts), bukan dari sini.
  */
 export const bookingListSearchSchema = z.object({
   channel: z
     .enum(BOOKING_CHANNEL_VALUES)
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  propertyId: optionalString,
   status: z
     .enum(BOOKING_STATUS_VALUES)
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  checkInFrom: optionalDate,
-  checkInTo: optionalDate,
   search: optionalString,
   page: z.coerce.number().int().positive().max(10_000).optional().default(1),
   pageSize: z.coerce
