@@ -90,6 +90,11 @@ export async function runIngest(
   router: RouterRegistry,
   input: RunIngestInput,
 ): Promise<PipelineResult> {
+  // Waktu penerimaan batch: dihitung SEKALI di sini (bukan di adapter) agar
+  // parser tetap deterministik (AGENTS.md aturan 3). Dipakai sebagai
+  // occurredAt cadangan untuk event yang sumbernya tidak menyediakan waktu.
+  const receivedAt = new Date();
+
   // 1. Parse via router.
   const parseResult = await router.parse(input.rawInput);
 
@@ -155,7 +160,7 @@ export async function runIngest(
   const errors: PipelineResult["errors"] = [];
 
   for (const event of parseResult.events) {
-    const outcome = await processSingleEvent(prisma, input, batch.id, event, errors);
+    const outcome = await processSingleEvent(prisma, input, batch.id, event, errors, receivedAt);
     if (outcome === "created") stats.created++;
     else if (outcome === "updated") stats.updated++;
     else if (outcome === "duplicate") stats.duplicate++;
@@ -183,6 +188,8 @@ async function processSingleEvent(
   batchId: string,
   event: ParsedBookingEvent,
   errors: PipelineResult["errors"],
+  /** Waktu penerimaan batch; jadi occurredAt cadangan event tanpa waktu sumber. */
+  receivedAt: Date,
 ): Promise<UpsertOutcome["kind"] | "failed" | "needsReview"> {
   const { booking } = event;
 
@@ -200,6 +207,7 @@ async function processSingleEvent(
       event,
       errorCode: resolution.reason,
       errorMessage: resolution.message,
+      receivedAt,
     });
     errors.push({ itemId: item, code: resolution.reason, message: resolution.message });
     await writeAudit(prisma, {
@@ -226,7 +234,7 @@ async function processSingleEvent(
         propertyId: resolution.propertyId,
         booking,
         eventType: event.eventType,
-        occurredAt: event.occurredAt,
+        occurredAt: event.occurredAt ?? receivedAt,
         actorId: input.actorId ?? null,
       });
     });
@@ -237,6 +245,7 @@ async function processSingleEvent(
       status: itemStatus,
       event,
       importItemExtra: { bookingId: outcome.bookingId, outcome: outcome.kind },
+      receivedAt,
     });
 
     if (outcome.kind === "created") {
@@ -276,6 +285,7 @@ async function processSingleEvent(
       event,
       errorCode: code,
       errorMessage: message,
+      receivedAt,
     });
     errors.push({ itemId: item, code, message });
     await writeAudit(prisma, {
@@ -303,13 +313,15 @@ async function recordImportItem(
     errorCode?: string;
     errorMessage?: string;
     importItemExtra?: Record<string, unknown>;
+    /** WaktuOccurredAt final (sudah dib-resolution dengan waktu penerimaan). */
+    receivedAt: Date;
   },
 ): Promise<string> {
   const contentHash = computeContentHash("event", {
     channel: args.event.booking.channel,
     externalId: args.event.booking.externalId,
     eventType: args.event.eventType,
-    occurredAt: args.event.occurredAt.toISOString(),
+    occurredAt: (args.event.occurredAt ?? args.receivedAt).toISOString(),
   });
 
   const existing = await prisma.importItem.findUnique({
@@ -327,7 +339,7 @@ async function recordImportItem(
       errorMessage: args.errorMessage ?? null,
       parsedPayload: safeJson({
         eventType: args.event.eventType,
-        occurredAt: args.event.occurredAt.toISOString(),
+        occurredAt: (args.event.occurredAt ?? args.receivedAt).toISOString(),
         booking: args.event.booking,
         ...(args.importItemExtra ?? {}),
       }),

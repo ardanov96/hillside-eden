@@ -203,9 +203,12 @@ export class ManualBookingAdapter implements SourceAdapter {
     }
 
     // Event awal selalu CREATED: form tidak bisa membuat event CANCELLED/NO_SHOW.
+    // occurredAt TIDAK diisi dari jam dinding (AGENTS.md aturan 3: adapter
+    // deterministik). Bila form tidak memuat tanggal pemesanan, occurredAt
+    // dibiarkan undefined dan pipeline memakai waktu penerimaan batch.
     const event: ParsedBookingEvent = {
       eventType: "CREATED",
-      occurredAt: normalized.bookedAt ?? new Date(),
+      ...(normalized.bookedAt ? { occurredAt: normalized.bookedAt } : {}),
       booking: validated.data as NormalizedBooking,
       confidence: "high",
       warnings: [],

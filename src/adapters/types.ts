@@ -105,7 +105,16 @@ export interface NormalizedBooking {
  */
 export interface ParsedBookingEvent {
   eventType: EventType;
-  occurredAt: Date;
+  /**
+   * Waktu event terjadi secara faktual (waktu pemesanan dari sumber).
+   *
+   * WAJIB opsional agar adapter tetap deterministik (AGENTS.md aturan 3):
+   * adapter tidak boleh injecting `new Date()` karena dua parse atas input
+   * identik akan menghasilkan output berbeda. Bila sumber tidak menyediakan
+   * waktu, biarkan undefined; pipeline akan mengisi dengan waktu penerimaan
+   * (satu cap waktu per batch) dan menandai `bookedAtIsApprox` di payload.
+   */
+  occurredAt?: Date;
   booking: NormalizedBooking;
   confidence: ConfidenceLevel;
   warnings: string[];

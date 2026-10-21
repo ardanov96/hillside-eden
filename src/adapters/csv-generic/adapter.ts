@@ -76,8 +76,6 @@ export class GenericCsvAdapter implements SourceAdapter {
     const allWarnings: string[] = [];
     let failureCount = 0;
 
-    const now = new Date();
-
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i]!;
       const rowNum = headerIndex + 2 + i;
@@ -105,7 +103,10 @@ export class GenericCsvAdapter implements SourceAdapter {
 
       events.push({
         eventType,
-        occurredAt: booking.bookedAt ?? now,
+        // Adapter deterministik (AGENTS.md aturan 3): jangan memakai jam
+        // dinding. Bila kolom tanggal pemesanan kosong, occurredAt dibiarkan
+        // undefined dan pipeline memakai waktu penerimaan batch.
+        ...(booking.bookedAt ? { occurredAt: booking.bookedAt } : {}),
         booking,
         confidence: "high",
         warnings: [],

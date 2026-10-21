@@ -142,6 +142,38 @@ describe("ManualBookingAdapter.parse (sukses)", () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 
+  // Regresi AGENTS.md aturan 3: adapter tidak boleh memakai jam dinding.
+  // Dua parse dipisah jeda >1ms harus tetap identik.
+  it("tetap identik meski dijalankan pada milidetik berbeda", async () => {
+    const a = adapter.parse({ kind: "manual", payload: formInput() });
+    await new Promise((r) => setTimeout(r, 5));
+    const b = adapter.parse({ kind: "manual", payload: formInput() });
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+
+  it("occurredAt mengikuti tanggal pemesanan bila form menyediakannya", () => {
+    const res = adapter.parse({
+      kind: "manual",
+      // bookedAtIsApprox=false berarti tanggal dianggap pasti oleh user.
+      payload: formInput({ bookedOn: "2026-10-01", bookedAtIsApprox: false }),
+    });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    //occurredAt diisi dari data, bukan jam dinding.
+    expect(res.events[0]?.occurredAt).toBeInstanceOf(Date);
+    // Tanggal disimpan sebagai tengah malam WITA (+08:00), yang dalam UTC
+    // jatuh pada hari sebelumnya pukul 16:00.
+    expect(res.events[0]?.occurredAt?.toISOString()).toBe("2026-09-30T16:00:00.000Z");
+  });
+
+  it("occurredAt undefined bila tanggal pemesanan tidak diisi", () => {
+    const res = adapter.parse({ kind: "manual", payload: formInput() });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    // Pipeline yang mengisi waktu penerimaan batch (lihat runIngest).
+    expect(res.events[0]?.occurredAt).toBeUndefined();
+  });
+
   it("menerima status PENDING", () => {
     const res = adapter.parse({ kind: "manual", payload: formInput({ status: "PENDING" }) });
     expect(res.ok).toBe(true);

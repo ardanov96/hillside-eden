@@ -13,6 +13,10 @@ import { BookingForm } from "./booking-form";
 
 export const metadata = { title: "Tambah Booking - Hillside Eden" };
 
+// Halaman ini membaca cookie sesi (auth()) dan query DB, sehingga tidak bisa
+// di-prerender saat build. `instant = false` memberi izin route dinamis.
+export const instant = false;
+
 export default async function NewBookingPage() {
   const session = await auth();
   const organizationId = session?.user?.organizationId;

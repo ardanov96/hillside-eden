@@ -1,4 +1,21 @@
 /**
+ * Format tanggal pendek dengan locale Indonesia, zona Asia/Makassar (WITA).
+ * Contoh: Date(2026-10-19) -> "19 Okt 2026".
+ */
+export function formatDateShort(input: Date | string): string {
+  const d = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(d.getTime())) return "-";
+  // WITA = UTC+8; untuk tampilan tanggal saja kita geser memakai komponen UTC.
+  const utcMs = d.getTime() + 8 * 60 * 60 * 1000;
+  const shifted = new Date(utcMs);
+  const day = shifted.getUTCDate();
+  const month = shifted.toLocaleString("id-ID", { month: "short", timeZone: "UTC" });
+  const year = shifted.getUTCFullYear();
+  return `${day} ${month} ${year}`;
+}
+
+/** Format mata uang generik sesuai Currency. */
+/**
  * Formatter id-ID (Indonesia).
  * Sumber kebenaran: docs/05 §1 (format mata uang, pembulatan) dan docs/07.
  * Format ini dipakai untuk tampilan UI dan laporan; nilai numerik tetap Decimal.
