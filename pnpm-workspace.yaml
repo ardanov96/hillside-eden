@@ -10,3 +10,14 @@ allowBuilds:
   esbuild: true
   prisma: true
   unrs-resolver: true
+
+# Pin `jose` (transitif dari next-auth -> @auth/core, yang meminta ^6.0.6).
+# Dipasang tepat, bukan range: pada build Vercel 2026-10-20, lockfile memilih
+# jose@6.2.13 yang baru terbit ~2 jam sebelum build sehingga tertahan policy
+# `minimumReleaseAge` pnpm dan build gagal dengan
+# ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION. jose@6.2.12 (terbit 2026-09-05)
+# jauh di luar jendela tersebut.
+# Pinsyon ini boleh dilepas setelah jendela policy terlewati - periksa
+# `npm view jose time` sebelum menaikkan.
+overrides:
+  jose: 6.2.12

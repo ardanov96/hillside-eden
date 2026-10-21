@@ -62,6 +62,9 @@
   },
   "packageManager": "pnpm@12.4.2",
   "pnpm": {
+    "overrides": {
+      "jose": "6.2.12"
+    },
     "onlyBuiltDependencies": [
       "@node-rs/argon2",
       "@prisma/client",
