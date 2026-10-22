@@ -2,68 +2,70 @@
 
 @layer base {
   :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(240 10% 3.9%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(240 10% 3.9%);
+    --background: hsl(240 5% 97%); /* Soft gray background canvas for depth */
+    --foreground: hsl(240 10% 10%);
+    --card: hsl(0 0% 100%); /* Pure white cards for crisp contrast */
+    --card-foreground: hsl(240 10% 10%);
     --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(240 10% 3.9%);
-    --primary: hsl(152 76% 36%); /* Hillside Green: Emerald */
+    --popover-foreground: hsl(240 10% 10%);
+    --primary: hsl(158 64% 38%); /* Hillside Eden Emerald */
     --primary-foreground: hsl(0 0% 100%);
-    --secondary: hsl(240 4.8% 95.9%);
-    --secondary-foreground: hsl(240 5.9% 10%);
-    --muted: hsl(240 4.8% 95.9%);
-    --muted-foreground: hsl(240 3.8% 46.1%);
-    --accent: hsl(152 50% 95%);
-    --accent-foreground: hsl(152 76% 25%);
-    --destructive: hsl(0 84.2% 60.2%);
+    --secondary: hsl(240 5% 93%);
+    --secondary-foreground: hsl(240 10% 10%);
+    --muted: hsl(240 5% 93%);
+    --muted-foreground: hsl(240 4% 46%);
+    --accent: hsl(158 60% 95%);
+    --accent-foreground: hsl(158 64% 28%);
+    --destructive: hsl(0 84% 60%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(240 5.9% 90%);
-    --input: hsl(240 5.9% 90%);
-    --ring: hsl(152 76% 36%);
+    --border: hsl(240 6% 90%);
+    --input: hsl(240 6% 90%);
+    --ring: hsl(158 64% 38%);
     --radius: 0.625rem;
-    --sidebar-background: hsl(0 0% 98.5%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(152 76% 36%);
+    --sidebar-background: hsl(0 0% 100%);
+    --sidebar-foreground: hsl(240 10% 15%);
+    --sidebar-primary: hsl(158 64% 38%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(240 4.8% 94%);
-    --sidebar-accent-foreground: hsl(240 5.9% 10%);
-    --sidebar-border: hsl(240 5.9% 90%);
-    --sidebar-ring: hsl(152 76% 36%);
+    --sidebar-accent: hsl(158 50% 96%);
+    --sidebar-accent-foreground: hsl(158 64% 28%);
+    --sidebar-border: hsl(240 6% 90%);
+    --sidebar-ring: hsl(158 64% 38%);
   }
 
   .dark {
-    --background: hsl(240 10% 3.9%);
+    --background: hsl(240 10% 4%);
     --foreground: hsl(0 0% 98%);
-    --card: hsl(240 10% 5%);
+    --card: hsl(240 10% 7%);
     --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(240 10% 5%);
+    --popover: hsl(240 10% 7%);
     --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(152 70% 45%);
+    --primary: hsl(158 60% 46%);
     --primary-foreground: hsl(0 0% 100%);
-    --secondary: hsl(240 3.7% 15.9%);
+    --secondary: hsl(240 4% 16%);
     --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(240 3.7% 15.9%);
-    --muted-foreground: hsl(240 5% 64.9%);
-    --accent: hsl(152 40% 15%);
-    --accent-foreground: hsl(152 70% 80%);
-    --destructive: hsl(0 62.8% 30.6%);
+    --muted: hsl(240 4% 16%);
+    --muted-foreground: hsl(240 5% 65%);
+    --accent: hsl(158 40% 16%);
+    --accent-foreground: hsl(158 60% 82%);
+    --destructive: hsl(0 63% 31%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(240 3.7% 15.9%);
-    --input: hsl(240 3.7% 15.9%);
-    --ring: hsl(152 70% 45%);
-    --sidebar-background: hsl(240 10% 4.5%);
-    --sidebar-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-primary: hsl(152 70% 45%);
+    --border: hsl(240 4% 18%);
+    --input: hsl(240 4% 18%);
+    --ring: hsl(158 60% 46%);
+    --sidebar-background: hsl(240 10% 6%);
+    --sidebar-foreground: hsl(240 5% 96%);
+    --sidebar-primary: hsl(158 60% 46%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(240 3.7% 14%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(240 3.7% 15.9%);
-    --sidebar-ring: hsl(152 70% 45%);
+    --sidebar-accent: hsl(240 4% 14%);
+    --sidebar-accent-foreground: hsl(240 5% 96%);
+    --sidebar-border: hsl(240 4% 18%);
+    --sidebar-ring: hsl(158 60% 46%);
   }
 }
 
 @theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -100,6 +102,14 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
+  font-family:
+    var(--font-sans),
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   font-feature-settings:
     "rlig" 1,
     "calt" 1;

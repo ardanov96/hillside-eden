@@ -58,86 +58,74 @@ export function GlobalFilterBar({ properties }: GlobalFilterBarProps) {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 shadow-xs"
+      className="flex flex-wrap items-center gap-2.5 text-xs"
       aria-label="Filter global: properti dan periode"
     >
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Properti Filter */}
-        <div className="flex items-center gap-2">
-          <label
-            htmlFor="global-property"
-            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground whitespace-nowrap"
-          >
-            <Building2 className="h-3.5 w-3.5 text-primary" />
-            <span>Properti:</span>
-          </label>
-          <div className="relative">
-            <select
-              id="global-property"
-              name="propertyId"
-              defaultValue={propertyId ?? ""}
-              className="h-9 cursor-pointer rounded-lg border border-input bg-background px-3 pr-8 text-xs font-medium text-foreground shadow-2xs transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Semua Properti</option>
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Periode Filter */}
-        <div className="flex items-center gap-2">
-          <label
-            htmlFor="global-period"
-            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground whitespace-nowrap"
-          >
-            <CalendarDays className="h-3.5 w-3.5 text-primary" />
-            <span>Periode:</span>
-          </label>
-          <div className="relative">
-            <select
-              id="global-period"
-              name="period"
-              defaultValue={period}
-              className="h-9 cursor-pointer rounded-lg border border-input bg-background px-3 pr-8 text-xs font-medium text-foreground shadow-2xs transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {PERIOD_PRESETS.map((p) => (
-                <option key={p} value={p}>
-                  {PERIOD_LABEL[p]}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Custom Date Range if selected */}
-        {period === "custom" ? (
-          <div className="flex items-center gap-2">
-            <input
-              id="global-from"
-              name="from"
-              type="date"
-              defaultValue={from ?? ""}
-              aria-label="Tanggal mulai"
-              className="h-9 rounded-lg border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <span className="text-xs text-muted-foreground">s/d</span>
-            <input
-              id="global-to"
-              name="to"
-              type="date"
-              defaultValue={to ?? ""}
-              aria-label="Tanggal akhir"
-              className="h-9 rounded-lg border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        ) : null}
+      {/* Properti Filter */}
+      <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 shadow-2xs">
+        <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
+        <span className="font-semibold text-muted-foreground whitespace-nowrap hidden sm:inline">
+          Properti:
+        </span>
+        <select
+          id="global-property"
+          name="propertyId"
+          defaultValue={propertyId ?? ""}
+          className="cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
+        >
+          <option value="">Semua Properti</option>
+          {properties.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <Button type="submit" size="sm" className="gap-1.5 font-medium shadow-xs">
+      {/* Periode Filter */}
+      <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 shadow-2xs">
+        <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
+        <span className="font-semibold text-muted-foreground whitespace-nowrap hidden sm:inline">
+          Periode:
+        </span>
+        <select
+          id="global-period"
+          name="period"
+          defaultValue={period}
+          className="cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
+        >
+          {PERIOD_PRESETS.map((p) => (
+            <option key={p} value={p}>
+              {PERIOD_LABEL[p]}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Custom Date Range if selected */}
+      {period === "custom" ? (
+        <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 shadow-2xs">
+          <input
+            id="global-from"
+            name="from"
+            type="date"
+            defaultValue={from ?? ""}
+            aria-label="Tanggal mulai"
+            className="bg-transparent text-xs font-medium text-foreground focus:outline-none"
+          />
+          <span className="text-xs text-muted-foreground">s/d</span>
+          <input
+            id="global-to"
+            name="to"
+            type="date"
+            defaultValue={to ?? ""}
+            aria-label="Tanggal akhir"
+            className="bg-transparent text-xs font-medium text-foreground focus:outline-none"
+          />
+        </div>
+      ) : null}
+
+      <Button type="submit" size="sm" variant="default" className="h-8 gap-1.5 px-3 shadow-xs">
         <Filter className="h-3.5 w-3.5" />
         <span>Terapkan</span>
       </Button>

@@ -1,13 +1,15 @@
 /**
- * Kerangka aplikasi (S4-01 + shadcn redesign) - Server Component.
+ * Kerangka aplikasi Dashboard Hillside Eden (shadcn/ui layout standard).
  *
- * Elemen kerangka: header modern dengan brand & user profile dropdown,
- * sidebar dengan ikon navigasi, bilah filter global, dan area konten utama.
+ * Struktur:
+ * - Fixed left sidebar (md:flex md:w-64 md:fixed md:inset-y-0)
+ * - Header sticky dengan filter global & profile dropdown
+ * - Main content area dengan latar canvas ber-kontras
  */
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Trees, LogOut, User as UserIcon } from "lucide-react";
+import { Trees, LogOut, ShieldCheck } from "lucide-react";
 
 import { signOutAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -40,60 +42,106 @@ export function AppShell({ userEmail, properties, children }: AppShellProps) {
   const initial = userEmail ? userEmail.charAt(0).toUpperCase() : "H";
 
   return (
-    <div className="flex min-h-screen flex-col bg-background antialiased selection:bg-primary/20 selection:text-primary">
-      {/* Top Header */}
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-md">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                <Trees className="h-5 w-5" />
+    <div className="min-h-screen bg-background text-foreground antialiased">
+      {/* =========================================================================
+          1. FIXED LEFT SIDEBAR (Desktop: md & up)
+         ========================================================================= */}
+      <aside className="hidden md:fixed md:inset-y-0 md:z-30 md:flex md:w-64 md:flex-col border-r border-border bg-card">
+        {/* Brand Header */}
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-border px-5">
+          <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <Trees className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight text-foreground">
+                Hillside Eden
+              </span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Hotel & Villa Management
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Scrollable Navigation Menu */}
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-muted/40" />}>
+            <NavList />
+          </Suspense>
+        </div>
+
+        {/* Sidebar Footer Info */}
+        <div className="border-t border-border p-4 bg-muted/30">
+          <div className="rounded-xl border border-border/70 bg-card p-3 shadow-2xs">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Zona Waktu</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
+                WITA (UTC+8)
+              </Badge>
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground/80">
+              Mata uang dasar: <strong className="text-foreground">IDR (Rp)</strong>
+            </p>
+          </div>
+        </div>
+      </aside>
+
+      {/* =========================================================================
+          2. MAIN WRAPPER (Offset by Sidebar on md & up)
+         ========================================================================= */}
+      <div className="flex flex-1 flex-col md:pl-64">
+        {/* Sticky Header */}
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/85 px-4 sm:px-6 backdrop-blur-md">
+          {/* Mobile Brand (visible only < md) */}
+          <div className="flex items-center gap-2 md:hidden">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Trees className="h-4 w-4" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-bold tracking-tight text-foreground">
-                  Hillside Eden
-                </span>
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                  Hotel & Villa Management
-                </span>
-              </div>
+              <span className="text-sm font-bold text-foreground">Hillside Eden</span>
             </Link>
           </div>
 
+          {/* Desktop Filter Bar (visible md & up) */}
+          <div className="hidden md:flex md:flex-1 md:items-center">
+            <Suspense fallback={<div className="h-9 w-72 animate-pulse rounded-lg bg-muted/40" />}>
+              <GlobalFilterBar properties={properties} />
+            </Suspense>
+          </div>
+
+          {/* User Profile Dropdown */}
           {userEmail ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 ml-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative flex h-10 items-center gap-2.5 rounded-full px-2 py-1 hover:bg-muted/60"
+                    className="flex h-10 items-center gap-2.5 rounded-full px-2 hover:bg-muted/60"
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shadow-2xs">
                       {initial}
                     </div>
                     <div className="hidden text-left sm:flex sm:flex-col">
-                      <span className="text-xs font-medium text-foreground leading-none">
+                      <span className="text-xs font-semibold text-foreground leading-tight">
                         {userEmail}
                       </span>
-                      <span className="mt-0.5 text-[10px] text-muted-foreground">Owner</span>
+                      <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                        Owner
+                      </span>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="font-normal">
+                <DropdownMenuContent align="end" className="w-60 shadow-lg">
+                  <DropdownMenuLabel className="font-normal p-3">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-xs font-semibold leading-none text-foreground">
-                        Akun Pemilik
-                      </p>
-                      <p className="text-[11px] leading-none text-muted-foreground">{userEmail}</p>
+                      <p className="text-xs font-semibold text-foreground">Akun Pemilik</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{userEmail}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-xs text-muted-foreground cursor-default">
-                    <UserIcon className="mr-2 h-3.5 w-3.5" />
+                  <DropdownMenuItem className="text-xs text-muted-foreground cursor-default py-2">
+                    <ShieldCheck className="mr-2 h-4 w-4 text-emerald-600" />
                     <span>Role: OWNER</span>
                     <Badge variant="success" className="ml-auto text-[9px] px-1.5 py-0">
                       Aktif
@@ -101,9 +149,9 @@ export function AppShell({ userEmail, properties, children }: AppShellProps) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <form action={signOutAction} className="w-full">
-                    <button type="submit" className="w-full">
-                      <DropdownMenuItem className="w-full cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
-                        <LogOut className="mr-2 h-3.5 w-3.5" />
+                    <button type="submit" className="w-full text-left">
+                      <DropdownMenuItem className="w-full cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive py-2">
+                        <LogOut className="mr-2 h-4 w-4" />
                         <span>Keluar</span>
                       </DropdownMenuItem>
                     </button>
@@ -112,43 +160,35 @@ export function AppShell({ userEmail, properties, children }: AppShellProps) {
               </DropdownMenu>
             </div>
           ) : null}
-        </div>
-      </header>
+        </header>
 
-      {/* Main Layout Area */}
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-6 sm:px-6 lg:flex-row lg:px-8">
-        {/* Left Sidebar */}
-        <aside className="w-full shrink-0 lg:w-60">
-          <div className="sticky top-24 rounded-2xl border border-border/80 bg-card p-3 shadow-xs">
-            <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-muted/40" />}>
-              <NavList />
-            </Suspense>
-          </div>
-        </aside>
-
-        {/* Content Area */}
-        <div className="min-w-0 flex-1 space-y-6">
-          <Suspense fallback={<div className="h-20 animate-pulse rounded-xl bg-muted/40" />}>
+        {/* Mobile Filter Bar (visible only < md) */}
+        <div className="border-b border-border bg-card p-4 md:hidden">
+          <Suspense fallback={<div className="h-10 animate-pulse rounded-lg bg-muted/40" />}>
             <GlobalFilterBar properties={properties} />
           </Suspense>
-          <main>{children}</main>
         </div>
-      </div>
 
-      {/* Footer */}
-      <footer className="border-t border-border/70 py-6 text-center text-xs text-muted-foreground">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:px-6 lg:px-8">
-          <p>© 2026 Hillside Eden Management Dashboard</p>
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              WITA (UTC+8)
-            </span>
-            <span>·</span>
-            <span>Mata uang dasar: IDR</span>
+        {/* Main Content Area */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">{children}</div>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-border py-4 text-center text-xs text-muted-foreground bg-card/40">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:px-6 lg:px-8">
+            <p>© 2026 Hillside Eden Management Dashboard</p>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Asia/Makassar (WITA)
+              </span>
+              <span>·</span>
+              <span>Mata uang: IDR</span>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
