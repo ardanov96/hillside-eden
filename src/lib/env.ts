@@ -9,6 +9,7 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
   TZ: z.string().default("Asia/Makassar"),
+  Timezone: z.string().optional(),
 
   DATABASE_URL: z.string().url().optional(),
   DIRECT_DATABASE_URL: z.string().url().optional(),
@@ -37,6 +38,12 @@ export type Env = z.infer<typeof EnvSchema>;
  * Di dev (`NODE_ENV !== "production"`) atau saat build time di hosting (Vercel/CI),
  * placeholder 32 byte dipakai agar build tidak gagal sebelum variabel diisi di dashboard.
  */
+if (typeof process !== "undefined") {
+  if (process.env.Timezone && !process.env.TZ) {
+    process.env.TZ = process.env.Timezone;
+  }
+}
+
 if (
   typeof process !== "undefined" &&
   process.env.NODE_ENV === "production" &&
