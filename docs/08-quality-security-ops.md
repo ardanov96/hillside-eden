@@ -53,12 +53,22 @@ Lint, typecheck, unit/integrasi, `prisma validate`, `pnpm audit` (peringatan tin
 
 | Lingkungan | Tujuan | Catatan |
 |---|---|---|
-| Lokal | Pengembangan | `docker compose`, data dummy |
+| Lokal | Pengembangan | Neon branch `dev`, data dummy |
 | Staging | UAT dan demo | Data dummy atau data asli teranonimkan; domain terpisah |
 | Produksi | Pemakaian pemilik | Akun/rahasia atas nama client bila memungkinkan |
 
 Variabel lingkungan minimal (nama indikatif):
+
+`DATABASE_URL` dan `DIRECT_DATABASE_URL` **wajib berbeda** pada Neon: yang pertama
+menggunakan endpoint pooled (host berakhiran `-pooler`) untuk runtime aplikasi,
+yang kedua endpoint direct untuk Prisma CLI. Keduanya wajib diisi di setiap
+environment karena `prisma/schema.prisma` mendeklarasikan `directUrl` (ADR-014),
+termasuk saat `prisma validate` berjalan di CI. Tambahkan `connect_timeout=15`
+agar tetap cope dengan compute yang scale-to-zero.
+
 `DATABASE_URL`, `DIRECT_DATABASE_URL` (migrasi), `AUTH_SECRET`, `APP_BASE_URL`, `ENCRYPTION_KEY` (URL iCal), `STORAGE_DRIVER` dan kredensialnya, `INBOUND_EMAIL_*`, `SENTRY_DSN` (opsional), `TZ=Asia/Makassar` (untuk proses, namun logika tetap eksplisit zona).
+> `.env.example`, log, atau pesan commit. Isi lewat `.env` lokal atau secret
+> manager di platform deploy.
 
 Semua nilai divalidasi saat start (Zod pada `lib/env`); aplikasi menolak jalan bila konfigurasi tidak valid.
 

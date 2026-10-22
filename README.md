@@ -19,7 +19,8 @@ Zona waktu: **Asia/Makassar (WITA)** - Mata uang dasar: **IDR**.
 
 - Node.js 22 LTS (lihat `.nvmrc`)
 - pnpm 12 (`corepack enable && corepack prepare pnpm@12.4.2 --activate`)
-- Docker Desktop (untuk Postgres lokal)
+- Akun Neon: branch `dev` untuk lokal, `main` untuk produksi (lihat ADR-014)
+- Docker Desktop (**opsional**, hanya fallback offline/CI)
 
 ### Setup lokal
 
@@ -27,29 +28,37 @@ Zona waktu: **Asia/Makassar (WITA)** - Mata uang dasar: **IDR**.
 pnpm install
 cp .env.example .env
 docker compose up -d postgres
-pnpm db:generate
 pnpm dev
 # buka http://localhost:3000
 ```
 
+Isi `DATABASE_URL` dan `DIRECT_DATABASE_URL` di `.env` dengan connection string
+
 ### Perintah standar
 
-| Perintah               | Fungsi                           |
-| ---------------------- | -------------------------------- |
-| `pnpm dev`             | Jalankan Next.js (hot reload)    |
-| `pnpm build`           | Build produksi                   |
-| `pnpm start`           | Jalankan hasil build             |
-| `pnpm lint`            | ESLint                           |
-| `pnpm typecheck`       | TypeScript (`tsc --noEmit`)      |
-| `pnpm test`            | Vitest (sekali jalan)            |
-| `pnpm test:watch`      | Vitest (watch mode)              |
-| `pnpm format`          | Prettier tulis ulang             |
-| `pnpm format:check`    | Prettier cek tanpa ubah          |
-| `pnpm db:generate`     | Prisma generate client           |
-| `pnpm db:migrate`      | Prisma migrate dev               |
-| `pnpm db:deploy`       | Prisma migrate deploy (prod)     |
-| `pnpm db:studio`       | Prisma Studio                    |
-| `docker compose up -d` | Nyalakan Postgres + web + worker |
+```bash
+pnpm db:deploy   # prisma migrate deploy ke branch dev
+pnpm db:seed     # master data + owner (idempoten)
+```
+
+Detail dan prosedur lengkap: `docs/briefs/od-01-neon-branches.md`.
+
+| Perintah                        | Fungsi                                             |
+| ------------------------------- | -------------------------------------------------- |
+| `pnpm dev`                      | Jalankan Next.js (hot reload)                      |
+| `pnpm build`                    | Build produksi                                     |
+| `pnpm start`                    | Jalankan hasil build                               |
+| `pnpm lint`                     | ESLint                                             |
+| `pnpm typecheck`                | TypeScript (`tsc --noEmit`)                        |
+| `pnpm test`                     | Vitest (sekali jalan)                              |
+| `pnpm test:watch`               | Vitest (watch mode)                                |
+| `pnpm format`                   | Prettier tulis ulang                               |
+| `pnpm format:check`             | Prettier cek tanpa ubah                            |
+| `pnpm db:generate`              | Prisma generate client                             |
+| `pnpm db:migrate`               | Prisma migrate dev                                 |
+| `pnpm db:deploy`                | Prisma migrate deploy (prod)                       |
+| `pnpm db:studio`                | Prisma Studio                                      |
+| `docker compose up -d postgres` | **Fallback**: nyalakan Postgres lokal (offline/CI) |
 
 ## Struktur Kode
 

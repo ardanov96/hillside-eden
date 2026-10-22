@@ -24,6 +24,12 @@
 
 Dua proses: **web** (Next.js) dan **worker** (ingest terjadwal, pengambil iCal, template biaya rutin, penutupan periode). Keduanya memakai kode domain yang sama.
 
+### 1.1 Database
+
+Database adalah **Neon PostgreSQL** (ADR-014): satu project, branch `main` untuk produksi dan branch `dev` untuk pengembangan lokal. Database bersifat stateless dari sisi aplikasi - hanya perlu `DATABASE_URL` (endpoint pooled, untuk runtime aplikasi) dan `DIRECT_DATABASE_URL` (endpoint direct, untuk Prisma CLI). Tidak ada kode aplikasi yang menyebut host atau nama branch, sehingga pindah hosting cukup mengganti environment variable.
+
+`docker-compose.yml` tetap ada sebagai fallback untuk development offline dan CI, serta sebagai sumber shadow database saat menjalankan `prisma migrate dev`.
+
 ## 2. Struktur kode
 
 ```
@@ -35,7 +41,7 @@ src/
   server/        # akses data (Prisma), service, StorageProvider, InboundEmailSource
   app/           # Next.js: halaman, route handler, server action
   lib/           # money, dates, format id-ID, logger, env
-prisma/          # schema.prisma, migrations, seed
+  prisma/          # schema.prisma, migrations, seed
 fixtures/
   real/          # data asli dari client (jangan commit data pribadi mentah; lihat 08)
   synthetic/     # data sintetis berlabel

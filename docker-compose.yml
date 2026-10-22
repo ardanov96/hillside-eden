@@ -1,6 +1,11 @@
-# Hillside Eden - local dev stack
+# Hillside Eden - FALLBACK lokal (bukan jalur utama anymore)
+#
+# Jalur utama sejak ADR-014: Neon branch `dev` untuk lokal, branch `main` untuk
+# produksi. Stack ini dipertahankan untuk: development offline, CI, dan membuat
+# migration Prisma yang butuh shadow database. Lihat docs/briefs/od-01-neon-branches.md
+#
 # Dokumentasi: docs/03-architecture.md, docs/08-quality-security-ops.md
-# Usage: docker compose up -d
+# Usage: docker compose up -d postgres
 services:
   postgres:
     image: postgres:16-alpine

@@ -13,10 +13,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // directUrl (untuk connection pooler) diaktifkan saat OD-01 diputuskan.
-  // Lihat DECISIONS.md OD-01.
+  provider  = "postgresql"
+  // App runtime: endpoint POOLED Neon (host mengandung "-pooler"). Lihat ADR-014.
+  url       = env("DATABASE_URL")
+  // Prisma CLI (migrate/studio/introspect): endpoint DIRECT Neon (tanpa "-pooler").
+  // Wajib ada di semua environment, termasuk `prisma validate` di CI.
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // Enums

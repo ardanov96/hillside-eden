@@ -10,6 +10,11 @@
  *   pnpm db:seed        # master data (WAJIB lebih dulu)
  *   pnpm db:seed:dummy  # data dummy (idempoten, aman diulang)
  *
+ * Pengaman: skrip ini menolak jalan bila target-nya dianggap produksi
+ * (NODE_ENV=production, atau DATABASE_URL sama dengan PROD_DATABASE_URL).
+ * Housing database saat ini adalah Neon, jadi satu perintah salah ketik bisa
+ * mengisi database cloud. Lihat docs/briefs/od-01-neon-branches.md bagian 6.
+ *
  * Idempoten: sebelum menulis, seluruh baris dummy yang ada dihapus berdasarkan
  * penanda DUMMY (externalId / filename / description berawalan "DUMMY").
  * Baris non-dummy (mis. hasil impor CSV asli) tidak pernah tersentuh.
@@ -35,6 +40,39 @@ import {
   type DummyListingRef,
   type DummyUnitRef,
 } from "../src/dev/dummy-data";
+
+/**
+ * Tolak jalan bila targetdatabase adalah produksi.
+ *
+ * Catatan: nama branch Neon tidak pernah muncul di hostname (formatnya
+ * `ep-<slug>-<hash>.<region>.aws.neon.tech`), jadi deteksi berbasis nama
+ * tidak mungkin dilakukan. Yang dipakai hanya dua sinyal yang memang
+ * tersedia: `NODE_ENV` dan kesamaan dengan `PROD_DATABASE_URL`.
+ */
+function assertDummyTargetIsSafe(): void {
+  const dbUrl = process.env.DATABASE_URL ?? "";
+  const isProductionEnv = process.env.NODE_ENV === "production";
+  const isKnownProd =
+    Boolean(process.env.PROD_DATABASE_URL) && dbUrl === process.env.PROD_DATABASE_URL;
+
+  if (isProductionEnv || isKnownProd) {
+    console.error("[seed-dummy] DITOLAK: target dianggap produksi.");
+    if (isProductionEnv) console.error("  Alasan: NODE_ENV=production.");
+    if (isKnownProd) console.error("  Alasan: DATABASE_URL sama dengan PROD_DATABASE_URL.");
+    process.exit(1);
+  }
+
+  const host = (() => {
+    try {
+      return new URL(dbUrl).host;
+    } catch {
+      return "(tidak terbaca)";
+    }
+  })();
+  console.warn(`[seed-dummy] Menulis ke host: ${host}. Pastikan ini branch dev.`);
+}
+
+assertDummyTargetIsSafe();
 
 const prisma = new PrismaClient();
 
