@@ -69,7 +69,7 @@ export async function GET(request: Request) {
   if (rawUrl) {
     try {
       const u = new URL(rawUrl.trim());
-      sanitizedUrl = `${u.protocol}//${u.username}:***@${u.host}${u.pathname}${u.search}`;
+      sanitizedUrl = `${u.protocol}//${u.username}:***(len=${u.password.length},pre=${u.password.slice(0, 4)},suf=${u.password.slice(-2)})@${u.host}${u.pathname}${u.search}`;
     } catch {
       sanitizedUrl = `MALFORMED (length=${rawUrl.length}, prefix=${rawUrl.slice(0, 20)})`;
     }
