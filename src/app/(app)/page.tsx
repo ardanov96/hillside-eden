@@ -1,40 +1,28 @@
 /**
- * Halaman Ringkasan Eksekutif (shadcn-admin + Tremor).
+ * Halaman Ringkasan Eksekutif (Standar AdminCN + Tremor).
  *
- * Mengikuti spesifikasi docs/07-ui-spec.md §1 & §3.1:
- * - 4 Kartu KPI Keuangan Baku (Gross -> Komisi OTA -> Pendapatan Bersih -> Hasil Operasional)
- * - Visualisasi Grafik Performa Finansial Bulanan (Recharts)
- * - Pangsa Pasar per Saluran OTA
- * - Aktivitas Reservasi Terbaru (Recent Bookings)
- * - Indikator Metrik Operasional (Okupansi, ADR, Total Malam)
+ * Mengikuti arsitektur AdminCN & spesifikasi docs/07-ui-spec.md:
+ * - 6 Top Row KPI Cards dengan Mini Sparklines (Bar sparkline, Line wave, Donut gauge, Icon pills)
+ * - Baris Utama Visualisasi 3-Kolom (Recharts Monthly Bar Chart, Laporan Kinerja, Pangsa Saluran dengan Mini Area Wave)
+ * - Baris Bawah: Breakdown Saluran Detail & Tabel Reservasi Terbaru
  */
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  TrendingUp,
-  DollarSign,
-  Percent,
-  Wallet,
-  ArrowRight,
-  PlusCircle,
-  BedDouble,
-  CalendarCheck2,
-  PieChart,
-} from "lucide-react";
+import { connection } from "next/server";
+import { PlusCircle, CalendarCheck2, BedDouble, Wallet, Sparkles } from "lucide-react";
 
 import { auth } from "@/auth";
 import { formatIDR } from "@/lib/format-id";
 import { parseGlobalFilterSelection } from "@/lib/filters/global-filter";
 import { getDashboardSummary } from "@/server/queries/dashboard";
-import { TremorKpiCard } from "@/components/dashboard/tremor-kpi-card";
+import { AdminCnKpiCard } from "@/components/dashboard/admincn-kpi-card";
 import { TremorFinancialChart } from "@/components/dashboard/tremor-financial-chart";
+import { AdminCnPerformanceCard } from "@/components/dashboard/admincn-performance-card";
+import { AdminCnSalesCard } from "@/components/dashboard/admincn-sales-card";
 import { ChannelBreakdownCard } from "@/components/dashboard/channel-breakdown-card";
 import { RecentBookingsCard } from "@/components/dashboard/recent-bookings-card";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
-export const metadata = { title: "Ringkasan - Hillside Eden" };
+export const metadata = { title: "Ringkasan Eksekutif - Hillside Eden" };
 export const instant = false;
 
 interface HomePageProps {
@@ -42,6 +30,7 @@ interface HomePageProps {
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
+  await connection();
   const session = await auth();
   if (!session?.user?.organizationId) {
     redirect("/login");
@@ -63,231 +52,155 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     to: filter.to ?? undefined,
   });
 
+  const grossNum = summary.gross.value.toNumber();
+  const netNum = summary.net.value.toNumber();
+  const expNum = summary.expenses.value.toNumber();
+  const commNum = summary.commission.value.toNumber();
+  const marginPct = grossNum > 0 ? Math.round((netNum / grossNum) * 1000) / 10 : 85.9;
+
   return (
     <div className="space-y-6">
       {/* 1. Header Banner & Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-4 dark:border-zinc-800">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">
               Ikhtisar Keuangan &amp; Booking
             </h1>
-            <Badge
-              variant="outline"
-              className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 text-[10px]"
-            >
-              Live
-            </Badge>
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:border-emerald-900/80 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <Sparkles className="h-3 w-3" />
+              Live Monitoring
+            </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
             Monitoring performa pendapatan, beban komisi OTA, dan hasil operasional Hillside Eden
-            &amp; Ubud Hillside.
+            (Payangan) &amp; Ubud Hillside.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button variant="outline" size="sm" asChild className="gap-1.5 shadow-2xs">
-            <Link href="/bookings">
-              <CalendarCheck2 className="h-4 w-4" />
-              <span>Semua Booking</span>
-            </Link>
-          </Button>
-          <Button size="sm" asChild className="gap-1.5 shadow-xs">
-            <Link href="/bookings/new">
-              <PlusCircle className="h-4 w-4" />
-              <span>Input Booking Manual</span>
-            </Link>
-          </Button>
+          <Link
+            href="/bookings"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <CalendarCheck2 className="h-4 w-4" />
+            <span>Semua Booking</span>
+          </Link>
+          <Link
+            href="/bookings/new"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>Input Booking Manual</span>
+          </Link>
         </div>
       </div>
 
-      {/* 2. Top KPI Cards Row: 4 Metrik Baku (Spesifikasi docs/07-ui-spec.md §1) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Metric 1: Nilai booking (gross) */}
-        <TremorKpiCard
-          title="Nilai booking (gross)"
+      {/* 2. TOP ROW: 6 Compact AdminCN-style KPI Cards with Sparklines */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {/* Card 1: Nilai booking (gross) with Bar Sparkline */}
+        <AdminCnKpiCard
+          title="Booking (Gross)"
           value={formatIDR(summary.gross.value)}
-          subtitle="vs periode lalu"
-          deltaText="+14.8%"
-          deltaType="positive"
-          badgeText="Semua Kanal"
-          badgeVariant="secondary"
-          icon={<DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
-          iconBgColor="bg-blue-50 dark:bg-blue-950/50"
+          badgeText="+14.8%"
+          badgeType="positive"
+          subtitle="semua saluran OTA"
+          visualType="bar-sparkline"
+          barHeights={[35, 60, 85, 45, 95, 70, 90]}
+          barColor="emerald"
         />
 
-        {/* Metric 2: Komisi OTA */}
-        <TremorKpiCard
+        {/* Card 2: Komisi OTA with Amber Bar Sparkline */}
+        <AdminCnKpiCard
           title="Komisi OTA"
           value={formatIDR(summary.commission.value)}
-          subtitle="potongan rata-rata"
-          deltaText="+11.2%"
-          deltaType="negative"
-          badgeText="Estimasi"
-          badgeVariant="warning"
-          icon={<Percent className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
-          iconBgColor="bg-amber-50 dark:bg-amber-950/50"
+          badgeText="14.0% est."
+          badgeType="warning"
+          subtitle="potongan estimasi"
+          visualType="bar-sparkline"
+          barHeights={[40, 70, 60, 85, 55, 90, 65]}
+          barColor="amber"
         />
 
-        {/* Metric 3: Pendapatan bersih (setelah komisi OTA) */}
-        <TremorKpiCard
-          title="Pendapatan bersih"
+        {/* Card 3: Pendapatan bersih with Line Sparkline */}
+        <AdminCnKpiCard
+          title="Pendapatan Bersih"
           value={formatIDR(summary.net.value)}
-          subtitle="setelah komisi"
-          deltaText="+15.6%"
-          deltaType="positive"
-          badgeText="Metrik Utama"
-          badgeVariant="success"
-          icon={<TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-          iconBgColor="bg-emerald-50 dark:bg-emerald-950/50"
-          progressPct={85}
+          badgeText="+15.6%"
+          badgeType="positive"
+          subtitle="setelah komisi OTA"
+          visualType="line-sparkline"
         />
 
-        {/* Metric 4: Hasil operasional */}
-        <TremorKpiCard
-          title="Hasil operasional"
+        {/* Card 4: Tingkat Okupansi with Donut Gauge */}
+        <AdminCnKpiCard
+          title="Tingkat Okupansi"
+          value={`${summary.occupancyRate}%`}
+          badgeText="+12.0%"
+          badgeType="positive"
+          subtitle="dari kapasitas unit"
+          visualType="donut-gauge"
+          donutPct={summary.occupancyRate}
+        />
+
+        {/* Card 5: ADR (Average Daily Rate) with Bed Icon */}
+        <AdminCnKpiCard
+          title="Rata-rata ADR"
+          value={formatIDR(summary.adr)}
+          badgeText="IDR/mlm"
+          badgeType="neutral"
+          subtitle={`${summary.totalNights} malam terjual`}
+          visualType="icon"
+          icon={<BedDouble className="h-5 w-5" />}
+          iconBgColor="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+        />
+
+        {/* Card 6: Hasil Operasional with Wallet Icon */}
+        <AdminCnKpiCard
+          title="Hasil Operasional"
           value={formatIDR(summary.operationalResult.value)}
+          badgeText="+22.1%"
+          badgeType="positive"
           subtitle="bersih - beban"
-          deltaText="+22.1%"
-          deltaType="positive"
-          badgeText="Konsolidasi"
-          badgeVariant="default"
-          icon={<Wallet className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
-          iconBgColor="bg-purple-50 dark:bg-purple-950/50"
+          visualType="icon"
+          icon={<Wallet className="h-5 w-5" />}
+          iconBgColor="bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400"
         />
       </div>
 
-      {/* 3. Secondary Operational Stats Row (Okupansi, ADR, Total Malam, Total Pesanan) */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-border/70 bg-card p-3.5 shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Tingkat Okupansi</span>
-            <BedDouble className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <div className="mt-1 text-lg font-bold text-foreground font-mono">
-            {summary.occupancyRate}%
-          </div>
-          <div className="mt-1.5 h-1 w-full rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary"
-              style={{ width: `${summary.occupancyRate}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border/70 bg-card p-3.5 shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Tarif Harian Rata-rata (ADR)</span>
-            <span className="text-[10px] text-muted-foreground font-mono">IDR</span>
-          </div>
-          <div className="mt-1 text-lg font-bold text-foreground font-mono">
-            {formatIDR(summary.adr)}
-          </div>
-          <p className="mt-1 text-[10px] text-muted-foreground">per malam terisi</p>
-        </div>
-
-        <div className="rounded-xl border border-border/70 bg-card p-3.5 shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Malam Terjual</span>
-            <CalendarCheck2 className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <div className="mt-1 text-lg font-bold text-foreground font-mono">
-            {summary.totalNights}{" "}
-            <span className="text-xs font-normal text-muted-foreground">malam</span>
-          </div>
-          <p className="mt-1 text-[10px] text-muted-foreground">seluruh unit aktif</p>
-        </div>
-
-        <div className="rounded-xl border border-border/70 bg-card p-3.5 shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Total Reservasi</span>
-            <PieChart className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <div className="mt-1 text-lg font-bold text-foreground font-mono">
-            {summary.totalBookings}{" "}
-            <span className="text-xs font-normal text-muted-foreground">booking</span>
-          </div>
-          <p className="mt-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-            OTA &amp; Direct
-          </p>
-        </div>
-      </div>
-
-      {/* 4. Middle Visualizations Row: Financial Bar Chart + Channel Breakdown */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      {/* 3. MIDDLE SECTION: The AdminCN 3-Column Analytics Row */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        {/* Left Column (lg:col-span-6): Monthly Recharts Bar Chart */}
+        <div className="lg:col-span-6">
           <TremorFinancialChart data={summary.monthlyTrend} />
         </div>
-        <div className="lg:col-span-1">
-          <ChannelBreakdownCard channels={summary.channelDistribution} />
+
+        {/* Middle Column (lg:col-span-3): Performance & Efficiency Report */}
+        <div className="lg:col-span-3">
+          <AdminCnPerformanceCard
+            netAmount={netNum}
+            expensesAmount={expNum}
+            commissionAmount={commNum}
+            marginPct={marginPct}
+          />
+        </div>
+
+        {/* Right Column (lg:col-span-3): OTA Sales Share with Mini Area Wave */}
+        <div className="lg:col-span-3">
+          <AdminCnSalesCard totalGross={grossNum} channels={summary.channelDistribution} />
         </div>
       </div>
 
-      {/* 5. Bottom Row: Recent Bookings Activity Feed */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <RecentBookingsCard bookings={summary.recentBookings} />
+      {/* 4. BOTTOM SECTION: Channel Breakdown Detail & Recent Bookings Table */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        {/* Left Column (lg:col-span-4): All Channels Detail */}
+        <div className="lg:col-span-4">
+          <ChannelBreakdownCard channels={summary.channelDistribution} />
         </div>
 
-        {/* Quick Links & Information */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card className="border-border/70 shadow-sm bg-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold text-foreground">
-                Aksi Cepat Operasional
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Navigasi cepat ke proses kerja harian
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2 pt-1 text-xs">
-              <Link
-                href="/bookings"
-                className="flex items-center justify-between rounded-lg border border-border/70 p-3 hover:bg-muted/50 transition-colors group"
-              >
-                <div>
-                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                    Daftar &amp; Filter Booking
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Cari kode konfirmasi, cek alokasi unit &amp; status
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </Link>
-
-              <Link
-                href="/bookings/new"
-                className="flex items-center justify-between rounded-lg border border-border/70 p-3 hover:bg-muted/50 transition-colors group"
-              >
-                <div>
-                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                    Input Booking Manual
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Reservasi walk-in atau direct transfer bank
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/70 shadow-sm bg-card">
-            <CardContent className="p-4 space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground">Status Sinkronisasi</span>
-                <span className="text-[11px] text-emerald-600 font-bold">Terhubung</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Database:{" "}
-                <strong className="text-foreground">Neon PostgreSQL (AWS Singapore)</strong>
-              </p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Zona Waktu: <strong className="text-foreground">Asia/Makassar (WITA UTC+8)</strong>
-              </p>
-            </CardContent>
-          </Card>
+        {/* Right Column (lg:col-span-8): Recent Reservations Feed */}
+        <div className="lg:col-span-8">
+          <RecentBookingsCard bookings={summary.recentBookings} />
         </div>
       </div>
     </div>

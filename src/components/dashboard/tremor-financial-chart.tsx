@@ -10,7 +10,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatIDR } from "@/lib/format-id";
 import type { MonthlyChartPoint } from "@/server/queries/dashboard";
 
@@ -26,25 +25,25 @@ function formatJuta(val: number): string {
 
 export function TremorFinancialChart({ data }: FinancialChartProps) {
   return (
-    <Card className="border-border/70 shadow-sm bg-card">
-      <CardHeader className="pb-4">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/90 h-full flex flex-col justify-between">
+      <div className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <CardTitle className="text-base font-bold text-foreground">
-              Performa Finansial Bulanan
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Perbandingan Nilai Booking (Gross), Pendapatan Bersih, Komisi OTA, dan Pengeluaran
-            </CardDescription>
+            <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
+              Tren Transaksi &amp; Pendapatan Bulanan
+            </h3>
+            <p className="text-[11px] text-slate-400 dark:text-zinc-500">
+              Perbandingan Gross, Pendapatan Bersih, Komisi OTA, dan Beban
+            </p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-0.5 text-[11px] font-semibold bg-muted/40">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
               Mata Uang: IDR (Rp)
             </span>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="pt-2">
+      </div>
+      <div className="pt-2">
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -131,7 +130,7 @@ export function TremorFinancialChart({ data }: FinancialChartProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

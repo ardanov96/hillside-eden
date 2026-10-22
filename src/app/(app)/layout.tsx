@@ -13,6 +13,7 @@
  * kebenaran ganda.
  */
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { auth } from "@/auth";
 import { AppShell } from "@/components/layout/app-shell";
@@ -22,6 +23,7 @@ import { getPropertyOptions } from "@/server/queries/listings";
 export const instant = false;
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  await connection();
   const session = await auth();
   const organizationId = session?.user?.organizationId;
   if (!organizationId) {
