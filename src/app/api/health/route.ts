@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Health check endpoint.
  * - GET /api/health         -> basic liveness, selalu 200
  * - GET /api/health?deep=1  -> cek koneksi database (Prisma)
@@ -32,6 +32,17 @@ export async function GET(request: Request) {
     });
   }
 
+  const rawUrl = process.env.DATABASE_URL;
+  let sanitizedUrl = "none";
+  if (rawUrl) {
+    try {
+      const u = new URL(rawUrl.trim());
+      sanitizedUrl = `${u.protocol}//${u.username}:***@${u.host}${u.pathname}${u.search}`;
+    } catch {
+      sanitizedUrl = `MALFORMED (length=${rawUrl.length}, prefix=${rawUrl.slice(0, 20)})`;
+    }
+  }
+
   // Deep check: verifikasi database.
   if (!process.env.DATABASE_URL) {
     return NextResponse.json(
@@ -52,6 +63,7 @@ export async function GET(request: Request) {
       status: "live",
       db: "up",
       dbResult: result[0]?.ok === 1 ? "ok" : "unexpected",
+      dbUrl: sanitizedUrl,
       startedAt,
       env: process.env.NODE_ENV ?? "development",
     });
@@ -61,6 +73,7 @@ export async function GET(request: Request) {
         ok: false,
         status: "degraded",
         db: "down",
+        dbUrl: sanitizedUrl,
         error: error instanceof Error ? error.message : String(error),
         startedAt,
       },

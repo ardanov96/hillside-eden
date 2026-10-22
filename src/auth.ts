@@ -36,29 +36,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
         const { email, password } = parsed.data;
 
-        const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase() },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            passwordHash: true,
-            role: true,
-            organizationId: true,
-          },
-        });
-        if (!user) return null;
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              passwordHash: true,
+              role: true,
+              organizationId: true,
+            },
+          });
+          if (!user) {
+            console.warn(`[auth] User not found: ${email}`);
+            return null;
+          }
 
-        const ok = await verifyPassword(user.passwordHash, password);
-        if (!ok) return null;
+          const ok = await verifyPassword(user.passwordHash, password);
+          if (!ok) {
+            console.warn(`[auth] Password verification failed for: ${email}`);
+            return null;
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          organizationId: user.organizationId,
-        };
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            organizationId: user.organizationId,
+          };
+        } catch (err) {
+          console.error(`[auth] Error during authorize for ${email}:`, err);
+          return null;
+        }
       },
     }),
   ],
