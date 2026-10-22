@@ -1,12 +1,8 @@
-/**
- * Pagination link halaman Bookings (S2-07.2).
- *
- * Mempertahankan query string saat berpindah halaman; reset ke halaman
- * 1 saat pengubahan sort/filter (handler di komponen pemanggil).
- */
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { type RawSearchParams, toQueryString } from "@/lib/search-params";
+import { buttonVariants } from "@/components/ui/button";
 
 export interface BookingPaginationProps {
   page: number;
@@ -42,18 +38,23 @@ export function BookingPagination({
 
   return (
     <nav
-      className="flex flex-wrap items-center justify-between gap-3 text-sm"
+      className="flex flex-wrap items-center justify-between gap-3 text-sm py-2"
       aria-label="Pagination booking"
     >
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-        Halaman {page} dari {pageCount} · {total} baris
+      <span className="text-xs text-muted-foreground">
+        Halaman <strong className="text-foreground">{page}</strong> dari {pageCount} · {total} baris
       </span>
-      <ul className="flex flex-wrap items-center gap-1">
+      <ul className="flex flex-wrap items-center gap-1.5">
         <li>
           <PaginationLink
             href={buildHref(basePath, searchParams, prev)}
             disabled={page <= 1}
-            label="Sebelumnya"
+            label={
+              <span className="flex items-center gap-1">
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Sebelumnya</span>
+              </span>
+            }
           />
         </li>
         {sortedPages.map((p, idx) => {
@@ -62,21 +63,25 @@ export function BookingPagination({
           return (
             <li key={p} className="flex items-center">
               {showGap ? (
-                <span aria-hidden="true" className="px-1 text-zinc-400">
+                <span aria-hidden="true" className="px-1 text-muted-foreground">
                   &hellip;
                 </span>
               ) : null}
               {p === page ? (
                 <span
                   aria-current="page"
-                  className="inline-flex h-9 min-w-9 items-center justify-center rounded-md bg-emerald-600 px-3 text-sm font-medium text-white"
+                  className={
+                    buttonVariants({ size: "sm", variant: "default" }) + " min-w-8 h-8 px-2.5"
+                  }
                 >
                   {p}
                 </span>
               ) : (
                 <Link
                   href={buildHref(basePath, searchParams, p)}
-                  className="inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  className={
+                    buttonVariants({ size: "sm", variant: "outline" }) + " min-w-8 h-8 px-2.5"
+                  }
                 >
                   {p}
                 </Link>
@@ -88,7 +93,12 @@ export function BookingPagination({
           <PaginationLink
             href={buildHref(basePath, searchParams, next)}
             disabled={page >= pageCount}
-            label="Berikutnya"
+            label={
+              <span className="flex items-center gap-1">
+                <span className="hidden sm:inline">Berikutnya</span>
+                <ChevronRight className="h-4 w-4" />
+              </span>
+            }
           />
         </li>
       </ul>
@@ -103,13 +113,13 @@ function PaginationLink({
 }: {
   href: string;
   disabled: boolean;
-  label: string;
+  label: React.ReactNode;
 }) {
   if (disabled) {
     return (
       <span
         aria-disabled
-        className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-200 px-3 text-sm text-zinc-400 dark:border-zinc-800"
+        className="inline-flex h-8 items-center justify-center rounded-md border border-border/50 px-2.5 text-xs text-muted-foreground/60 cursor-not-allowed"
       >
         {label}
       </span>
@@ -118,7 +128,7 @@ function PaginationLink({
   return (
     <Link
       href={href}
-      className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+      className={buttonVariants({ size: "sm", variant: "outline" }) + " h-8 px-2.5 text-xs"}
     >
       {label}
     </Link>

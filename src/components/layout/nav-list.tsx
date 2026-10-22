@@ -1,45 +1,74 @@
 "use client";
 /**
- * Daftar menu navigasi (S4-01).
+ * Daftar menu navigasi (S4-01 + shadcn redesign).
  *
- * Client component untuk dua hal: `usePathname()` agar item aktif ikut
- * menyorot `/bookings/new`, dan `useSearchParams()` agar setiap link
- * membawa filter global aktif (user tidak kehilangan pilihannya saat
- * berpindah halaman).
- *
- * Data menu ada di `nav-items.ts` (modul biasa) sehingga mudah diuji dan
- * tidak menarik dependensi server ke client bundle.
+ * Client component: membaca usePathname() dan useSearchParams()
+ * agar pilihan filter global tetap terbawa saat navigasi antar menu.
  */
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Calendar,
+  Receipt,
+  Wallet,
+  FileBarChart,
+  AlertCircle,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
 
 import { globalFilterQueryString, parseGlobalFilterSelection } from "@/lib/filters/global-filter";
-import { NAV_ITEMS } from "./nav-items";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { NAV_ITEMS, type NavItem } from "./nav-items";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  "/": LayoutDashboard,
+  "/bookings": BookOpen,
+  "/calendar": Calendar,
+  "/expenses": Receipt,
+  "/cash": Wallet,
+  "/reports": FileBarChart,
+  "/attention": AlertCircle,
+  "/settings": Settings,
+};
 
 export function NavList() {
   const currentPath = usePathname();
   const searchParams = useSearchParams();
 
   const selection = parseGlobalFilterSelection(Object.fromEntries(searchParams.entries()));
-  // Range sengaja tidak dihitung di client (butuh "hari ini" versi server).
   const globalQs = globalFilterQueryString(selection);
 
   return (
-    <nav aria-label="Navigasi utama" className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
+    <nav aria-label="Navigasi utama" className="flex flex-col gap-1.5 py-2">
+      <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+        Menu Utama
+      </div>
+      {NAV_ITEMS.map((item: NavItem) => {
+        const Icon = ICON_MAP[item.href] ?? BookOpen;
+
         if (item.status === "planned") {
           return (
-            <span
+            <div
               key={item.href}
               aria-disabled="true"
               title={`Segera hadir${item.ticket ? ` (${item.ticket})` : ""}`}
-              className="flex items-center justify-between gap-2 rounded-md border border-transparent px-3 py-2 text-sm font-medium text-zinc-400 dark:text-zinc-600"
+              className="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/50 transition-colors"
             >
-              <span>{item.label}</span>
-              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+              <div className="flex items-center gap-3">
+                <Icon className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                <span>{item.label}</span>
+              </div>
+              <Badge
+                variant="outline"
+                className="h-4 border-dashed px-1.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60"
+              >
                 Segera
-              </span>
-            </span>
+              </Badge>
+            </div>
           );
         }
 
@@ -52,13 +81,25 @@ export function NavList() {
             key={item.href}
             href={`${item.href}${globalQs}`}
             aria-current={isActive ? "page" : undefined}
-            className={
+            className={cn(
+              "group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
               isActive
-                ? "rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 transition dark:border-emerald-700/60 dark:bg-emerald-900/40 dark:text-emerald-200"
-                : "rounded-md border border-transparent px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-200 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
-            }
+                ? "bg-primary/10 text-primary font-semibold shadow-2xs dark:bg-primary/20"
+                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+            )}
           >
-            {item.label}
+            <div className="flex items-center gap-3">
+              <Icon
+                className={cn(
+                  "h-4 w-4 shrink-0 transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                )}
+              />
+              <span>{item.label}</span>
+            </div>
+            {isActive ? (
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+            ) : null}
           </Link>
         );
       })}

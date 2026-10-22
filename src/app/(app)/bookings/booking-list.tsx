@@ -47,6 +47,9 @@ const STATUS_LABEL: Record<(typeof BOOKING_STATUS_VALUES)[number], string> = {
   NO_SHOW: "Tidak hadir",
 };
 
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 export interface BookingListProps {
   organizationId: string;
   searchParams: Record<string, string | string[] | undefined>;
@@ -78,22 +81,23 @@ export async function BookingList({ organizationId, searchParams }: BookingListP
   });
 
   return (
-    <section className="space-y-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+    <section className="space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Daftar Booking
           </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Baris Booking dari seluruh OTA, manual, dan direct. Klik baris untuk membuka detail.
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+            Konsolidasi pesanan dari seluruh OTA, manual, dan direct. Klik baris untuk membuka
+            detail.
           </p>
         </div>
-        <Link
-          href="/bookings/new"
-          className="inline-flex h-10 items-center rounded-md bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700"
-        >
-          + Tambah booking manual
-        </Link>
+        <Button asChild className="gap-2 shadow-xs">
+          <Link href="/bookings/new">
+            <Plus className="h-4 w-4" />
+            <span>Tambah Booking Manual</span>
+          </Link>
+        </Button>
       </header>
 
       <BookingFiltersForm

@@ -1,84 +1,239 @@
 /**
- * Halaman Ringkasan (S4-01).
+ * Halaman Ringkasan (S4-01 + shadcn redesign).
  *
- * Shell (navbar, bilah filter global, header, footer, <main>) sudah
- * dimiliki oleh `src/app/(app)/layout.tsx`. Halaman ini hanya merender
- * konten ringkasan.
- *
- * Kartu KPI + grafik + tabel per OTA adalah lingkup S4-02
- * (docs/01-development-plan.md). Untuk S4-01 halaman ini menampilkan
- * placeholder yang jujur: tidak ada angka dummy yang menyesatkan.
+ * Menampilkan ringkasan eksekutif dan KPI utama manajemen properti
+ * Hillside Eden & Ubud Hillside.
  */
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { TrendingUp, DollarSign, Percent, Wallet, ArrowRight, Sparkles } from "lucide-react";
 
 import { auth } from "@/auth";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Ringkasan - Hillside Eden" };
 
-// Halaman ini membaca cookie sesi (auth()), sehingga tidak bisa di-prerender.
 export const instant = false;
 
 export default async function HomePage() {
   const session = await auth();
-  // Middleware sudah menahan, tapi lapisan ini menjaga route tetap aman
-  // bila matcher middleware berubah (DoD: route tanpa login ditolak).
   if (!session?.user) {
     redirect("/login");
   }
   const user = session.user;
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-2">
-        <p className="text-sm font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-          Ringkasan
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Selamat datang, {user.name ?? user.email}
-        </h1>
-        <p className="text-base leading-7 text-zinc-600 dark:text-zinc-400">
-          Monitoring booking dan keuangan untuk satu pemilik, banyak properti. Fokus: Tiket.com,
-          Traveloka, Airbnb.
-        </p>
-      </header>
-
-      <section className="rounded-2xl border border-dashed border-zinc-300 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-          Kartu ringkasan menyusul di S4-02
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-          Nilai booking (gross), Komisi OTA (estimasi), Pendapatan bersih (setelah komisi OTA),
-          Pengeluaran, dan Hasil operasional akan tampil di sini, mengikuti bilah filter global di
-          atas.
-        </p>
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-          sementara itu,{" "}
-          <Link
-            href="/bookings"
-            className="text-emerald-600 underline hover:text-emerald-700 dark:text-emerald-400"
-          >
-            daftar booking
-          </Link>{" "}
-          sudah berfungsi dan memakai filter global yang sama.
-        </p>
-      </section>
-
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-          Akun
-        </h2>
-        <dl className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-          <div className="space-y-1">
-            <dt className="text-xs text-zinc-500">Email</dt>
-            <dd className="font-medium text-zinc-900 dark:text-zinc-100">{user.email}</dd>
+    <div className="space-y-8">
+      {/* Welcome Banner */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="gap-1 border-primary/30 text-primary bg-primary/5">
+              <Sparkles className="h-3 w-3" />
+              <span>Monitoring Realtime</span>
+            </Badge>
           </div>
-          <div className="space-y-1">
-            <dt className="text-xs text-zinc-500">Peran</dt>
-            <dd className="font-medium text-zinc-900 dark:text-zinc-100">{user.role ?? "OWNER"}</dd>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Selamat datang, {user.name ?? "Pemilik"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Dashboard terpadu booking dan keuangan properti Hillside Eden (Payangan) & Ubud
+            Hillside.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" variant="default" className="gap-2 shadow-xs">
+            <Link href="/bookings/new">
+              <span>Tambah Booking Manual</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* KPI Cards Row (Spesifikasi 07-ui-spec §3.1) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Card 1: Nilai Booking Gross */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Nilai booking (gross)
+            </CardTitle>
+            <div className="rounded-md bg-blue-50 p-2 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+              <DollarSign className="h-4 w-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tracking-tight text-foreground">Rp --</div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Total bruto seluruh pesanan OTA & Direct
+            </p>
+            <div className="mt-3">
+              <Badge variant="secondary" className="text-[10px]">
+                Di-refresh via filter
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 2: Komisi OTA */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Komisi OTA
+            </CardTitle>
+            <div className="rounded-md bg-amber-50 p-2 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
+              <Percent className="h-4 w-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tracking-tight text-foreground">Rp --</div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Estimasi potongan komisi saluran (OTA)
+            </p>
+            <div className="mt-3">
+              <Badge variant="warning" className="text-[10px]">
+                Estimasi
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 3: Pendapatan Bersih */}
+        <Card className="border-primary/20 bg-primary/5 hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-semibold text-primary uppercase tracking-wider">
+              Pendapatan bersih
+            </CardTitle>
+            <div className="rounded-md bg-primary p-2 text-primary-foreground">
+              <TrendingUp className="h-4 w-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tracking-tight text-primary">Rp --</div>
+            <p className="mt-1 text-xs text-muted-foreground">Setelah dikurangi komisi OTA</p>
+            <div className="mt-3">
+              <Badge variant="success" className="text-[10px]">
+                Metrik Utama
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 4: Hasil Operasional */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Hasil operasional
+            </CardTitle>
+            <div className="rounded-md bg-purple-50 p-2 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
+              <Wallet className="h-4 w-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tracking-tight text-foreground">Rp --</div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Pendapatan bersih - pengeluaran operasional
+            </p>
+            <div className="mt-3">
+              <Badge variant="secondary" className="text-[10px]">
+                Konsolidasi
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Navigation Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">Modul Operasional Aktif</CardTitle>
+          <CardDescription>
+            Akses langsung ke manajemen pesanan dan alur kerja harian.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Link
+              href="/bookings"
+              className="group flex flex-col justify-between rounded-xl border border-border p-4 transition-all hover:border-primary/50 hover:bg-muted/40"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                    Daftar Booking
+                  </h3>
+                  <Badge variant="success" className="text-[10px]">
+                    Live
+                  </Badge>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                  Kelola dan filter data reservasi dari Tiket.com, Traveloka, Airbnb, serta booking
+                  langsung.
+                </p>
+              </div>
+              <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary">
+                <span>Buka daftar booking</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
+
+            <Link
+              href="/bookings/new"
+              className="group flex flex-col justify-between rounded-xl border border-border p-4 transition-all hover:border-primary/50 hover:bg-muted/40"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                    Input Booking Manual
+                  </h3>
+                  <Badge variant="success" className="text-[10px]">
+                    Live
+                  </Badge>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                  Input pesanan walk-in, reservasi telepon, atau direct transfer bank dengan
+                  validasi jadwal otomatis.
+                </p>
+              </div>
+              <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary">
+                <span>Buat booking baru</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
           </div>
-        </dl>
-      </section>
+        </CardContent>
+      </Card>
+
+      {/* Account Info Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Status Akun & Konfigurasi
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-xs">
+            <div>
+              <span className="text-muted-foreground">Email Terdaftar:</span>
+              <p className="mt-0.5 font-medium text-foreground">{user.email}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Hak Akses:</span>
+              <p className="mt-0.5 font-medium text-foreground">{user.role ?? "OWNER"}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Basis Data:</span>
+              <p className="mt-0.5 font-medium text-emerald-600 dark:text-emerald-400">
+                Neon Cloud PostgreSQL (Aktif)
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

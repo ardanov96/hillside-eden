@@ -29,8 +29,8 @@ export interface BookingTableProps {
 
 export function BookingTable({ rows, sort, basePath, searchParams }: BookingTableProps) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-xs">
+      <table className="min-w-full divide-y divide-border">
         <thead>
           <tr>
             <th scope="col" className={TABLE_HEAD_CLASS}>

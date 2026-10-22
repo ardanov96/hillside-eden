@@ -1,20 +1,21 @@
 /**
- * Halaman "Tambah Booking" manual (S2-04.3) - Server Component.
+ * Halaman "Tambah Booking" manual (S2-04.3 + shadcn redesign) - Server Component.
  *
- * - Memastikan user sudah login (middleware sudah, tapi butuh organizationId).
+ * - Memastikan user sudah login (memuat organizationId).
  * - Mengambil daftar Listing untuk dropdown form.
  */
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, PlusCircle } from "lucide-react";
 
 import { auth } from "@/auth";
 import { getListingOptions } from "@/server/queries/listings";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { BookingForm } from "./booking-form";
 
 export const metadata = { title: "Tambah Booking - Hillside Eden" };
 
-// Halaman ini membaca cookie sesi (auth()) dan query DB, sehingga tidak bisa
-// di-prerender saat build. `instant = false` memberi izin route dinamis.
 export const instant = false;
 
 export default async function NewBookingPage() {
@@ -26,32 +27,42 @@ export default async function NewBookingPage() {
 
   const listings = await getListingOptions(organizationId);
 
-  // Shell `(app)/layout.tsx` sudah menyediakan <main>; halaman ini hanya
-  // merender konten (S4-01).
   return (
-    <div className="mx-auto w-full max-w-3xl">
-      <header className="mb-8 space-y-2">
-        <p className="text-sm font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-          Hillside Eden
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Tambah booking manual
-        </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Catat booking yang diterima langsung (telepon, walk-in, atau transfer bank) tanpa OTA.
-        </p>
-      </header>
-
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <BookingForm listings={listings} />
-      </section>
-
-      <footer className="mt-6 flex items-center justify-between text-xs text-zinc-500">
-        <span>Zona waktu: Asia/Makassar (WITA)</span>
-        <Link href="/bookings" className="text-emerald-600 hover:underline dark:text-emerald-400">
-          Kembali ke daftar booking
+    <div className="mx-auto w-full max-w-3xl space-y-6">
+      {/* Back button */}
+      <div>
+        <Link
+          href="/bookings"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span>Kembali ke Daftar Booking</span>
         </Link>
-      </footer>
+      </div>
+
+      <Card className="shadow-xs">
+        <CardHeader className="pb-6 border-b border-border/60">
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className="gap-1 border-primary/30 text-primary bg-primary/5 text-[11px]"
+            >
+              <PlusCircle className="h-3 w-3" />
+              <span>Input Manual</span>
+            </Badge>
+          </div>
+          <CardTitle className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-1">
+            Tambah booking manual
+          </CardTitle>
+          <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+            Catat booking yang diterima langsung (telepon, walk-in, atau transfer bank) tanpa OTA.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="pt-6">
+          <BookingForm listings={listings} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

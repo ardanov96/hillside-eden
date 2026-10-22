@@ -50,6 +50,9 @@ function globalQ(sp: PreservedGlobalParams | undefined): string {
   });
 }
 
+import { Filter, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 export function BookingFiltersForm({
   channelOptions,
   statusOptions,
@@ -62,13 +65,10 @@ export function BookingFiltersForm({
     <form
       method="get"
       action="/bookings"
-      className="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:grid-cols-2 lg:grid-cols-4"
+      className="grid gap-4 rounded-xl border border-border bg-card p-4 shadow-xs sm:grid-cols-2 lg:grid-cols-4"
     >
-      <div className="space-y-1 lg:col-span-2">
-        <label
-          htmlFor="search"
-          className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
-        >
+      <div className="space-y-1.5 lg:col-span-2">
+        <label htmlFor="search" className="block text-xs font-semibold text-foreground">
           Cari kode konfirmasi
         </label>
         <input
@@ -76,18 +76,15 @@ export function BookingFiltersForm({
           name="search"
           type="search"
           defaultValue={values.search ?? ""}
-          placeholder="HMABC123"
+          placeholder="Misal: HMABC123..."
           maxLength={64}
           className={INPUT_CLASS}
         />
       </div>
 
-      <div className="space-y-1">
-        <label
-          htmlFor="channel"
-          className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          OTA
+      <div className="space-y-1.5">
+        <label htmlFor="channel" className="block text-xs font-semibold text-foreground">
+          Saluran (OTA)
         </label>
         <select
           id="channel"
@@ -95,7 +92,7 @@ export function BookingFiltersForm({
           defaultValue={values.channel ?? ""}
           className={INPUT_CLASS}
         >
-          <option value="">Semua</option>
+          <option value="">Semua Saluran</option>
           {channelOptions.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -104,12 +101,9 @@ export function BookingFiltersForm({
         </select>
       </div>
 
-      <div className="space-y-1">
-        <label
-          htmlFor="status"
-          className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Status
+      <div className="space-y-1.5">
+        <label htmlFor="status" className="block text-xs font-semibold text-foreground">
+          Status Booking
         </label>
         <select
           id="status"
@@ -117,7 +111,7 @@ export function BookingFiltersForm({
           defaultValue={values.status ?? ""}
           className={INPUT_CLASS}
         >
-          <option value="">Semua</option>
+          <option value="">Semua Status</option>
           {statusOptions.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -137,22 +131,20 @@ export function BookingFiltersForm({
         <input type="hidden" name="to" value={preserved.to} />
       ) : null}
 
-      <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
-        <button
-          type="submit"
-          className="inline-flex h-10 items-center justify-center rounded-md bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700"
-        >
-          Terapkan
-        </button>
-        <a
-          href={resetHref}
-          className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-        >
-          Reset
-        </a>
+      <div className="flex items-center gap-2 pt-2 sm:col-span-2 lg:col-span-4 border-t border-border/60">
+        <Button type="submit" size="sm" className="gap-1.5 shadow-xs">
+          <Filter className="h-3.5 w-3.5" />
+          <span>Terapkan Filter</span>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <a href={resetHref} className="gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span>Reset</span>
+          </a>
+        </Button>
         {typeof resultCount === "number" ? (
-          <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
-            {resultCount} hasil
+          <span className="ml-auto text-xs font-medium text-muted-foreground">
+            Ditemukan <strong className="text-foreground">{resultCount}</strong> hasil
           </span>
         ) : null}
       </div>

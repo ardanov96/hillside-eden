@@ -1,18 +1,13 @@
 "use client";
 /**
- * Bilah filter global (S4-01) - Client Component.
+ * Bilah filter global (S4-01 + shadcn redesign) - Client Component.
  *
- * Mengapa client? Komponen ini harus mempertahankan parameter milik halaman
- * (mis. `channel`, `status`, `page`, `sort` di /bookings) saat user mengubah
- * filter global, lalu menavigasi tanpa full reload. Satu-satunya sumber
- * kebenaran tetap query string URL (lihat docs/DECISIONS.md).
- *
- * Nilai yang tampil dibaca dari `useSearchParams()`, bukan dari prop, supaya
- * komponen tetap sinkron setelah navigasi sisi-klien dan tidak perlu
- *diteruskan dari layout (Next.js 15 tidak memberi `searchParams` ke layout).
+ * Mengontrol filter properti dan periode (bulan ini, bulan lalu, dll.)
+ * yang berlaku melintasi seluruh halaman dashboard.
  */
 import type { FormEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Building2, CalendarDays, Filter } from "lucide-react";
 
 import {
   PERIOD_LABEL,
@@ -23,10 +18,7 @@ import {
   type GlobalFilterKey,
   type PeriodPreset,
 } from "@/lib/filters/global-filter";
-
-const CONTROL =
-  "h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100";
-const LABEL = "text-xs font-medium text-zinc-700 dark:text-zinc-300";
+import { Button } from "@/components/ui/button";
 
 export interface PropertyOption {
   id: string;
@@ -50,7 +42,6 @@ export function GlobalFilterBar({ properties }: GlobalFilterBarProps) {
     const fd = new FormData(event.currentTarget);
     const nextPeriod = (fd.get("period") as PeriodPreset | null) ?? "this_month";
 
-    // String kosong berarti hapus kunci (dropdown "Semua properti").
     const updates: Partial<Record<GlobalFilterKey, string>> = {
       propertyId: (fd.get("propertyId") as string | null) ?? "",
       period: nextPeriod,
@@ -67,76 +58,89 @@ export function GlobalFilterBar({ properties }: GlobalFilterBarProps) {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
+      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 shadow-xs"
       aria-label="Filter global: properti dan periode"
     >
-      <div className="flex min-w-[180px] flex-1 flex-col gap-1">
-        <label htmlFor="global-property" className={LABEL}>
-          Properti
-        </label>
-        <select
-          id="global-property"
-          name="propertyId"
-          defaultValue={propertyId ?? ""}
-          className={CONTROL}
-        >
-          <option value="">Semua properti</option>
-          {properties.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Properti Filter */}
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="global-property"
+            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground whitespace-nowrap"
+          >
+            <Building2 className="h-3.5 w-3.5 text-primary" />
+            <span>Properti:</span>
+          </label>
+          <div className="relative">
+            <select
+              id="global-property"
+              name="propertyId"
+              defaultValue={propertyId ?? ""}
+              className="h-9 cursor-pointer rounded-lg border border-input bg-background px-3 pr-8 text-xs font-medium text-foreground shadow-2xs transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Semua Properti</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      <div className="flex min-w-[150px] flex-col gap-1">
-        <label htmlFor="global-period" className={LABEL}>
-          Periode
-        </label>
-        <select id="global-period" name="period" defaultValue={period} className={CONTROL}>
-          {PERIOD_PRESETS.map((p) => (
-            <option key={p} value={p}>
-              {PERIOD_LABEL[p]}
-            </option>
-          ))}
-        </select>
-      </div>
+        {/* Periode Filter */}
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="global-period"
+            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground whitespace-nowrap"
+          >
+            <CalendarDays className="h-3.5 w-3.5 text-primary" />
+            <span>Periode:</span>
+          </label>
+          <div className="relative">
+            <select
+              id="global-period"
+              name="period"
+              defaultValue={period}
+              className="h-9 cursor-pointer rounded-lg border border-input bg-background px-3 pr-8 text-xs font-medium text-foreground shadow-2xs transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {PERIOD_PRESETS.map((p) => (
+                <option key={p} value={p}>
+                  {PERIOD_LABEL[p]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      {period === "custom" ? (
-        <>
-          <div className="flex min-w-[140px] flex-col gap-1">
-            <label htmlFor="global-from" className={LABEL}>
-              Dari
-            </label>
+        {/* Custom Date Range if selected */}
+        {period === "custom" ? (
+          <div className="flex items-center gap-2">
             <input
               id="global-from"
               name="from"
               type="date"
               defaultValue={from ?? ""}
-              className={CONTROL}
+              aria-label="Tanggal mulai"
+              className="h-9 rounded-lg border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-ring"
             />
-          </div>
-          <div className="flex min-w-[140px] flex-col gap-1">
-            <label htmlFor="global-to" className={LABEL}>
-              Sampai
-            </label>
+            <span className="text-xs text-muted-foreground">s/d</span>
             <input
               id="global-to"
               name="to"
               type="date"
               defaultValue={to ?? ""}
-              className={CONTROL}
+              aria-label="Tanggal akhir"
+              className="h-9 rounded-lg border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-        </>
-      ) : null}
+        ) : null}
+      </div>
 
-      <button
-        type="submit"
-        className="ml-auto inline-flex h-10 items-center justify-center rounded-md bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700"
-      >
-        Terapkan
-      </button>
+      <Button type="submit" size="sm" className="gap-1.5 font-medium shadow-xs">
+        <Filter className="h-3.5 w-3.5" />
+        <span>Terapkan</span>
+      </Button>
     </form>
   );
 }
