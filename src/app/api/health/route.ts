@@ -6,6 +6,38 @@
  */
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import dns from "node:dns/promises";
+import net from "node:net";
+
+async function testTcp(
+  host: string,
+  port = 5432,
+  timeoutMs = 4000,
+): Promise<{ ok: boolean; error?: string; ip?: string; timeMs?: number }> {
+  const start = Date.now();
+  try {
+    const lookup = await dns.lookup(host);
+    return await new Promise((resolve) => {
+      const socket = new net.Socket();
+      socket.setTimeout(timeoutMs);
+      socket.once("connect", () => {
+        const timeMs = Date.now() - start;
+        socket.destroy();
+        resolve({ ok: true, ip: lookup.address, timeMs });
+      });
+      socket.once("timeout", () => {
+        socket.destroy();
+        resolve({ ok: false, error: "ETIMEDOUT", ip: lookup.address, timeMs: Date.now() - start });
+      });
+      socket.once("error", (err) => {
+        resolve({ ok: false, error: err.message, ip: lookup.address, timeMs: Date.now() - start });
+      });
+      socket.connect(port, lookup.address);
+    });
+  } catch (err) {
+    return { ok: false, error: `DNS_${err instanceof Error ? err.message : String(err)}` };
+  }
+}
 
 // Hindari membuat banyak PrismaClient saat Next.js HMR (dev mode).
 const globalForPrisma = globalThis as unknown as {
@@ -83,12 +115,15 @@ export async function GET(request: Request) {
       }
     }
 
+    const tcpDiag = await testTcp("ep-raspy-bar-a17fzwpf-pooler.ap-southeast-1.aws.neon.tech");
+
     return NextResponse.json(
       {
         ok: false,
         status: "degraded",
         db: "down",
         dbUrl: sanitizedUrl,
+        tcpDiag,
         directStatus,
         directError,
         error: error instanceof Error ? error.message : String(error),
