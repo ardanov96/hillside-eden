@@ -20,7 +20,6 @@ import { getPropertyOptions } from "@/server/queries/listings";
 
 // Membaca cookie sesi lewat auth(): tidak bisa di-prerender saat build.
 export const instant = false;
-export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

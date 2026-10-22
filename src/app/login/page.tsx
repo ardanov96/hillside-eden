@@ -5,7 +5,6 @@ import { LoginForm } from "./login-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const instant = false;
-export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
   const session = await auth();
