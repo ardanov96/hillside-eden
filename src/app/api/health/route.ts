@@ -68,12 +68,29 @@ export async function GET(request: Request) {
       env: process.env.NODE_ENV ?? "development",
     });
   } catch (error) {
+    const directUrl = process.env.DIRECT_DATABASE_URL;
+    let directStatus = "untested";
+    let directError = null;
+    if (directUrl) {
+      try {
+        const directPrisma = new PrismaClient({ datasources: { db: { url: directUrl } } });
+        const res = await directPrisma.$queryRaw<Array<{ ok: number }>>`SELECT 1 AS ok`;
+        await directPrisma.$disconnect();
+        directStatus = res[0]?.ok === 1 ? "up" : "unexpected";
+      } catch (e) {
+        directStatus = "down";
+        directError = e instanceof Error ? e.message : String(e);
+      }
+    }
+
     return NextResponse.json(
       {
         ok: false,
         status: "degraded",
         db: "down",
         dbUrl: sanitizedUrl,
+        directStatus,
+        directError,
         error: error instanceof Error ? error.message : String(error),
         startedAt,
       },
