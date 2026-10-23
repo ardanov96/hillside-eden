@@ -42,11 +42,14 @@ export function AdminCnSalesCard({ totalGross, channels }: AdminCnSalesCardProps
         </div>
 
         {/* Big Value */}
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-xl font-bold tracking-tight text-slate-900 font-mono sm:text-2xl dark:text-white">
-            {formatIDR(totalGross)}
+        <div className="mt-2 flex items-baseline gap-1.5">
+          <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500 select-none">
+            Rp
           </span>
-          <span className="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          <span className="text-xl font-bold tracking-tight text-slate-900 tabular-nums sm:text-2xl dark:text-white">
+            {formatIDR(totalGross).slice(3)}
+          </span>
+          <span className="ml-1.5 inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
             <ArrowUpRight className="h-3.5 w-3.5 stroke-[2.5]" />
             +14.8%
           </span>
@@ -62,10 +65,10 @@ export function AdminCnSalesCard({ totalGross, channels }: AdminCnSalesCardProps
                   <span className="font-medium text-slate-600 dark:text-zinc-300">{c.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-semibold text-slate-900 dark:text-white">
+                  <span className="tabular-nums font-semibold text-slate-900 dark:text-white">
                     {formatIDR(c.gross)}
                   </span>
-                  <span className="text-[11px] font-medium text-slate-400 font-mono">
+                  <span className="text-[11px] font-semibold text-slate-400 tabular-nums">
                     {c.sharePct}%
                   </span>
                 </div>

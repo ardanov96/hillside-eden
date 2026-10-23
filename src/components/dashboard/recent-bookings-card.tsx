@@ -67,10 +67,10 @@ export function RecentBookingsCard({ bookings }: RecentBookingsCardProps) {
               </div>
 
               <div className="text-left sm:text-right">
-                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                   {formatIDR(item.netAmount)}
                 </div>
-                <div className="text-[10px] text-slate-400 dark:text-zinc-500">
+                <div className="text-[10px] text-slate-400 dark:text-zinc-500 tabular-nums">
                   Gross: {formatIDR(item.grossAmount)}
                 </div>
               </div>

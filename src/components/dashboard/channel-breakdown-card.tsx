@@ -30,7 +30,7 @@ export function ChannelBreakdownCard({ channels }: ChannelBreakdownProps) {
                   <ChannelChip channel={item.channel} />
                   <span className="text-slate-400 text-[11px]">({item.count} pesanan)</span>
                 </div>
-                <div className="flex items-center gap-2 font-mono">
+                <div className="flex items-center gap-2 tabular-nums">
                   <span className="font-semibold text-slate-900 dark:text-white">
                     {formatIDR(item.gross)}
                   </span>

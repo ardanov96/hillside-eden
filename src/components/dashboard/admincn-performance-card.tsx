@@ -37,54 +37,68 @@ export function AdminCnPerformanceCard({
           </span>
         </div>
 
-        {/* 2 Mini Stat Cards (Matching AdminCN middle card) */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        {/* 2 Stacked Stat Cards with full horizontal width for nominals */}
+        <div className="mt-3.5 space-y-2.5">
           {/* Box 1: Pendapatan Bersih */}
           <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 dark:border-zinc-800 dark:bg-zinc-800/40">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100/80 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                <TrendingUp className="h-3.5 w-3.5" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100/80 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight dark:text-zinc-400">
+                  Pendapatan Bersih
+                </span>
               </div>
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">
-                Net Profit
+              <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full dark:bg-emerald-950/60 dark:text-emerald-400">
+                +15.6% vs target
               </span>
             </div>
-            <div className="mt-2 text-sm font-bold text-slate-900 font-mono dark:text-white">
-              {formatIDR(netAmount)}
-            </div>
-            <div className="mt-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-              +15.6% vs target
+            <div className="mt-1.5 flex items-baseline gap-1 text-slate-900 dark:text-white">
+              <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500 select-none">
+                Rp
+              </span>
+              <span className="text-base font-bold tabular-nums tracking-tight">
+                {formatIDR(netAmount).slice(3)}
+              </span>
             </div>
           </div>
 
           {/* Box 2: Total Beban Operasional & Komisi */}
           <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 dark:border-zinc-800 dark:bg-zinc-800/40">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100/80 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                <Receipt className="h-3.5 w-3.5" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100/80 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                  <Receipt className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight dark:text-zinc-400">
+                  Total Beban
+                </span>
               </div>
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">
-                Total Beban
+              <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full dark:bg-amber-950/60 dark:text-amber-400">
+                -8.2% efisiensi
               </span>
             </div>
-            <div className="mt-2 text-sm font-bold text-slate-900 font-mono dark:text-white">
-              {formatIDR(totalDeductions)}
-            </div>
-            <div className="mt-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-              -8.2% efisiensi
+            <div className="mt-1.5 flex items-baseline gap-1 text-slate-900 dark:text-white">
+              <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500 select-none">
+                Rp
+              </span>
+              <span className="text-base font-bold tabular-nums tracking-tight">
+                {formatIDR(totalDeductions).slice(3)}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Performance Pill & Dark Action Button */}
-      <div className="mt-5 pt-3 border-t border-slate-100 dark:border-zinc-800">
+      {/* Bottom Performance Pill & Action Button */}
+      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
               Efisiensi Margin
             </span>
-            <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+            <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
               +{marginPct}%
             </span>
           </div>
