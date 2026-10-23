@@ -21,6 +21,7 @@ import {
 
 export * from "./allocation";
 export * from "./collision";
+export * from "./commission";
 
 export type KpiBookingStatus = "CONFIRMED" | "PENDING" | "CANCELLED" | "NO_SHOW";
 

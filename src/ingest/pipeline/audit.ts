@@ -38,8 +38,11 @@ export const AUDIT_ACTIONS = {
   importItemReprocessed: "import_item.reprocessed",
   importItemIgnored: "import_item.ignored",
   importItemFailed: "import_item.failed",
-  importItemDuplicate: "import_item.duplicate",
   payoutCreated: "payout.created",
+  payoutLinked: "payout.linked",
+  commissionRuleCreated: "commission_rule.created",
+  commissionRuleUpdated: "commission_rule.updated",
+  commissionRuleDeleted: "commission_rule.deleted",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

@@ -28,6 +28,7 @@ import type { RouterRegistry } from "./router";
 import { resolveListing } from "./listing-resolver";
 import { applyBookingEvent, type UpsertOutcome } from "./upsert";
 import { AUDIT_ACTIONS, writeAudit } from "./audit";
+import { linkPayouts } from "./payout";
 
 /** Ringkasan hasil ingest satu batch. */
 export interface PipelineResult {
@@ -38,6 +39,7 @@ export interface PipelineResult {
   duplicate: number;
   failed: number;
   needsReview: number;
+  payoutsLinked?: number;
   errors: Array<{ itemId: string; code: string; message: string }>;
 }
 
@@ -168,10 +170,22 @@ export async function runIngest(
     else if (outcome === "needsReview") stats.needsReview++;
   }
 
+  let payoutsLinked = 0;
+  if (parseResult.payouts && parseResult.payouts.length > 0) {
+    const payoutOutcome = await linkPayouts(prisma, {
+      organizationId: input.organizationId,
+      actorId: input.actorId,
+      importBatchId: batch.id,
+      payouts: parseResult.payouts,
+    });
+    payoutsLinked = payoutOutcome.linkedBookings;
+  }
+
   const result: PipelineResult = {
     batchId: batch.id,
     total: parseResult.events.length,
     ...stats,
+    payoutsLinked,
     errors,
   };
   await finalizeBatch(prisma, input, batch.id, result);

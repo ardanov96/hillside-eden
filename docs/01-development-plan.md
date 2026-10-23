@@ -104,13 +104,15 @@ Parser Tiket.com dan Traveloka terverifikasi dengan golden tests pada fixture si
 
 ### Sprint 7: Komisi dan rekonsiliasi (lane A, C, D)
 
-| ID | Tugas | Ukuran |
-|---|---|---|
-| S7-01 | CRUD `commission_rule` dan estimasi komisi | M |
-| S7-02 | Impor payout/laporan pembayaran, tautkan ke booking | L |
-| S7-03 | Alur estimasi → aktual dan tampilan selisih | M |
-| S7-04 | Komisi terutang (hotel collect) dan tab kas | M |
-| S7-05 | Kartu gross → komisi → pendapatan bersih berdampingan | S |
+| ID | Tugas | Ukuran | Status |
+|---|---|---|---|
+| S7-01 | CRUD `commission_rule` dan estimasi komisi | M | Selesai (`validateCommissionRule`, `estimateCommission`, CRUD queries/actions) |
+| S7-02 | Impor payout/laporan pembayaran, tautkan ke booking | L | Selesai (`linkPayouts`, `PayoutBooking`, `PAYOUT_LINKED` event, audit log) |
+| S7-03 | Alur estimasi → aktual dan tampilan selisih | M | Selesai (`reconcileCommission`, query rekonsiliasi selisih komisi) |
+| S7-04 | Komisi terutang (hotel collect) dan tab kas | M | Selesai (`computeOutstandingHotelCommission`, query kas, halaman `/cash` live) |
+| S7-05 | Kartu gross → komisi → pendapatan bersih berdampingan | S | Selesai (`GrossCommissionNetCard` sesuai ADR-004) |
+
+Seluruh domain dan alur rekonsiliasi komisi, pipeline payout, saldo komisi terutang, serta tab kas telah selesai dan lulus 560 tes otomatis. Siap memproses file payout/reconciliation nyata saat client mengunduhnya dari extranet.
 
 ### Sprint 8: Laporan dan rilis (lane C, D, E)
 
