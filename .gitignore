@@ -56,3 +56,8 @@ next-env.d.ts
 # Environment override (selain .env.example)
 .env.local
 .env.*.local
+
+# Secrets and credential text files
+akses_OTA.txt
+*credential*
+dashboardimages.jpg

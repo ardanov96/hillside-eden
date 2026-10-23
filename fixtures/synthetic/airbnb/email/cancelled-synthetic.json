@@ -1,0 +1,6 @@
+{
+  "kind": "email",
+  "from": "automated@airbnb.com",
+  "subject": "Reservation cancelled - HM12345678 - Ubud Hillside",
+  "text": "Reservation cancelled.\nConfirmation code: HM12345678\nGuest: John D.\nListing: Ubud Hillside\nCheck-in: 2026-11-01\nCheck-out: 2026-11-05"
+}

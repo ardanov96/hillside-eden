@@ -1,0 +1,4 @@
+# SINTETIS: Digunakan untuk pengujian parser riwayat transaksi Airbnb (S5-01 / S5-02)
+Date,Type,Confirmation code,Amount,Paid out,Currency,Details
+2026-11-02,Reservation,HM12345678,8500000.00,8500000.00,IDR,Payout for HM12345678
+2026-11-03,Payout,P-999888,8500000.00,8500000.00,IDR,Bank transfer

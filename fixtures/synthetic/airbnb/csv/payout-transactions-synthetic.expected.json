@@ -1,0 +1,10 @@
+[
+  {
+    "channel": "AIRBNB",
+    "reference": "P-999888",
+    "payoutDate": "2026-11-03",
+    "amount": "8500000.00",
+    "currency": "IDR",
+    "bookingExternalIds": ["HM12345678"]
+  }
+]

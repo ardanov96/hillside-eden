@@ -1,0 +1,6 @@
+{
+  "kind": "email",
+  "from": "automated@airbnb.com",
+  "subject": "Reservation altered - HM12345678 - Ubud Hillside",
+  "text": "Reservation altered!\nConfirmation code: HM12345678\nGuest: John D.\nListing: Ubud Hillside\nCheck-in: 2026-11-02\nCheck-out: 2026-11-06\nGuests: 2\nTotal payout: IDR 8,500,000"
+}

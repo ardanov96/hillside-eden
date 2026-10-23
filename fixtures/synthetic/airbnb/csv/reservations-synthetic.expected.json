@@ -1,0 +1,40 @@
+[
+  {
+    "eventType": "CREATED",
+    "confidence": "high",
+    "warnings": [],
+    "booking": {
+      "channel": "AIRBNB",
+      "externalId": "HM12345678",
+      "listingName": "Ubud Hillside",
+      "status": "CONFIRMED",
+      "checkIn": "2026-11-01",
+      "checkOut": "2026-11-05",
+      "nights": 4,
+      "guestsCount": 2,
+      "guestName": "John D.",
+      "currency": "IDR",
+      "grossAmount": "8500000.00",
+      "collectType": "CHANNEL_COLLECT"
+    }
+  },
+  {
+    "eventType": "CANCELLED",
+    "confidence": "high",
+    "warnings": [],
+    "booking": {
+      "channel": "AIRBNB",
+      "externalId": "HM87654321",
+      "listingName": "Ubud Hillside",
+      "status": "CANCELLED",
+      "checkIn": "2026-11-10",
+      "checkOut": "2026-11-12",
+      "nights": 2,
+      "guestsCount": 1,
+      "guestName": "Sarah M.",
+      "currency": "IDR",
+      "grossAmount": "0.00",
+      "collectType": "CHANNEL_COLLECT"
+    }
+  }
+]

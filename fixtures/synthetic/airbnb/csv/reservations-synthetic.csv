@@ -1,0 +1,4 @@
+# SINTETIS: Digunakan untuk pengujian parser ekspor reservasi Airbnb (S5-01 / S5-02)
+Confirmation code,Status,Guest name,Contact,# of adults,# of children,# of infants,Start date,End date,# of nights,Booked,Listing,Earnings
+HM12345678,Confirmed,John D.,+1234567890,2,0,0,2026-11-01,2026-11-05,4,2026-10-15,Ubud Hillside,8500000.00
+HM87654321,Cancelled,Sarah M.,+1987654321,1,0,0,2026-11-10,2026-11-12,2,2026-10-18,Ubud Hillside,0.00
