@@ -1,0 +1,4 @@
+# SINTETIS: Ekspor reservasi Traveloka TERA Extranet (S6-03)
+Booking ID,Guest Name,Property,Room Name,Check-in Date,Check-out Date,Nights,Total Amount,Currency,Booking Status,Payment Type
+TVL-554433,Agus P.,Hillside Eden Bali - Estate (Traveloka),Villa 4 Bedroom + 3 Cottages,2026-11-20,2026-11-24,4,12000000.00,IDR,CONFIRMED,CHANNEL_COLLECT
+TVL-554444,Dewi K.,Hillside Eden Bali - Estate (Traveloka),Villa 4 Bedroom + 3 Cottages,2026-11-26,2026-11-28,2,0.00,IDR,CANCELLED,HOTEL_COLLECT

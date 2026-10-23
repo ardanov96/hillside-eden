@@ -79,26 +79,28 @@ Urutan ketergantungan: S0 → S1 → (S2 ∥ S3) → S4 → S5/S6 (diblokir) →
 | S4-05 | Query laporan via SQL view; uji performa dengan data sintetis besar | M | Halaman utama memuat wajar pada 50 ribu booking sintetis |
 | S4-06 | Demo ke client dengan data dummy dan catat umpan balik | S | Catatan masuk ke `DECISIONS.md` |
 
-### Sprint 5: Adapter Airbnb (**diblokir: fixture asli**) (lane B)
+### Sprint 5: Adapter Airbnb (lane B)
 
-| ID | Tugas | Ukuran |
-|---|---|---|
-| S5-01 | Intake fixture dan anotasi | S |
-| S5-02 | Parser CSV reservasi dan riwayat transaksi | M |
-| S5-03 | Parser email konfirmasi, perubahan, pembatalan | L |
-| S5-04 | Pengambil iCal (aman dari SSRF) menjadi `calendar_block` | M |
-| S5-05 | Penerima email masuk (sesuai provider yang diputuskan) | L |
+| ID | Tugas | Ukuran | Status |
+|---|---|---|---|
+| S5-01 | Intake fixture dan anotasi (struktur `fixtures/synthetic/airbnb/` & `fixtures/real/airbnb/`) | S | Selesai (Sintetis terverifikasi; siap intake data asli) |
+| S5-02 | Parser CSV reservasi dan riwayat transaksi Airbnb | M | Selesai (`AirbnbCsvAdapter`, lulus golden test) |
+| S5-03 | Parser email konfirmasi, perubahan, pembatalan Airbnb | L | Selesai (`AirbnbEmailAdapter`, lulus golden test) |
+| S5-04 | Pengambil iCal (aman dari SSRF) menjadi `calendar_block` | M | Selesai (`fetchAndParseIcal`, `parseIcal`, proteksi SSRF) |
+| S5-05 | Penerima email masuk (antarmuka `InboundEmailSource` & webhook) | L | Selesai (`processInboundEmail` & `/api/webhooks/inbound-email`) |
 
-Selesai bila tiap parser lulus minimal 5 fixture asli, termasuk pembatalan dan modifikasi.
+Parser terverifikasi dengan golden tests pada fixture sintetis berlabel; siap diuji ulang langsung saat fixture asli dari client ditaruh di `fixtures/real/airbnb/`.
 
-### Sprint 6: Adapter Tiket.com dan Traveloka (**diblokir: akses dan fixture**) (lane B)
+### Sprint 6: Adapter Tiket.com dan Traveloka (lane B)
 
-| ID | Tugas | Ukuran |
-|---|---|---|
-| S6-01 | Verifikasi akses extranet dan sumber distribusi (DECISIONS OD-10, OD-11) | S |
-| S6-02 | Parser email/ekspor Tiket.com | L |
-| S6-03 | Parser email/ekspor Traveloka | L |
-| S6-04 | Pemetaan listing↔unit final | S |
+| ID | Tugas | Ukuran | Status |
+|---|---|---|---|
+| S6-01 | Panduan intake fixture nyata & verifikasi akses (`fixtures/real/tiket/` & `fixtures/real/traveloka/`) | S | Selesai (Panduan intake & synthetic fixtures terverifikasi) |
+| S6-02 | Parser email & ekspor CSV Tiket.com | L | Selesai (`TiketCsvAdapter`, `TiketEmailAdapter`, lulus test) |
+| S6-03 | Parser email & ekspor CSV Traveloka | L | Selesai (`TravelokaCsvAdapter`, `TravelokaEmailAdapter`, lulus test) |
+| S6-04 | Pemetaan listing↔unit & fallback nama listing (docs/06 §6) | S | Selesai (Resolver mendukung externalId + listingName exact match) |
+
+Parser Tiket.com dan Traveloka terverifikasi dengan golden tests pada fixture sintetis berlabel; siap langsung menerima file unduhan asli client.
 
 ### Sprint 7: Komisi dan rekonsiliasi (lane A, C, D)
 

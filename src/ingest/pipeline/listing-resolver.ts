@@ -24,7 +24,8 @@ export interface ListingResolverDb {
       where: {
         organizationId: string;
         channel: ChannelCode;
-        externalId: string;
+        externalId?: string;
+        name?: string;
       };
       select?: {
         id?: true;
@@ -64,7 +65,9 @@ export interface ResolveListingOptions {
  *
  * Algoritma:
  * - MANUAL: gunakan options.listingId, validasi milik organizationId.
- * - OTA (CSV/email/ical): cari Listing by (organizationId, channel, externalListingId).
+ * - OTA (CSV/email/ical):
+ *   1. cari Listing by (organizationId, channel, externalListingId).
+ *   2. cari Listing by (organizationId, channel, name: booking.listingName) (docs/06 §6).
  *   - Ketemu -> resolved.
  *   - Tidak ketemu -> needsReview 'listing-not-found'.
  */
@@ -120,10 +123,20 @@ export async function resolveListing(
     };
   }
 
-  const found = await db.listing.findFirst({
+  // 1. Cari berdasarkan externalId
+  let found = await db.listing.findFirst({
     where: { organizationId, channel, externalId: externalListingId },
     select: { id: true, propertyId: true, organizationId: true },
   });
+
+  // 2. Fallback: cari berdasarkan nama persis (docs/06 §6)
+  if (!found && booking.listingName) {
+    found = await db.listing.findFirst({
+      where: { organizationId, channel, name: booking.listingName },
+      select: { id: true, propertyId: true, organizationId: true },
+    });
+  }
+
   if (!found) {
     return {
       kind: "needsReview",
