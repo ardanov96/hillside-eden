@@ -1,83 +1,52 @@
 /**
- * Health check endpoint.
- * - GET /api/health         -> basic liveness, selalu 200
- * - GET /api/health?deep=1  -> cek koneksi database (Prisma)
- * Lihat docs/08-quality-security-ops.md #9 untuk sinyal alert.
+ * Health check & Monitoring endpoint (S0-05, S8-03).
+ *
+ * Mengikuti spesifikasi docs/08-quality-security-ops.md §9:
+ * - GET /api/health         -> basic liveness cepat (200 OK)
+ * - GET /api/health?deep=1  -> deep readiness: latensi DB, kesegaran data sumber OTA,
+ *                              status heartbeat worker, dan hitungan item gagal ingest
+ * - POST /api/health        -> heartbeat ping dari background worker
  */
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-// Hindari membuat banyak PrismaClient saat Next.js HMR (dev mode).
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
-
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+import { getDetailedSystemHealth, recordWorkerHeartbeat } from "@/server/monitoring/health";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const deep = url.searchParams.get("deep") === "1";
-  const startedAt = new Date().toISOString();
 
   if (!deep) {
     return NextResponse.json({
       ok: true,
       status: "live",
-      startedAt,
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.round(process.uptime()),
       env: process.env.NODE_ENV ?? "development",
     });
   }
 
-  const rawUrl = process.env.DATABASE_URL;
-  let sanitizedUrl = "none";
-  if (rawUrl) {
-    try {
-      const u = new URL(rawUrl.trim());
-      sanitizedUrl = `${u.protocol}//${u.username}:***@${u.host}${u.pathname}${u.search}`;
-    } catch {
-      sanitizedUrl = "MALFORMED";
-    }
-  }
+  const health = await getDetailedSystemHealth();
+  const statusCode = health.status === "unhealthy" ? 503 : 200;
 
-  // Deep check: verifikasi database.
-  if (!process.env.DATABASE_URL) {
-    return NextResponse.json(
-      {
-        ok: false,
-        status: "degraded",
-        error: "DATABASE_URL not configured",
-        startedAt,
-      },
-      { status: 503 },
-    );
-  }
+  return NextResponse.json(health, { status: statusCode });
+}
 
+export async function POST(request: Request) {
   try {
-    const result = await prisma.$queryRaw<Array<{ ok: number }>>`SELECT 1 AS ok`;
-    return NextResponse.json({
-      ok: true,
-      status: "live",
-      db: "up",
-      dbResult: result[0]?.ok === 1 ? "ok" : "unexpected",
-      dbUrl: sanitizedUrl,
-      startedAt,
-      env: process.env.NODE_ENV ?? "development",
-    });
-  } catch (error) {
+    const body = await request.json().catch(() => ({}));
+    if (body.type === "heartbeat" || body.worker) {
+      recordWorkerHeartbeat();
+      return NextResponse.json({
+        ok: true,
+        type: "heartbeat_acknowledged",
+        recordedAt: new Date().toISOString(),
+      });
+    }
+
     return NextResponse.json(
-      {
-        ok: false,
-        status: "degraded",
-        db: "down",
-        dbUrl: sanitizedUrl,
-        error: error instanceof Error ? error.message : String(error),
-        startedAt,
-      },
-      { status: 503 },
+      { ok: false, error: "Invalid payload, expected { type: 'heartbeat' }" },
+      { status: 400 },
     );
+  } catch {
+    return NextResponse.json({ ok: false, error: "Bad Request" }, { status: 400 });
   }
 }

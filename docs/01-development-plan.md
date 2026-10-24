@@ -120,7 +120,7 @@ Seluruh domain dan alur rekonsiliasi komisi, pipeline payout, saldo komisi terut
 |---|---|---|---|
 | S8-01 | Laporan bulanan pemilik (PDF dan Excel) | L | Selesai (Halaman `/reports` live, ekspor Excel `/api/reports/export/excel`, cetak PDF `/reports/print`, snapshot tutup buku & variansi) |
 | S8-02 | Backup terjadwal dan uji restore | M | Selesai (Skrip `scripts/backup-db.ts` + SHA-256, skrip uji restore & verifikasi matematis `scripts/restore-and-verify.ts`, SOP `docs/ops/backup-restore.md`) |
-| S8-03 | Monitoring, alert kegagalan, heartbeat worker | M | |
+| S8-03 | Monitoring, alert kegagalan, heartbeat worker | M | Selesai (Modul `src/server/monitoring/health.ts`, deep check `/api/health`, kesegaran OTA, worker heartbeat ping) |
 | S8-04 | Tinjauan keamanan dan checklist pengerasan (`08-quality-security-ops.md`) | M | |
 | S8-05 | UAT dengan pemilik, deploy produksi, dokumentasi serah terima | M | |
 
