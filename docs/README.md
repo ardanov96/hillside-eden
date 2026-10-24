@@ -13,6 +13,9 @@
 | `08-quality-security-ops.md` | Tes, keamanan, privasi, operasional | Menulis tes, deploy, atau fitur sensitif |
 | `DECISIONS.md` | Keputusan final dan keputusan terbuka | Sebelum mengubah apa pun yang mendasar |
 | `briefs/od-01-neon-branches.md` | Brief eksekusi: Neon branching untuk dev + prod | Saat mengerjakan OD-01 atau menyiapkan DB lokal/produksi |
+| `ops/backup-restore.md` | SOP backup database & Disaster Recovery runbook | Operasional backup & pemulihan darurat |
+| `ops/security-hardening.md` | Tinjauan keamanan & checklist pengerasan produksi | Review audit & hardening sistem |
+| `ops/handover-and-uat.md` | Skenario UAT pemilik & panduan serah terima | Demo client, UAT, dan serah terima sistem |
 | `../AGENTS.md` | Aturan kerja agent | Selalu |
 
 Urutan baca minimal untuk tugas baru: `AGENTS.md` → `ROADMAP.md` → tiketmu di `01` → dokumen teknis yang disebut tiket.

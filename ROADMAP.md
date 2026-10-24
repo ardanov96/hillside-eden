@@ -126,17 +126,17 @@ Kunci idempotensi booking: `source + external_id`.
 **Selesai bila:** tiap adapter lulus tes dengan minimal 5 fixture asli (termasuk pembatalan dan modifikasi), idempoten, dan setiap record bisa ditelusuri ke `import_batch`.
 
 ### Fase 3: Rekonsiliasi dan laporan
-- [ ] `commission_rule` per listing, alur estimasi ke aktual, tampilan selisih.
-- [ ] Kartu gross → komisi → pendapatan bersih berdampingan; tabel per OTA dan properti dengan kolom status data (estimasi/aktual).
-- [ ] Tab kas berdasarkan payout dan komisi terutang.
-- [ ] Alert bentrok jadwal.
-- [ ] Laporan bulanan pemilik (PDF dan Excel) dengan rincian per properti dan per OTA.
+- [x] `commission_rule` per listing, alur estimasi ke aktual, tampilan selisih.
+- [x] Kartu gross → komisi → pendapatan bersih berdampingan; tabel per OTA dan properti dengan kolom status data (estimasi/aktual).
+- [x] Tab kas berdasarkan payout dan komisi terutang.
+- [x] Alert bentrok jadwal.
+- [x] Laporan bulanan pemilik (PDF dan Excel) dengan rincian per properti dan per OTA.
 
 ### Fase 4: Pengerasan dan rilis
-- [ ] Backup terjadwal ke penyimpanan terpisah dan uji restore.
-- [ ] Pemantauan dan alert kegagalan sinkronisasi.
-- [ ] Keamanan: hash password, rate limit, enkripsi backup, kebijakan retensi data tamu (UU PDP).
-- [ ] UAT dengan pemilik, deploy, dokumentasi dan serah terima.
+- [x] Backup terjadwal ke penyimpanan terpisah dan uji restore.
+- [x] Pemantauan dan alert kegagalan sinkronisasi.
+- [x] Keamanan: hash password, rate limit, enkripsi backup, kebijakan retensi data tamu (UU PDP).
+- [x] UAT dengan pemilik, deploy, dokumentasi dan serah terima.
 
 ## 9. Aturan untuk agent
 

@@ -122,7 +122,9 @@ Seluruh domain dan alur rekonsiliasi komisi, pipeline payout, saldo komisi terut
 | S8-02 | Backup terjadwal dan uji restore | M | Selesai (Skrip `scripts/backup-db.ts` + SHA-256, skrip uji restore & verifikasi matematis `scripts/restore-and-verify.ts`, SOP `docs/ops/backup-restore.md`) |
 | S8-03 | Monitoring, alert kegagalan, heartbeat worker | M | Selesai (Modul `src/server/monitoring/health.ts`, deep check `/api/health`, kesegaran OTA, worker heartbeat ping) |
 | S8-04 | Tinjauan keamanan dan checklist pengerasan (`08-quality-security-ops.md`) | M | Selesai (CSP & HTTP security headers di `next.config.ts`, sweeper retensi data tamu UU PDP `src/server/retention/guest-retention.ts`, checklist `docs/ops/security-hardening.md`) |
-| S8-05 | UAT dengan pemilik, deploy produksi, dokumentasi serah terima | M | |
+| S8-05 | UAT dengan pemilik, deploy produksi, dokumentasi serah terima | M | Selesai (Panduan skenario UAT pemilik, checklist serah terima, SOP handover `docs/ops/handover-and-uat.md`) |
+
+Sprint 8 selesai menyeluruh: Laporan bulanan pemilik (PDF & Excel), penutupan buku bulanan (PeriodLock) & deteksi variansi pasca-tutup, skrip backup logis & uji verifikasi restore, deep monitoring & heartbeat worker, pengerasan keamanan (CSP, HSTS, UU PDP), dan panduan UAT/handover siap produksi. Total 574 tes otomatis lulus 100%.
 
 ## 4. Spesifikasi data dummy (S1-06)
 
