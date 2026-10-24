@@ -18,7 +18,9 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
-    "db:seed:dummy": "tsx prisma/seed-dummy.ts"
+    "db:seed:dummy": "tsx prisma/seed-dummy.ts",
+    "db:backup": "tsx scripts/backup-db.ts",
+    "db:restore:verify": "tsx scripts/restore-and-verify.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
