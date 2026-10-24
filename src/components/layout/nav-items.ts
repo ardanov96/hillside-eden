@@ -30,6 +30,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/expenses", label: "Pengeluaran", status: "planned", ticket: "S3-01" },
   { href: "/cash", label: "Kas", status: "live" },
   { href: "/reports", label: "Laporan", status: "live" },
-  { href: "/attention", label: "Perlu perhatian", status: "planned", ticket: "S2-03" },
+  { href: "/attention", label: "Perlu perhatian", status: "live" },
   { href: "/settings", label: "Pengaturan", status: "live" },
 ];

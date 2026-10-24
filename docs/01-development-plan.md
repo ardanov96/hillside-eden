@@ -132,7 +132,9 @@ Sprint 8 selesai menyeluruh: Laporan bulanan pemilik (PDF & Excel), penutupan bu
 |---|---|---|---|
 | S9-01 | Halaman Impor File OTA (`/bookings/import`) | M | Selesai (Server Action `importOtaCsvAction`, validasi berkas, auto-detect saluran Airbnb/Tiket/Traveloka, eksekusi via `runIngest`, UI drag & drop, kartu statistik batch, lulus 580 tes) |
 | S9-02 | Halaman Pengaturan Listing & Kelola iCal Feed (`/settings`) | M | Selesai (Halaman `/settings` live, navigasi live, enkripsi AES-256-GCM `urlEncrypted`, proteksi SSRF, sinkronisasi kalender on-demand via `fetchAndParseIcal`, modal `IcalDialog`, lulus 592 tes) |
-| S9-03 | Karantina "Perlu Perhatian" (`/attention` / S2-03) | M | Siap (Inbox item `NEEDS_REVIEW` & `FAILED`, peninjauan raw payload, dan aksi pemetaan ulang listing) |
+| S9-03 | Karantina "Perlu Perhatian" (`/attention` / S2-03) | M | Selesai (Halaman `/attention` live, query `getAttentionItems`, Server Action `resolveAndReprocessItemAction` pemetaan listing, Server Action `dismissAttentionItemAction`, modal `ResolveDialog` & `PayloadDialog`, lulus 598 tes) |
+
+Sprint 9 selesai menyeluruh: Antarmuka Web Ingest OTA siap pakai di browser — Impor CSV OTA (`/bookings/import`), Kelola Listing & Sinkronisasi Kalender iCal (`/settings`), serta Kotak Masuk Karantina "Perlu Perhatian" (`/attention`). Total 598 tes otomatis lulus 100%.
 
 ## 4. Spesifikasi data dummy (S1-06)
 
