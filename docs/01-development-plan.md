@@ -116,13 +116,13 @@ Seluruh domain dan alur rekonsiliasi komisi, pipeline payout, saldo komisi terut
 
 ### Sprint 8: Laporan dan rilis (lane C, D, E)
 
-| ID | Tugas | Ukuran |
-|---|---|---|
-| S8-01 | Laporan bulanan pemilik (PDF dan Excel) | L |
-| S8-02 | Backup terjadwal dan uji restore | M |
-| S8-03 | Monitoring, alert kegagalan, heartbeat worker | M |
-| S8-04 | Tinjauan keamanan dan checklist pengerasan (`08-quality-security-ops.md`) | M |
-| S8-05 | UAT dengan pemilik, deploy produksi, dokumentasi serah terima | M |
+| ID | Tugas | Ukuran | Status |
+|---|---|---|---|
+| S8-01 | Laporan bulanan pemilik (PDF dan Excel) | L | Selesai (Halaman `/reports` live, ekspor Excel `/api/reports/export/excel`, cetak PDF `/reports/print`, snapshot tutup buku & variansi) |
+| S8-02 | Backup terjadwal dan uji restore | M | |
+| S8-03 | Monitoring, alert kegagalan, heartbeat worker | M | |
+| S8-04 | Tinjauan keamanan dan checklist pengerasan (`08-quality-security-ops.md`) | M | |
+| S8-05 | UAT dengan pemilik, deploy produksi, dokumentasi serah terima | M | |
 
 ## 4. Spesifikasi data dummy (S1-06)
 
