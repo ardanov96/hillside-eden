@@ -96,8 +96,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </div>
 
-      {/* 2. TOP ROW: 6 Compact AdminCN-style KPI Cards with Sparklines */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      {/* 2. TOP SECTION: 6 KPI Cards divided into 2 Rows (3 cards per row) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Card 1: Nilai booking (gross) with Bar Sparkline */}
         <AdminCnKpiCard
           title="Booking (Gross)"
