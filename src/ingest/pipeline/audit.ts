@@ -45,6 +45,7 @@ export const AUDIT_ACTIONS = {
   commissionRuleDeleted: "commission_rule.deleted",
   periodLocked: "period.locked",
   periodUnlocked: "period.unlocked",
+  guestAnonymized: "guest.anonymized",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

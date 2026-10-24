@@ -1,7 +1,7 @@
 /**
  * Unit test untuk skrip Backup & Verifikasi Restore (S8-02).
  */
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, afterEach } from "vitest";
 import { writeFileSync, unlinkSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";
