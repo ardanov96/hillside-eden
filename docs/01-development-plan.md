@@ -131,7 +131,7 @@ Sprint 8 selesai menyeluruh: Laporan bulanan pemilik (PDF & Excel), penutupan bu
 | ID | Tugas | Ukuran | Status |
 |---|---|---|---|
 | S9-01 | Halaman Impor File OTA (`/bookings/import`) | M | Selesai (Server Action `importOtaCsvAction`, validasi berkas, auto-detect saluran Airbnb/Tiket/Traveloka, eksekusi via `runIngest`, UI drag & drop, kartu statistik batch, lulus 580 tes) |
-| S9-02 | Halaman Pengaturan Listing & Kelola iCal Feed (`/settings`) | M | Siap (Manajemen URL feed iCal per listing, sinkronisasi kalender on-demand via `fetchAndParseIcal`) |
+| S9-02 | Halaman Pengaturan Listing & Kelola iCal Feed (`/settings`) | M | Selesai (Halaman `/settings` live, navigasi live, enkripsi AES-256-GCM `urlEncrypted`, proteksi SSRF, sinkronisasi kalender on-demand via `fetchAndParseIcal`, modal `IcalDialog`, lulus 592 tes) |
 | S9-03 | Karantina "Perlu Perhatian" (`/attention` / S2-03) | M | Siap (Inbox item `NEEDS_REVIEW` & `FAILED`, peninjauan raw payload, dan aksi pemetaan ulang listing) |
 
 ## 4. Spesifikasi data dummy (S1-06)
