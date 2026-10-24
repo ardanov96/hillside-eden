@@ -47,7 +47,7 @@ const STATUS_LABEL: Record<(typeof BOOKING_STATUS_VALUES)[number], string> = {
   NO_SHOW: "Tidak hadir",
 };
 
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface BookingListProps {
@@ -92,12 +92,20 @@ export async function BookingList({ organizationId, searchParams }: BookingListP
             detail.
           </p>
         </div>
-        <Button asChild className="gap-2 shadow-xs">
-          <Link href="/bookings/new">
-            <Plus className="h-4 w-4" />
-            <span>Tambah Booking Manual</span>
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" className="gap-2 shadow-xs">
+            <Link href="/bookings/import">
+              <Upload className="h-4 w-4" />
+              <span>Impor File OTA</span>
+            </Link>
+          </Button>
+          <Button asChild className="gap-2 shadow-xs">
+            <Link href="/bookings/new">
+              <Plus className="h-4 w-4" />
+              <span>Tambah Booking Manual</span>
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <BookingFiltersForm

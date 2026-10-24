@@ -126,6 +126,14 @@ Seluruh domain dan alur rekonsiliasi komisi, pipeline payout, saldo komisi terut
 
 Sprint 8 selesai menyeluruh: Laporan bulanan pemilik (PDF & Excel), penutupan buku bulanan (PeriodLock) & deteksi variansi pasca-tutup, skrip backup logis & uji verifikasi restore, deep monitoring & heartbeat worker, pengerasan keamanan (CSP, HSTS, UU PDP), dan panduan UAT/handover siap produksi. Total 574 tes otomatis lulus 100%.
 
+### Sprint 9: Antarmuka Web Ingest OTA & Sinkronisasi (lane B, D)
+
+| ID | Tugas | Ukuran | Status |
+|---|---|---|---|
+| S9-01 | Halaman Impor File OTA (`/bookings/import`) | M | Selesai (Server Action `importOtaCsvAction`, validasi berkas, auto-detect saluran Airbnb/Tiket/Traveloka, eksekusi via `runIngest`, UI drag & drop, kartu statistik batch, lulus 580 tes) |
+| S9-02 | Halaman Pengaturan Listing & Kelola iCal Feed (`/settings`) | M | Siap (Manajemen URL feed iCal per listing, sinkronisasi kalender on-demand via `fetchAndParseIcal`) |
+| S9-03 | Karantina "Perlu Perhatian" (`/attention` / S2-03) | M | Siap (Inbox item `NEEDS_REVIEW` & `FAILED`, peninjauan raw payload, dan aksi pemetaan ulang listing) |
+
 ## 4. Spesifikasi data dummy (S1-06)
 
 - 2 properti: satu dengan estate (4 unit: villa + 3 cottage, juga dijual sebagai paket), satu dengan 4 kamar di mana hanya 2 yang `isSellable`.
