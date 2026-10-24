@@ -136,6 +136,14 @@ Sprint 8 selesai menyeluruh: Laporan bulanan pemilik (PDF & Excel), penutupan bu
 
 Sprint 9 selesai menyeluruh: Antarmuka Web Ingest OTA siap pakai di browser — Impor CSV OTA (`/bookings/import`), Kelola Listing & Sinkronisasi Kalender iCal (`/settings`), serta Kotak Masuk Karantina "Perlu Perhatian" (`/attention`). Total 598 tes otomatis lulus 100%.
 
+### Sprint 10: Kalender Okupansi & Deteksi Bentrok Visual (lane D)
+
+| ID | Tugas | Ukuran | Status |
+|---|---|---|---|
+| S10-01 | Kalender Okupansi Multi-Properti & Deteksi Bentrok (`/calendar` / S4-05) | L | Selesai (Halaman `/calendar` live, timeline matriks unit harian, integrasi deteksi bentrok domain `detectScheduleCollisions`, visualisasi kanal OTA & iCal block, indikator okupansi unit & portofolio, modal detail booking, filter properti, lulus 602 tes) |
+
+Sprint 10 selesai menyeluruh: Halaman Kalender Okupansi (`/calendar`) live di navigasi utama dengan visualisasi ketersediaan kamar, reservasi seluruh kanal OTA, pemblokiran iCal, dan deteksi otomatis bentrok jadwal (double-booking). Total 602 tes otomatis lulus 100%.
+
 ## 4. Spesifikasi data dummy (S1-06)
 
 - 2 properti: satu dengan estate (4 unit: villa + 3 cottage, juga dijual sebagai paket), satu dengan 4 kamar di mana hanya 2 yang `isSellable`.

@@ -26,7 +26,7 @@ export interface NavItem {
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", label: "Ringkasan", status: "live" },
   { href: "/bookings", label: "Booking", status: "live" },
-  { href: "/calendar", label: "Kalender", status: "planned", ticket: "S4-05" },
+  { href: "/calendar", label: "Kalender", status: "live" },
   { href: "/expenses", label: "Pengeluaran", status: "planned", ticket: "S3-01" },
   { href: "/cash", label: "Kas", status: "live" },
   { href: "/reports", label: "Laporan", status: "live" },
