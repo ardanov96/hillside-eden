@@ -131,7 +131,7 @@ export class LocalDriver implements StorageProvider {
   constructor(opts: LocalDriverOptions = {}) {
     const candidate =
       opts.rootDir ?? process.env.LOCAL_STORAGE_DIR ?? path.resolve(process.cwd(), ".storage");
-    this.rootDir = path.resolve(candidate);
+    this.rootDir = path.resolve(/*turbopackIgnore: true*/ candidate);
   }
 
   /** Path absolut ke blob (sudah dijamin aman). */

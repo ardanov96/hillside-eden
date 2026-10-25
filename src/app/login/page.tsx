@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { Trees } from "lucide-react";
 import { auth } from "@/auth";
 import { LoginForm } from "./login-form";
@@ -7,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export const instant = false;
 
 export default async function LoginPage() {
+  await connection();
   const session = await auth();
   if (session?.user) {
     redirect("/");
