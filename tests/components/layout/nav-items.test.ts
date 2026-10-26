@@ -57,7 +57,6 @@ describe("NAV_ITEMS", () => {
 
   it("item planned selalu punya tiket rujukan", () => {
     const planned = NAV_ITEMS.filter((i) => i.status === "planned");
-    expect(planned.length).toBeGreaterThan(0);
     for (const item of planned) {
       expect(item.ticket).toMatch(/^S\d+-\d+$/);
     }

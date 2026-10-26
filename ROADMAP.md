@@ -109,14 +109,15 @@ Kunci idempotensi booking: `source + external_id`.
 
 ### Fase 1: Pengeluaran dan ringkasan (paralel dengan Fase 0 setelah skema ada)
 - [x] Kategori default (bisa diubah): gaji dan tunjangan, utilitas, housekeeping/laundry/amenities, F&B, perawatan dan perbaikan, pemasaran dan software, pajak/perizinan/asuransi, transportasi dan operasional lain, sewa/lease.
-- [ ] Form pengeluaran ramah ponsel, unggah foto struk, template biaya rutin, impor CSV (tiket S3-01 s/d S3-04).
-- [ ] Alokasi biaya bersama antar properti (persentase tetap atau proporsional room-night) (tiket S3-05).
-- [ ] Pendapatan lain (manual) (tiket S3-06).
-- [ ] Status draf/terverifikasi, koreksi lewat entri pembalik, log audit di UI (tiket S3-07).
+- [x] Form pengeluaran ramah ponsel, unggah foto struk, template biaya rutin, impor CSV (tiket S3-01 s/d S3-04).
+- [x] Alokasi biaya bersama antar properti (persentase tetap atau proporsional room-night) (tiket S3-05).
+- [x] Pendapatan lain (manual) (tiket S3-06).
+- [x] Status draf/terverifikasi, koreksi lewat entri pembalik, log audit di UI (tiket S3-07).
 - [x] Tutup buku bulanan (`period_lock`) dengan snapshot historis & deteksi variansi (diselesaikan di S8-01).
 - [x] Halaman ringkasan: pemasukan − pengeluaran = hasil operasional, per properti, gabungan, bulan, dan tahun berjalan, dengan pembanding periode sebelumnya.
 
 **Selesai bila:** ringkasan cocok dengan perhitungan manual pada dataset uji, dan periode terkunci menolak perubahan.
+
 
 ### Fase 2: Adapter pemasukan (**terverifikasi sintetis**, siap intake fixture asli)
 - [x] Airbnb: ekspor CSV reservasi dan riwayat transaksi, email konfirmasi, iCal untuk blok tanggal.

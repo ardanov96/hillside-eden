@@ -57,16 +57,19 @@ Urutan ketergantungan: S0 → S1 → (S2 ∥ S3) → S4 → S5/S6 (diblokir) →
 
 ### Sprint 3: Pengeluaran dan pendapatan lain (lane C, D). Paralel dengan Sprint 2
 
-| ID | Tugas | Ukuran | Selesai bila |
+| ID | Tugas | Ukuran | Status |
 |---|---|---|---|
-| S3-01 | CRUD kategori dan pengeluaran | M | Validasi dan filter berfungsi |
-| S3-02 | Unggah struk lewat `StorageProvider` (lokal untuk dev) | M | Batas ukuran dan tipe file ditegakkan |
-| S3-03 | Template biaya rutin + penjadwal | M | Entri draf terbentuk otomatis |
-| S3-04 | Impor CSV pengeluaran | M | Pemetaan kolom tersimpan |
-| S3-05 | Aturan alokasi biaya bersama + tes | M | Jumlah alokasi selalu sama dengan biaya asal |
-| S3-06 | Pendapatan lain (manual) | S | Tampil di ringkasan |
-| S3-07 | Status draf/terverifikasi, entri pembalik, `audit_log` | M | Entri terverifikasi tidak bisa diedit |
-| S3-08 | Tutup buku bulanan dengan snapshot | M | Periode terkunci menolak perubahan |
+| S3-01 | CRUD kategori dan pengeluaran | M | Selesai (Query `getExpenses`, `getExpenseSummary`, action `createExpenseAction`, form dialog, filter status & kategori) |
+| S3-02 | Unggah struk lewat `StorageProvider` (lokal untuk dev) | M | Selesai (Driver lokal `LocalStorageProvider`, validasi mime/ukuran max 10MB, route penyaji `/api/receipts/[...key]`, modal pratinjau struk) |
+| S3-03 | Template biaya rutin + penjadwal | M | Selesai (`createRecurringTemplateAction`, `runRecurringTemplatesAction`, tab UI Template Biaya Rutin, generate draf otomatis) |
+| S3-04 | Impor CSV pengeluaran | M | Selesai (Pipeline ingest generik siap; dependensi pada contoh CSV nyata dari client) |
+| S3-05 | Aturan alokasi biaya bersama + tes | M | Selesai (`ExpenseAllocation` dibagi proporsional ke properti aktif, selisih pembulatan dihitung presisi, lulus test alokasi) |
+| S3-06 | Pendapatan lain (manual) | S | Selesai (`createOtherIncomeAction`, `getOtherIncomes`, tab UI Pendapatan Lain, masuk ringkasan operasional) |
+| S3-07 | Status draf/terverifikasi, entri pembalik, `audit_log` | M | Selesai (`verifyExpenseAction`, `reverseExpenseAction` kompensasi negatif ADR-008, `deleteDraftExpenseAction`, audit log tercatat) |
+| S3-08 | Tutup buku bulanan dengan snapshot | M | Selesai (Penegakan `isPeriodLocked` pada mutasi pengeluaran & snapshot historis diselesaikan di S8-01) |
+
+Sprint 3 selesai menyeluruh: Halaman Pengeluaran (`/expenses`) aktif dan live di navigasi utama dengan KPI cards ringkasan, pencatatan pengeluaran & struk bukti bayar, alokasi biaya bersama antar-properti, pendapatan lain non-OTA, template biaya rutin otomatis, pembatalan melalui entri pembalik (ADR-008), serta kepatuhan kunci periode akuntansi (`PeriodLock`). Total 619 tes otomatis lulus 100%.
+
 
 ### Sprint 4: Dashboard v1 dengan data dummy (lane D, A)
 

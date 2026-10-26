@@ -27,7 +27,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", label: "Ringkasan", status: "live" },
   { href: "/bookings", label: "Booking", status: "live" },
   { href: "/calendar", label: "Kalender", status: "live" },
-  { href: "/expenses", label: "Pengeluaran", status: "planned", ticket: "S3-01" },
+  { href: "/expenses", label: "Pengeluaran", status: "live" },
   { href: "/cash", label: "Kas", status: "live" },
   { href: "/reports", label: "Laporan", status: "live" },
   { href: "/attention", label: "Perlu perhatian", status: "live" },

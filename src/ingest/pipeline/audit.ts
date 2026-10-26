@@ -46,6 +46,15 @@ export const AUDIT_ACTIONS = {
   periodLocked: "period.locked",
   periodUnlocked: "period.unlocked",
   guestAnonymized: "guest.anonymized",
+  expenseCreated: "expense.created",
+  expenseUpdated: "expense.updated",
+  expenseVerified: "expense.verified",
+  expenseReversed: "expense.reversed",
+  expenseDeleted: "expense.deleted",
+  otherIncomeCreated: "other_income.created",
+  otherIncomeReversed: "other_income.reversed",
+  recurringTemplateCreated: "recurring_template.created",
+  recurringTemplateDeleted: "recurring_template.deleted",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
