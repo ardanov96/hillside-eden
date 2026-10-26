@@ -1,0 +1,7 @@
+# SYNTHETIC FIXTURE - Booking.com Extranet Reservations
+# Format ekspor CSV reservasi standar Booking.com Extranet
+"Book number","Booked on","Check-in","Check-out","Guest name","Room type","Total amount","Commission","Status","Payment status","Currency"
+"BK-2026-9011","2026-10-15","2026-11-01","2026-11-04","Michael Green","Master Suite Villa","12000000","1800000","ok","Online Payments","IDR"
+"BK-2026-9012","2026-10-18","2026-11-05","2026-11-08","Sophie Martin","Luxury Cottage 1","7500000","1125000","ok","Online Payments","IDR"
+"BK-2026-9013","2026-10-20","2026-11-10","2026-11-13","Daniel Lee","Luxury Cottage 2","7200000","1080000","cancelled","Online Payments","IDR"
+"BK-2026-9014","2026-10-22","2026-11-15","2026-11-18","Emma Watson","Master Suite Villa","11500000","1725000","ok","Pay at Hotel","IDR"

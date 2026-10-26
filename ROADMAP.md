@@ -163,7 +163,7 @@ Kunci idempotensi booking: `source + external_id`.
 ## 11. Backlog (di luar scope awal)
 
 - Potongan tambahan di tampilan bersih (biaya pembayaran/channel, pajak, service charge): **hanya setelah diminta client**.
-- Expedia Group dan Agoda sebagai adapter tambahan.
+- [x] Booking.com, Agoda, dan Expedia Group sebagai adapter CSV tambahan (aktif sesuai OD-25).
 - Channel manager sebagai hub data (API/webhook) setelah client setuju.
 - Website direct booking mengikuti referensi mjvilla.com.
 - Revenue F&B/spa dan integrasi POS.

@@ -151,6 +151,17 @@ Sprint 9 selesai menyeluruh: Antarmuka Web Ingest OTA siap pakai di browser — 
 
 Sprint 10 selesai menyeluruh: Halaman Kalender Okupansi (`/calendar`) live di navigasi utama dengan visualisasi ketersediaan kamar, reservasi seluruh kanal OTA, pemblokiran iCal, dan deteksi otomatis bentrok jadwal (double-booking). Total 602 tes otomatis lulus 100%.
 
+### Sprint 11: Ingest Adapter Saluran Aktif Client (Booking.com, Agoda, Expedia) (lane B, D)
+
+| ID | Tugas | Ukuran | Status |
+|---|---|---|---|
+| S11-01 | Adapter & Parser CSV Booking.com Extranet | M | Selesai (`BookingComCsvAdapter`, `parseBookingComReservationsCsv`, fixture sintetis, lulus golden test) |
+| S11-02 | Adapter & Parser CSV Agoda YCS Extranet | M | Selesai (`AgodaCsvAdapter`, `parseAgodaReservationsCsv`, fixture sintetis, lulus golden test) |
+| S11-03 | Adapter & Parser CSV Expedia Partner Central | M | Selesai (`ExpediaCsvAdapter`, `parseExpediaReservationsCsv`, fixture sintetis, lulus golden test) |
+| S11-04 | Registrasi Ingest Router & Integrasi Halaman `/bookings/import` | S | Selesai (Router auto & manual, filter saluran Booking.com, Agoda, Expedia, Generic CSV, kartu panduan extranet) |
+
+Sprint 11 selesai menyeluruh: Keempat saluran OTA aktif client (Airbnb, Booking.com, Agoda, Expedia) kini memiliki adapter ingest deterministik khusus dengan dukungan deteksi otomatis, penanganan hotel collect vs channel collect, dan panduan extranet langsung di web UI. Total 651 tes otomatis lulus 100%.
+
 ## 4. Spesifikasi data dummy (S1-06)
 
 - 2 properti: satu dengan estate (4 unit: villa + 3 cottage, juga dijual sebagai paket), satu dengan 4 kamar di mana hanya 2 yang `isSellable`.

@@ -26,10 +26,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { importOtaCsvAction, type ImportResultState } from "@/server/actions/import";
 
 const CHANNELS = [
-  { id: "AUTO", label: "Deteksi Otomatis", desc: "Airbnb, Tiket, atau Traveloka", isAuto: true },
+  {
+    id: "AUTO",
+    label: "Deteksi Otomatis",
+    desc: "Airbnb, Booking.com, Agoda, Expedia, dsb.",
+    isAuto: true,
+  },
   { id: "AIRBNB", label: "Airbnb", desc: "Reservasi & Payout CSV", isAuto: false },
-  { id: "TIKET_COM", label: "Tiket.com", desc: "Ekspor Reservasi CSV", isAuto: false },
+  { id: "BOOKING_COM", label: "Booking.com", desc: "Extranet Reservations CSV", isAuto: false },
+  { id: "AGODA", label: "Agoda", desc: "YCS Extranet Bookings CSV", isAuto: false },
+  { id: "EXPEDIA", label: "Expedia", desc: "Partner Central CSV", isAuto: false },
+  { id: "TIKET_COM", label: "Tiket.com", desc: "TIX Extranet Pesanan CSV", isAuto: false },
   { id: "TRAVELOKA", label: "Traveloka", desc: "Tera Extranet CSV", isAuto: false },
+  { id: "GENERIC", label: "Format Kustom", desc: "CSV Profil Pemetaan", isAuto: false },
 ] as const;
 
 export function ImportForm() {
@@ -334,11 +343,26 @@ export function ImportForm() {
             <Info className="h-3.5 w-3.5 text-primary" />
             <span>Cara Mengunduh Berkas dari Extranet OTA:</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <div className="p-2.5 rounded-lg bg-background border border-border/40">
               <strong className="text-foreground block mb-0.5">Airbnb</strong>
               Masuk ke <em>Reservations</em> &gt; klik <em>Export (CSV)</em>, atau{" "}
               <em>Earnings / Payouts</em> &gt; <em>Transaction History</em>.
+            </div>
+            <div className="p-2.5 rounded-lg bg-background border border-border/40">
+              <strong className="text-foreground block mb-0.5">Booking.com</strong>
+              Buka <em>Booking.com Extranet</em> &gt; menu <em>Reservations</em> &gt; tentukan
+              rentang tanggal &gt; unduh berkas <em>CSV</em>.
+            </div>
+            <div className="p-2.5 rounded-lg bg-background border border-border/40">
+              <strong className="text-foreground block mb-0.5">Agoda</strong>
+              Buka <em>Agoda YCS Extranet</em> &gt; menu <em>Bookings</em> &gt; pilih filter tanggal
+              &gt; klik <em>Export CSV</em>.
+            </div>
+            <div className="p-2.5 rounded-lg bg-background border border-border/40">
+              <strong className="text-foreground block mb-0.5">Expedia</strong>
+              Buka <em>Expedia Partner Central</em> &gt; menu <em>Reservations</em> &gt; unduh
+              laporan pemesanan dalam format <em>CSV</em>.
             </div>
             <div className="p-2.5 rounded-lg bg-background border border-border/40">
               <strong className="text-foreground block mb-0.5">Tiket.com</strong>

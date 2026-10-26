@@ -12,8 +12,13 @@ import { prisma } from "@/lib/prisma";
 import { runIngest, type PipelineResult } from "@/ingest/pipeline/pipeline";
 import { createRouterRegistry } from "@/ingest/pipeline/router";
 import { AirbnbCsvAdapter } from "@/adapters/airbnb/csv/adapter";
+import { BookingComCsvAdapter } from "@/adapters/booking_com/csv/adapter";
+import { AgodaCsvAdapter } from "@/adapters/agoda/csv/adapter";
+import { ExpediaCsvAdapter } from "@/adapters/expedia/csv/adapter";
 import { TiketCsvAdapter } from "@/adapters/tiket/csv/adapter";
 import { TravelokaCsvAdapter } from "@/adapters/traveloka/csv/adapter";
+import { GenericCsvAdapter } from "@/adapters/csv-generic/adapter";
+import type { CsvMappingProfile } from "@/adapters/csv-generic/profile";
 import { createStorageProvider } from "@/ingest/storage";
 import type { ChannelCode, RawInput } from "@/adapters/types";
 
@@ -107,13 +112,36 @@ export async function importOtaCsvAction(
   const router = createRouterRegistry();
   if (selectedChannel === "AIRBNB") {
     router.register(new AirbnbCsvAdapter());
+  } else if (selectedChannel === "BOOKING_COM") {
+    router.register(new BookingComCsvAdapter());
+  } else if (selectedChannel === "AGODA") {
+    router.register(new AgodaCsvAdapter());
+  } else if (selectedChannel === "EXPEDIA") {
+    router.register(new ExpediaCsvAdapter());
   } else if (selectedChannel === "TIKET_COM") {
     router.register(new TiketCsvAdapter());
   } else if (selectedChannel === "TRAVELOKA") {
     router.register(new TravelokaCsvAdapter());
+  } else if (selectedChannel === "GENERIC") {
+    const profileRecord = await prisma.importMappingProfile.findFirst({
+      where: { organizationId },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (!profileRecord) {
+      return {
+        success: false,
+        message:
+          "Belum ada profil pemetaan CSV yang tersimpan untuk organisasi ini. Silakan pilih format OTA atau buat profil pemetaan terlebih dahulu.",
+      };
+    }
+    const profile = profileRecord.mapping as unknown as CsvMappingProfile;
+    router.register(new GenericCsvAdapter(profile, `generic.${profileRecord.id}`));
   } else {
-    // AUTO: Daftarkan ketiga adapter OTA
+    // AUTO: Daftarkan semua adapter OTA aktif
     router.register(new AirbnbCsvAdapter());
+    router.register(new BookingComCsvAdapter());
+    router.register(new AgodaCsvAdapter());
+    router.register(new ExpediaCsvAdapter());
     router.register(new TiketCsvAdapter());
     router.register(new TravelokaCsvAdapter());
   }
@@ -126,9 +154,12 @@ export async function importOtaCsvAction(
 
   const channelCode: ChannelCode | null =
     selectedChannel === "AIRBNB" ||
+    selectedChannel === "BOOKING_COM" ||
+    selectedChannel === "AGODA" ||
+    selectedChannel === "EXPEDIA" ||
     selectedChannel === "TIKET_COM" ||
     selectedChannel === "TRAVELOKA"
-      ? selectedChannel
+      ? (selectedChannel as ChannelCode)
       : null;
 
   let result: PipelineResult;

@@ -1,0 +1,7 @@
+# SYNTHETIC FIXTURE - Agoda YCS Extranet Bookings
+# Format ekspor CSV reservasi standar Agoda YCS Extranet
+"Booking ID","Booking Date","Check-in Date","Check-out Date","Customer Name","Room Type","Total Inclusive Rate","Commission","Booking Status","Payment Model","Currency"
+"AG-881920","2026-10-14","2026-11-02","2026-11-06","Kenji Sato","Estate Whole Villa","25000000","3750000","Confirmed","Agoda Collect","IDR"
+"AG-881921","2026-10-17","2026-11-07","2026-11-10","Rachel Adams","Luxury Cottage 3","6800000","1020000","Confirmed","Agoda Collect","IDR"
+"AG-881922","2026-10-19","2026-11-12","2026-11-15","Lucas Silva","Master Suite Villa","11000000","1650000","Cancelled","Agoda Collect","IDR"
+"AG-881923","2026-10-21","2026-11-16","2026-11-19","Hannah Clark","Luxury Cottage 1","7200000","1080000","Confirmed","Property Collect","IDR"

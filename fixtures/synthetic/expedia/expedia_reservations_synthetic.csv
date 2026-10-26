@@ -1,0 +1,7 @@
+# SYNTHETIC FIXTURE - Expedia Partner Central Reservations
+# Format ekspor CSV reservasi standar Expedia Partner Central
+"Reservation ID","Booked Date","Stay Date Start","Stay Date End","Guest Name","Unit Name","Total Booking Value","Commission Amount","Status","Payment Type","Currency"
+"EXP-772101","2026-10-12","2026-11-04","2026-11-08","David Miller","Master Suite Villa","15000000","2250000","Booked","Expedia Collect","IDR"
+"EXP-772102","2026-10-16","2026-11-09","2026-11-12","Jessica White","Luxury Cottage 2","7400000","1110000","Booked","Expedia Collect","IDR"
+"EXP-772103","2026-10-18","2026-11-13","2026-11-16","Carlos Gomez","Estate Whole Villa","24000000","3600000","Cancelled","Expedia Collect","IDR"
+"EXP-772104","2026-10-20","2026-11-18","2026-11-21","Olivia Brown","Luxury Cottage 3","6900000","1035000","Booked","Hotel Collect","IDR"

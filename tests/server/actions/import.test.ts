@@ -12,7 +12,11 @@ vi.mock("@/auth", () => ({
 }));
 
 vi.mock("@/lib/prisma", () => ({
-  prisma: {},
+  prisma: {
+    importMappingProfile: {
+      findFirst: vi.fn(),
+    },
+  },
 }));
 
 vi.mock("@/ingest/pipeline/pipeline", () => ({
@@ -26,6 +30,7 @@ vi.mock("@/ingest/storage", () => ({
 }));
 
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { runIngest } from "@/ingest/pipeline/pipeline";
 import { revalidatePath } from "next/cache";
 import { importOtaCsvAction } from "@/server/actions/import";
@@ -152,5 +157,58 @@ describe("importOtaCsvAction (S9-01)", () => {
     expect(result.success).toBe(false);
     expect(result.message).toContain("Header tidak cocok");
     expect(result.stats?.failed).toBe(1);
+  });
+
+  it("berhasil memproses import berkas CSV saluran BOOKING_COM, AGODA, dan EXPEDIA", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: { id: "user-1", organizationId: "org-1" },
+    } as never);
+
+    vi.mocked(runIngest).mockResolvedValue({
+      batchId: "batch-ota",
+      total: 4,
+      created: 4,
+      updated: 0,
+      duplicate: 0,
+      failed: 0,
+      needsReview: 0,
+      payoutsLinked: 0,
+      errors: [],
+    });
+
+    for (const channel of ["BOOKING_COM", "AGODA", "EXPEDIA"]) {
+      const file = new File(["dummy,csv"], `${channel.toLowerCase()}.csv`, { type: "text/csv" });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("channel", channel);
+
+      const result = await importOtaCsvAction(null, formData);
+      expect(result.success).toBe(true);
+      expect(result.batchId).toBe("batch-ota");
+      expect(runIngest).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          channel,
+        }),
+      );
+    }
+  });
+
+  it("menolak GENERIC import jika belum ada ImportMappingProfile tersimpan", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: { id: "user-1", organizationId: "org-1" },
+    } as never);
+
+    vi.mocked(prisma.importMappingProfile.findFirst).mockResolvedValue(null as never);
+
+    const file = new File(["col1,col2"], "custom.csv", { type: "text/csv" });
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("channel", "GENERIC");
+
+    const result = await importOtaCsvAction(null, formData);
+    expect(result.success).toBe(false);
+    expect(result.message).toContain("Belum ada profil pemetaan CSV yang tersimpan");
   });
 });
