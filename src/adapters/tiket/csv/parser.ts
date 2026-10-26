@@ -6,7 +6,8 @@
  */
 import type { ParsedBookingEvent, BookingStatus, EventType, CollectType } from "@/adapters/types";
 import { parseCsvRows } from "@/adapters/csv-generic/csv-tokenizer";
-import { isStayDate, nightsBetween, type StayDate } from "@/lib/dates";
+import { nightsBetween } from "@/lib/dates";
+import { parseOtaAmount, parseOtaDate } from "@/adapters/common/parse-utils";
 
 export function parseTiketReservationsCsv(content: string): {
   events: ParsedBookingEvent[];
@@ -73,8 +74,8 @@ export function parseTiketReservationsCsv(content: string): {
     const checkInRaw = (colIndex.checkIn >= 0 ? (row[colIndex.checkIn] ?? "") : "").trim();
     const checkOutRaw = (colIndex.checkOut >= 0 ? (row[colIndex.checkOut] ?? "") : "").trim();
 
-    const checkIn = isStayDate(checkInRaw) ? (checkInRaw as StayDate) : undefined;
-    const checkOut = isStayDate(checkOutRaw) ? (checkOutRaw as StayDate) : undefined;
+    const checkIn = parseOtaDate(checkInRaw);
+    const checkOut = parseOtaDate(checkOutRaw);
 
     if (!checkIn || !checkOut) {
       errors.push(
@@ -88,12 +89,7 @@ export function parseTiketReservationsCsv(content: string): {
     const listingName =
       colIndex.room >= 0 ? row[colIndex.room]?.trim() : "Hillside Eden Bali - Estate (Tiket.com)";
 
-    let grossAmount = "0.00";
-    const rawTotal = colIndex.total >= 0 ? row[colIndex.total] : undefined;
-    if (rawTotal) {
-      const cleaned = rawTotal.replace(/[^0-9.-]/g, "");
-      if (cleaned) grossAmount = Number.parseFloat(cleaned).toFixed(2);
-    }
+    const grossAmount = parseOtaAmount(colIndex.total >= 0 ? row[colIndex.total] : undefined);
 
     const rawPayment = (colIndex.payment >= 0 ? (row[colIndex.payment] ?? "") : "").toUpperCase();
     let collectType: CollectType = "CHANNEL_COLLECT";

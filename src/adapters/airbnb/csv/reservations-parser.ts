@@ -6,7 +6,8 @@
  */
 import type { ParsedBookingEvent, BookingStatus, EventType } from "@/adapters/types";
 import { parseCsvRows } from "@/adapters/csv-generic/csv-tokenizer";
-import { isStayDate, nightsBetween, type StayDate } from "@/lib/dates";
+import { nightsBetween } from "@/lib/dates";
+import { parseOtaAmount, parseOtaDate } from "@/adapters/common/parse-utils";
 
 export interface ParseReservationsOptions {
   filename?: string;
@@ -83,9 +84,8 @@ export function parseAirbnbReservationsCsv(
     const checkInRaw = (colIndex.startDate >= 0 ? (row[colIndex.startDate] ?? "") : "").trim();
     const checkOutRaw = (colIndex.endDate >= 0 ? (row[colIndex.endDate] ?? "") : "").trim();
 
-    // Normalisasi tanggal (YYYY-MM-DD)
-    const checkIn = isStayDate(checkInRaw) ? (checkInRaw as StayDate) : undefined;
-    const checkOut = isStayDate(checkOutRaw) ? (checkOutRaw as StayDate) : undefined;
+    const checkIn = parseOtaDate(checkInRaw);
+    const checkOut = parseOtaDate(checkOutRaw);
 
     if (!checkIn || !checkOut) {
       errors.push(
@@ -99,12 +99,7 @@ export function parseAirbnbReservationsCsv(
     const listingName = colIndex.listing >= 0 ? row[colIndex.listing]?.trim() : undefined;
 
     // Bersihkan nominal pendapatan
-    let grossAmount = "0.00";
-    const rawEarnings = colIndex.earnings >= 0 ? row[colIndex.earnings] : undefined;
-    if (rawEarnings) {
-      const cleaned = rawEarnings.replace(/[^0-9.-]/g, "");
-      if (cleaned) grossAmount = Number.parseFloat(cleaned).toFixed(2);
-    }
+    const grossAmount = parseOtaAmount(colIndex.earnings >= 0 ? row[colIndex.earnings] : undefined);
 
     const rawCurrency = colIndex.currency >= 0 ? row[colIndex.currency]?.trim() : undefined;
     const currency = rawCurrency ? rawCurrency.toUpperCase() : "IDR";

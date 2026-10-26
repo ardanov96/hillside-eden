@@ -135,9 +135,11 @@ export async function getDashboardSummary(
         status: true,
         checkIn: true,
         checkOut: true,
+        currency: true,
         grossAmount: true,
         commissionAmount: true,
         commissionRate: true,
+        fxRateToBase: true,
         property: { select: { name: true } },
       },
       orderBy: { checkIn: "desc" },
@@ -151,6 +153,20 @@ export async function getDashboardSummary(
     }),
   ]);
 
+  // Helper konversi kurs ke base currency IDR (docs/05 §1 & OD-05)
+  const getBookingFx = (b: {
+    currency?: string | null;
+    fxRateToBase?: Decimal | unknown;
+  }): Decimal => {
+    if (!b.currency || b.currency === "IDR") return new Decimal(1);
+    if (b.fxRateToBase) {
+      const fx = new Decimal(b.fxRateToBase.toString());
+      if (fx.gt(1)) return fx;
+    }
+    if (b.currency === "USD") return new Decimal(16000);
+    return new Decimal(1);
+  };
+
   // 3. Kalkulasi total metrik
   let totalGross = new Decimal(0);
   let totalCommission = new Decimal(0);
@@ -160,10 +176,14 @@ export async function getDashboardSummary(
   for (const b of bookings) {
     if (b.status === "CANCELLED") continue;
 
-    const gross = new Decimal(b.grossAmount.toString());
-    const comm = b.commissionAmount
+    const fx = getBookingFx(b);
+    const rawGross = new Decimal(b.grossAmount.toString());
+    const rawComm = b.commissionAmount
       ? new Decimal(b.commissionAmount.toString())
-      : gross.times(b.commissionRate ? new Decimal(b.commissionRate.toString()) : 0.15);
+      : rawGross.times(b.commissionRate ? new Decimal(b.commissionRate.toString()) : 0.15);
+
+    const gross = rawGross.times(fx);
+    const comm = rawComm.times(fx);
 
     totalGross = totalGross.plus(gross);
     totalCommission = totalCommission.plus(comm);
@@ -231,10 +251,13 @@ export async function getDashboardSummary(
         exp: new Decimal(0),
       };
     }
-    const g = new Decimal(b.grossAmount.toString());
-    const c = b.commissionAmount
+    const fx = getBookingFx(b);
+    const rawG = new Decimal(b.grossAmount.toString());
+    const rawC = b.commissionAmount
       ? new Decimal(b.commissionAmount.toString())
-      : g.times(b.commissionRate ? new Decimal(b.commissionRate.toString()) : 0.15);
+      : rawG.times(b.commissionRate ? new Decimal(b.commissionRate.toString()) : 0.15);
+    const g = rawG.times(fx);
+    const c = rawC.times(fx);
     monthlyMap[mKey].gross = monthlyMap[mKey].gross.plus(g);
     monthlyMap[mKey].comm = monthlyMap[mKey].comm.plus(c);
     monthlyMap[mKey].net = monthlyMap[mKey].net.plus(g.minus(c));
@@ -293,10 +316,13 @@ export async function getDashboardSummary(
 
   // 7. Recent 5 Bookings
   const recentBookings: RecentBookingItem[] = bookings.slice(0, 5).map((b) => {
-    const g = new Decimal(b.grossAmount.toString());
-    const c = b.commissionAmount
+    const fx = getBookingFx(b);
+    const rawG = new Decimal(b.grossAmount.toString());
+    const rawC = b.commissionAmount
       ? new Decimal(b.commissionAmount.toString())
-      : g.times(b.commissionRate ? new Decimal(b.commissionRate.toString()) : 0.15);
+      : rawG.times(b.commissionRate ? new Decimal(b.commissionRate.toString()) : 0.15);
+    const g = rawG.times(fx);
+    const c = rawC.times(fx);
     const ci = new Date(b.checkIn).getTime();
     const co = new Date(b.checkOut).getTime();
     const nights = Math.max(1, Math.round((co - ci) / (1000 * 60 * 60 * 24)));

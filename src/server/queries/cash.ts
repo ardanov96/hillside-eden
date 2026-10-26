@@ -113,7 +113,8 @@ export async function getCashFlowSummary(filters: CashFlowFilters): Promise<Cash
   const recentPayouts: PayoutHistoryItem[] = [];
 
   for (const p of payouts) {
-    totalPayoutAmount = totalPayoutAmount.plus(p.amount);
+    const fx = p.currency === "USD" ? new Decimal(16000) : new Decimal(1);
+    totalPayoutAmount = totalPayoutAmount.plus(p.amount.times(fx));
     recentPayouts.push({
       id: p.id,
       channel: p.channel,
@@ -145,7 +146,13 @@ export async function getCashFlowSummary(filters: CashFlowFilters): Promise<Cash
 
   let totalHotelCollectCash = new Decimal(0);
   for (const b of hotelCollectBookings) {
-    totalHotelCollectCash = totalHotelCollectCash.plus(b.grossAmount);
+    const fx =
+      b.currency === "USD"
+        ? b.fxRateToBase
+          ? new Decimal(b.fxRateToBase.toString())
+          : new Decimal(16000)
+        : new Decimal(1);
+    totalHotelCollectCash = totalHotelCollectCash.plus(b.grossAmount.times(fx));
   }
 
   const totalCashIn = totalPayoutAmount.plus(totalHotelCollectCash);
@@ -181,15 +188,20 @@ export async function getCashFlowSummary(filters: CashFlowFilters): Promise<Cash
     },
   });
 
-  const hotelCollectItems = allHotelCollect.map((b) => ({
-    channel: b.channel,
-    grossAmount: money(b.grossAmount.toString(), b.currency as "IDR" | "USD"),
-    commissionAmount: money(
-      (b.commissionAmount ?? new Decimal(0)).toString(),
-      b.currency as "IDR" | "USD",
-    ),
-    collectType: b.collectType,
-  }));
+  const hotelCollectItems = allHotelCollect.map((b) => {
+    const fx =
+      b.currency === "USD"
+        ? b.fxRateToBase
+          ? new Decimal(b.fxRateToBase.toString())
+          : new Decimal(16000)
+        : new Decimal(1);
+    return {
+      channel: b.channel,
+      grossAmount: money(b.grossAmount.times(fx).toString(), "IDR"),
+      commissionAmount: money((b.commissionAmount ?? new Decimal(0)).times(fx).toString(), "IDR"),
+      collectType: b.collectType,
+    };
+  });
 
   const outstandingMap = computeOutstandingHotelCommission(hotelCollectItems);
   const outstandingCommissions: OutstandingCommissionItem[] = [];
@@ -231,13 +243,19 @@ export async function getCashFlowSummary(filters: CashFlowFilters): Promise<Cash
   const pendingPayouts: PendingPayoutItem[] = [];
 
   for (const pb of pendingBookings) {
+    const fx =
+      pb.currency === "USD"
+        ? pb.fxRateToBase
+          ? new Decimal(pb.fxRateToBase.toString())
+          : new Decimal(16000)
+        : new Decimal(1);
     const gross = money(pb.grossAmount.toString(), pb.currency as "IDR" | "USD");
     const comm = pb.commissionAmount
       ? money(pb.commissionAmount.toString(), pb.currency as "IDR" | "USD")
       : zero(gross.currency);
     const estimatedNet = sub(gross, comm).amount;
 
-    totalPendingPayoutDec = totalPendingPayoutDec.plus(estimatedNet);
+    totalPendingPayoutDec = totalPendingPayoutDec.plus(estimatedNet.times(fx));
     pendingPayouts.push({
       bookingId: pb.id,
       externalId: pb.externalId,

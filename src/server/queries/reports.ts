@@ -258,10 +258,18 @@ export async function getMonthlyOwnerReport(input: {
   }
 
   for (const b of bookings) {
-    const grossVal = new Decimal(b.grossAmount.toString());
-    const commVal = b.commissionAmount
+    const fx =
+      b.currency === "USD"
+        ? b.fxRateToBase && new Decimal(b.fxRateToBase.toString()).gt(1)
+          ? new Decimal(b.fxRateToBase.toString())
+          : new Decimal(16000)
+        : new Decimal(1);
+    const rawGross = new Decimal(b.grossAmount.toString());
+    const rawComm = b.commissionAmount
       ? new Decimal(b.commissionAmount.toString())
-      : grossVal.times(b.commissionRate ? new Decimal(b.commissionRate.toString()) : 0.15);
+      : rawGross.times(b.commissionRate ? new Decimal(b.commissionRate.toString()) : 0.15);
+    const grossVal = rawGross.times(fx);
+    const commVal = rawComm.times(fx);
     const netVal = grossVal.minus(commVal);
 
     // Hitung malam menginap yang jatuh dalam bulan ini

@@ -122,5 +122,28 @@ describe("BookingComCsvAdapter", () => {
         expect(res.errorCode).toBe("INVALID_VALUE");
       }
     });
+
+    it("mem-parse CSV dengan pemisah ribuan titik Indonesia dan tanggal garis miring (DD/MM/YYYY)", async () => {
+      const localizedCsv = `Book number,Check-in,Check-out,Guest name,Room type,Total amount,Commission,Status,Payment status,Currency
+BK-LOC-01,05/11/2026,08/11/2026,Budi Santoso,Master Suite,15.000.000,2.250.000,ok,Online Payments,IDR`;
+
+      const input: RawInput = {
+        kind: "csv",
+        filename: "booking_local.csv",
+        content: localizedCsv,
+      };
+
+      const res = await adapter.parse(input);
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+
+      expect(res.events).toHaveLength(1);
+      const ev = res.events[0]!;
+      expect(ev.booking.checkIn).toBe("2026-11-05");
+      expect(ev.booking.checkOut).toBe("2026-11-08");
+      expect(ev.booking.nights).toBe(3);
+      expect(ev.booking.grossAmount).toBe("15000000.00");
+      expect(ev.booking.commissionAmount).toBe("2250000.00");
+    });
   });
 });

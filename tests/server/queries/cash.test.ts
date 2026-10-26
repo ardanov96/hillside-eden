@@ -110,4 +110,73 @@ describe("getCashFlowSummary", () => {
     expect(result.metrics.totalPendingPayout).toBe("2550000");
     expect(result.pendingPayouts).toHaveLength(1);
   });
+
+  it("mengonversi USD ke IDR dengan benar berdasarkan kurs fx", async () => {
+    // 1. Payout USD 200 (default kurs 16.000 = 3.200.000)
+    const mockPayouts = [
+      {
+        id: "payout-usd-1",
+        channel: "AIRBNB",
+        payoutDate: new Date("2026-10-20T00:00:00Z"),
+        currency: "USD",
+        amount: new Decimal("200"),
+        reference: "PAY-USD-01",
+        bookings: [{ id: "b-usd-1" }],
+      },
+    ];
+
+    // 2. Hotel Collect Booking USD 100 dengan fxRateToBase 16.200 (komisi 15 USD = 243.000 IDR)
+    const mockHotelCollect = [
+      {
+        id: "b-usd-2",
+        channel: "BOOKING_COM",
+        grossAmount: new Decimal("100"),
+        commissionAmount: new Decimal("15"),
+        currency: "USD",
+        fxRateToBase: new Decimal("16200"),
+        collectType: "HOTEL_COLLECT",
+        status: "CONFIRMED",
+      },
+    ];
+
+    // 3. Expenses: Rp 0
+    const mockExpenses: unknown[] = [];
+
+    // 4. Pending Booking USD 50 (komisi 5 -> net 45 USD, default fx 16000 -> 720.000 IDR)
+    const mockPending = [
+      {
+        id: "b-usd-3",
+        externalId: "USD999",
+        channel: "AGODA",
+        grossAmount: new Decimal("50"),
+        commissionAmount: new Decimal("5"),
+        currency: "USD",
+        fxRateToBase: null,
+        checkOut: new Date("2026-10-18T00:00:00Z"),
+        property: { name: "Villa Hillside" },
+      },
+    ];
+
+    vi.mocked(prisma.payout.findMany).mockResolvedValue(mockPayouts as never);
+    vi.mocked(prisma.booking.findMany)
+      .mockResolvedValueOnce(mockHotelCollect as never)
+      .mockResolvedValueOnce(mockHotelCollect as never)
+      .mockResolvedValueOnce(mockPending as never);
+    vi.mocked(prisma.expense.findMany).mockResolvedValue(mockExpenses as never);
+
+    const result = await getCashFlowSummary({ organizationId: "org-1" });
+
+    // Kas Masuk = 200 * 16.000 (3.200.000) + 100 * 16.200 (1.620.000) = 4.820.000
+    expect(result.metrics.payoutsReceived).toBe("3200000");
+    expect(result.metrics.hotelCollectReceived).toBe("1620000");
+    expect(result.metrics.totalCashIn).toBe("4820000");
+
+    // Komisi Terutang (Hotel Collect) = 15 * 16.200 = 243.000
+    expect(result.metrics.totalOutstandingCommission).toBe("243000");
+    expect(result.outstandingCommissions).toHaveLength(1);
+    expect(result.outstandingCommissions[0]?.totalCommissionPayable).toBe("243000");
+
+    // Pendapatan Belum Cair = (50 - 5) * 16.000 = 720.000
+    expect(result.metrics.totalPendingPayout).toBe("720000");
+  });
 });

@@ -85,6 +85,7 @@ export interface BookingFields {
   commissionRate: Decimal | null;
   collectType: CollectType;
   fxRateToBase: Decimal;
+  fxRateSource: string | null;
   bookedAt: Date | null;
 }
 
@@ -101,6 +102,12 @@ export function inferBookingFields(b: NormalizedBooking): BookingFields {
   const commissionAmount =
     b.commissionAmount !== undefined ? new Decimal(b.commissionAmount) : null;
   const commissionRate = b.commissionRate !== undefined ? new Decimal(b.commissionRate) : null;
+
+  // Konversi kurs ke base currency (IDR) per docs/05 §1 & OD-05
+  const isUsd = currency === "USD";
+  const fxRateToBase = isUsd ? new Decimal(16000) : new Decimal(1);
+  const fxRateSource = isUsd ? "ESTIMATED_DEFAULT" : null;
+
   return {
     nights,
     guestsCount,
@@ -111,7 +118,8 @@ export function inferBookingFields(b: NormalizedBooking): BookingFields {
     commissionAmount,
     commissionRate,
     collectType: b.collectType ?? "UNKNOWN",
-    fxRateToBase: new Decimal(1),
+    fxRateToBase,
+    fxRateSource,
     bookedAt: b.bookedAt ?? null,
   };
 }
@@ -296,6 +304,7 @@ export async function applyBookingEvent(
         commissionRate: inferred.commissionRate,
         collectType: inferred.collectType,
         fxRateToBase: inferred.fxRateToBase,
+        fxRateSource: inferred.fxRateSource,
         bookedAt: inferred.bookedAt,
         bookedAtIsApprox: inferred.bookedAt === null,
       },
