@@ -96,32 +96,32 @@ Kunci idempotensi booking: `source + external_id`.
 ## 8. Roadmap per fase
 
 ### Fase 0: Fondasi (tidak butuh data client)
-- [ ] Repo, lint, format, typecheck, CI, Dockerfile dan docker-compose (app + postgres), `.env.example`.
-- [ ] Skema Prisma v0, migrasi, seed.
-- [ ] Autentikasi satu user owner (Auth.js), enum peran disiapkan.
+- [x] Repo, lint, format, typecheck, CI, Dockerfile dan docker-compose (app + postgres), `.env.example`.
+- [x] Skema Prisma v0, migrasi, seed.
+- [x] Autentikasi satu user owner (Auth.js), enum peran disiapkan.
 - [x] Generator data dummy: 2 properti, unit sesuai bagian 2, 3 OTA, kasus tepi (modifikasi, pembatalan, booking seluruh estate, hanya 2 kamar disewakan, mata uang berbeda).
-- [ ] Library KPI di `src/domain` dengan unit test.
-- [ ] Deteksi bentrok jadwal, termasuk estate vs unit.
-- [ ] Kontrak adapter dan pipeline ingest idempoten (`import_batch`, dedup, `booking_event`).
-- [ ] Impor CSV generik (pemetaan kolom) dan form booking manual.
+- [x] Library KPI di `src/domain` dengan unit test.
+- [x] Deteksi bentrok jadwal, termasuk estate vs unit.
+- [x] Kontrak adapter dan pipeline ingest idempoten (`import_batch`, dedup, `booking_event`).
+- [x] Impor CSV generik (pemetaan kolom) dan form booking manual.
 
 **Selesai bila:** `docker compose up` berjalan, seed menghasilkan dashboard terisi, semua tes KPI hijau.
 
 ### Fase 1: Pengeluaran dan ringkasan (paralel dengan Fase 0 setelah skema ada)
-- [ ] Kategori default (bisa diubah): gaji dan tunjangan, utilitas, housekeeping/laundry/amenities, F&B, perawatan dan perbaikan, pemasaran dan software, pajak/perizinan/asuransi, transportasi dan operasional lain, sewa/lease.
-- [ ] Form pengeluaran ramah ponsel, unggah foto struk, template biaya rutin, impor CSV.
-- [ ] Alokasi biaya bersama antar properti (persentase tetap atau proporsional room-night).
-- [ ] Pendapatan lain (manual).
-- [ ] Status draf/terverifikasi, tutup buku bulanan (`period_lock`), koreksi lewat entri pembalik, log audit.
-- [ ] Halaman ringkasan: pemasukan − pengeluaran = hasil operasional, per properti, gabungan, bulan, dan tahun berjalan, dengan pembanding periode sebelumnya.
+- [x] Kategori default (bisa diubah): gaji dan tunjangan, utilitas, housekeeping/laundry/amenities, F&B, perawatan dan perbaikan, pemasaran dan software, pajak/perizinan/asuransi, transportasi dan operasional lain, sewa/lease.
+- [x] Form pengeluaran ramah ponsel, unggah foto struk, template biaya rutin, impor CSV.
+- [x] Alokasi biaya bersama antar properti (persentase tetap atau proporsional room-night).
+- [x] Pendapatan lain (manual).
+- [x] Status draf/terverifikasi, tutup buku bulanan (`period_lock`), koreksi lewat entri pembalik, log audit.
+- [x] Halaman ringkasan: pemasukan − pengeluaran = hasil operasional, per properti, gabungan, bulan, dan tahun berjalan, dengan pembanding periode sebelumnya.
 
 **Selesai bila:** ringkasan cocok dengan perhitungan manual pada dataset uji, dan periode terkunci menolak perubahan.
 
-### Fase 2: Adapter pemasukan (**diblokir** sampai ada fixture asli)
-- [ ] Airbnb: ekspor CSV reservasi dan riwayat transaksi, email konfirmasi, iCal untuk blok tanggal.
-- [ ] Tiket.com dan Traveloka: email notifikasi dan ekspor extranet.
-- [ ] Penerimaan email: mailbox khusus atau inbound webhook, simpan email mentah.
-- [ ] Pemetaan listing ke unit (seed dan UI sederhana).
+### Fase 2: Adapter pemasukan (**terverifikasi sintetis**, siap intake fixture asli)
+- [x] Airbnb: ekspor CSV reservasi dan riwayat transaksi, email konfirmasi, iCal untuk blok tanggal.
+- [x] Tiket.com dan Traveloka: email notifikasi dan ekspor extranet.
+- [x] Penerimaan email: mailbox khusus atau inbound webhook, simpan email mentah.
+- [x] Pemetaan listing ke unit (seed dan UI sederhana).
 
 **Selesai bila:** tiap adapter lulus tes dengan minimal 5 fixture asli (termasuk pembatalan dan modifikasi), idempoten, dan setiap record bisa ditelusuri ke `import_batch`.
 
