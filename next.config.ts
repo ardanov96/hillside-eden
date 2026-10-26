@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob:",
               "font-src 'self' data:",
-              "connect-src 'self'",
+              "connect-src 'self' ws: wss:",
               "frame-ancestors 'none'",
             ].join("; "),
           },
