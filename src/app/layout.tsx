@@ -5,11 +5,13 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -21,14 +23,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
-        {/* Bersihkan zombie Service Worker / Cache Storage (mis. dari project PWA lain di port 3000) agar tidak membajak navigasi dev */}
+        {/* Bersihkan zombie Service Worker / Cache Storage hanya di localhost agar tidak membajak port dev 3000 */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(regs) {
-                  for (var r of regs) { r.unregister(); }
-                });
+              if (typeof window !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    for (var r of regs) { r.unregister(); }
+                  });
+                }
                 if ('caches' in window) {
                   caches.keys().then(function(keys) {
                     for (var k of keys) { caches.delete(k); }

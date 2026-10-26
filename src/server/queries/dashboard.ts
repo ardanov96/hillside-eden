@@ -102,16 +102,7 @@ export async function getDashboardSummary(
     };
   }
 
-  // 1. Ambil seluruh booking terfilter
-  const bookings = await prisma.booking.findMany({
-    where: whereBooking,
-    include: {
-      property: { select: { name: true } },
-    },
-    orderBy: { checkIn: "desc" },
-  });
-
-  // 2. Ambil seluruh pengeluaran terfilter
+  // 2. Klausa filter pengeluaran
   const whereExpense: Record<string, unknown> = {
     organizationId,
     ...(propertyId ? { propertyId } : {}),
@@ -122,9 +113,33 @@ export async function getDashboardSummary(
       ...(to ? { lte: new Date(`${to}T23:59:59.999Z`) } : {}),
     };
   }
-  const expenses = await prisma.expense.findMany({
-    where: whereExpense,
-  });
+
+  // 1 & 2. Ambil booking dan pengeluaran secara paralel (tanpa rawPayload JSON yang membebani memori/jaringan)
+  const [bookings, expenses] = await Promise.all([
+    prisma.booking.findMany({
+      where: whereBooking,
+      select: {
+        id: true,
+        externalId: true,
+        channel: true,
+        status: true,
+        checkIn: true,
+        checkOut: true,
+        grossAmount: true,
+        commissionAmount: true,
+        commissionRate: true,
+        property: { select: { name: true } },
+      },
+      orderBy: { checkIn: "desc" },
+    }),
+    prisma.expense.findMany({
+      where: whereExpense,
+      select: {
+        amount: true,
+        incurredOn: true,
+      },
+    }),
+  ]);
 
   // 3. Kalkulasi total metrik
   let totalGross = new Decimal(0);
