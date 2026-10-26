@@ -21,28 +21,40 @@ import type { DateRange, StayDate } from "@/lib/dates";
 export const GLOBAL_FILTER_KEYS = ["propertyId", "channel", "period", "from", "to"] as const;
 export type GlobalFilterKey = (typeof GLOBAL_FILTER_KEYS)[number];
 
-/** Preset saluran / OTA yang terdaftar secara default. */
-export const CHANNEL_PRESETS = [
+/**
+ * Saluran / OTA aktif yang terhubung untuk Hillside Eden.
+ * Owner/client saat ini hanya tersambung ke: Airbnb, Booking.com, Agoda, dan Expedia.
+ * Saluran lainnya di-hidden secara default dari antarmuka filter.
+ */
+export const CONNECTED_OTA_CHANNELS = [
   { value: "AIRBNB", label: "Airbnb" },
-  { value: "TIKET_COM", label: "Tiket.com" },
-  { value: "TRAVELOKA", label: "Traveloka" },
   { value: "BOOKING_COM", label: "Booking.com" },
   { value: "AGODA", label: "Agoda" },
   { value: "EXPEDIA", label: "Expedia" },
+] as const;
+
+/** Pilihan saluran yang tampil di UI (dropdown filter). */
+export const CHANNEL_PRESETS = CONNECTED_OTA_CHANNELS;
+
+/** Seluruh saluran yang dikenal sistem (termasuk saluran historis/eksternal yang di-hidden). */
+export const ALL_CHANNEL_PRESETS = [
+  ...CONNECTED_OTA_CHANNELS,
+  { value: "TIKET_COM", label: "Tiket.com" },
+  { value: "TRAVELOKA", label: "Traveloka" },
   { value: "DIRECT", label: "Direct Booking" },
   { value: "MANUAL", label: "Manual" },
 ] as const;
 
-export const CHANNEL_VALUES = CHANNEL_PRESETS.map((c) => c.value);
-export type ChannelPreset = (typeof CHANNEL_PRESETS)[number]["value"];
+export const CHANNEL_VALUES = ALL_CHANNEL_PRESETS.map((c) => c.value);
+export type ChannelPreset = (typeof ALL_CHANNEL_PRESETS)[number]["value"];
 
 export const CHANNEL_LABEL: Record<ChannelPreset, string> = {
   AIRBNB: "Airbnb",
-  TIKET_COM: "Tiket.com",
-  TRAVELOKA: "Traveloka",
   BOOKING_COM: "Booking.com",
   AGODA: "Agoda",
   EXPEDIA: "Expedia",
+  TIKET_COM: "Tiket.com",
+  TRAVELOKA: "Traveloka",
   DIRECT: "Direct Booking",
   MANUAL: "Manual",
 };

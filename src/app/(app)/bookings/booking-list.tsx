@@ -18,27 +18,15 @@ import Link from "next/link";
 
 import {
   safeParseBookingListSearch,
-  BOOKING_CHANNEL_VALUES,
   BOOKING_STATUS_VALUES,
 } from "@/lib/forms/booking-list-search-schema";
-import { parseGlobalFilter } from "@/lib/filters/global-filter";
+import { parseGlobalFilter, CHANNEL_PRESETS } from "@/lib/filters/global-filter";
 import { todayInWITA } from "@/lib/dates";
 import { getBookings } from "@/server/queries/bookings";
 
 import { BookingFiltersForm } from "./booking-filters-form";
 import { BookingPagination } from "./booking-pagination";
 import { BookingTable } from "./booking-table";
-
-const CHANNEL_LABEL: Record<(typeof BOOKING_CHANNEL_VALUES)[number], string> = {
-  AIRBNB: "Airbnb",
-  TIKET_COM: "Tiket.com",
-  TRAVELOKA: "Traveloka",
-  EXPEDIA: "Expedia",
-  AGODA: "Agoda",
-  BOOKING_COM: "Booking.com",
-  DIRECT: "Direct",
-  MANUAL: "Manual",
-};
 
 const STATUS_LABEL: Record<(typeof BOOKING_STATUS_VALUES)[number], string> = {
   PENDING: "Menunggu",
@@ -109,9 +97,9 @@ export async function BookingList({ organizationId, searchParams }: BookingListP
       </header>
 
       <BookingFiltersForm
-        channelOptions={BOOKING_CHANNEL_VALUES.map((v) => ({
-          value: v,
-          label: CHANNEL_LABEL[v],
+        channelOptions={CHANNEL_PRESETS.map((c) => ({
+          value: c.value,
+          label: c.label,
         }))}
         statusOptions={BOOKING_STATUS_VALUES.map((v) => ({
           value: v,

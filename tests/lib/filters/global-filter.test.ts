@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   GLOBAL_FILTER_KEYS,
+  CHANNEL_PRESETS,
   PERIOD_PRESETS,
   globalFilterQueryString,
   mergeKeepingNonGlobal,
@@ -299,5 +300,14 @@ describe("konstanta", () => {
 
   it("PERIOD_PRESETS berisi 4 preset tanpa duplikat", () => {
     expect(new Set(PERIOD_PRESETS).size).toBe(4);
+  });
+
+  it("CHANNEL_PRESETS hanya berisi 4 OTA aktif (Airbnb, Booking.com, Agoda, Expedia)", () => {
+    expect(CHANNEL_PRESETS.map((c) => c.value)).toEqual([
+      "AIRBNB",
+      "BOOKING_COM",
+      "AGODA",
+      "EXPEDIA",
+    ]);
   });
 });
