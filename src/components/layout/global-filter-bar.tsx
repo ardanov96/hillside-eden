@@ -20,6 +20,8 @@ import {
 } from "@/lib/filters/global-filter";
 import { Button } from "@/components/ui/button";
 
+import { cn } from "@/lib/utils";
+
 export interface PropertyOption {
   id: string;
   name: string;
@@ -27,9 +29,17 @@ export interface PropertyOption {
 
 export interface GlobalFilterBarProps {
   properties: readonly PropertyOption[];
+  className?: string;
+  isMobile?: boolean;
+  onApplied?: () => void;
 }
 
-export function GlobalFilterBar({ properties }: GlobalFilterBarProps) {
+export function GlobalFilterBar({
+  properties,
+  className,
+  isMobile = false,
+  onApplied,
+}: GlobalFilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -53,6 +63,90 @@ export function GlobalFilterBar({ properties }: GlobalFilterBarProps) {
 
     const merged = mergeKeepingNonGlobal(current, updates);
     router.push(`${pathname}${serializeParams(merged)}`);
+    onApplied?.();
+  }
+
+  if (isMobile) {
+    return (
+      <form onSubmit={onSubmit} className={cn("space-y-3", className)}>
+        <div className="space-y-1">
+          <label
+            htmlFor="global-property-m"
+            className="text-xs font-semibold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5"
+          >
+            <Building2 className="h-3.5 w-3.5 text-primary" />
+            <span>Pilih Properti</span>
+          </label>
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-2xs dark:border-zinc-800 dark:bg-zinc-850">
+            <select
+              id="global-property-m"
+              name="propertyId"
+              defaultValue={propertyId ?? ""}
+              className="w-full cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
+            >
+              <option value="">Semua Properti (Portofolio)</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label
+            htmlFor="global-period-m"
+            className="text-xs font-semibold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5"
+          >
+            <CalendarDays className="h-3.5 w-3.5 text-primary" />
+            <span>Pilih Periode</span>
+          </label>
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-2xs dark:border-zinc-800 dark:bg-zinc-850">
+            <select
+              id="global-period-m"
+              name="period"
+              defaultValue={period}
+              className="w-full cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
+            >
+              {PERIOD_PRESETS.map((p) => (
+                <option key={p} value={p}>
+                  {PERIOD_LABEL[p]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {period === "custom" ? (
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div>
+              <span className="text-[10px] text-muted-foreground block mb-1">Mulai:</span>
+              <input
+                name="from"
+                type="date"
+                defaultValue={from ?? ""}
+                className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-medium text-foreground dark:border-zinc-800 dark:bg-zinc-800"
+              />
+            </div>
+            <div>
+              <span className="text-[10px] text-muted-foreground block mb-1">Sampai:</span>
+              <input
+                name="to"
+                type="date"
+                defaultValue={to ?? ""}
+                className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-medium text-foreground dark:border-zinc-800 dark:bg-zinc-800"
+              />
+            </div>
+          </div>
+        ) : null}
+
+        <Button type="submit" className="w-full h-9 gap-1.5 font-semibold shadow-xs mt-1">
+          <Filter className="h-4 w-4" />
+          <span>Terapkan Filter</span>
+        </Button>
+      </form>
+    );
   }
 
   return (

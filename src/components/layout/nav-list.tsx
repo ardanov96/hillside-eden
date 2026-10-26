@@ -34,7 +34,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
   "/settings": Settings,
 };
 
-export function NavList() {
+export interface NavListProps {
+  onNavigate?: () => void;
+}
+
+export function NavList({ onNavigate }: NavListProps = {}) {
   const currentPath = usePathname();
   const searchParams = useSearchParams();
 
@@ -76,9 +80,10 @@ export function NavList() {
           <Link
             key={item.href}
             href={`${item.href}${globalQs}`}
+            onClick={onNavigate}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "group flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-xs font-medium transition-all duration-150",
+              "group flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-150 active:scale-[0.98]",
               isActive
                 ? "bg-slate-100 text-slate-900 font-semibold shadow-2xs dark:bg-zinc-800 dark:text-white"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-white",

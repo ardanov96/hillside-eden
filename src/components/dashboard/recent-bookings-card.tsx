@@ -42,13 +42,13 @@ export function RecentBookingsCard({ bookings }: RecentBookingsCardProps) {
               key={item.id}
               className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100/70 dark:border-zinc-800 dark:bg-zinc-800/30 dark:hover:bg-zinc-800/60 transition-colors"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 font-mono text-xs font-bold text-white dark:bg-emerald-600">
                   {item.externalId.slice(-3).toUpperCase()}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-mono text-xs font-bold text-slate-900 dark:text-white truncate">
                       {item.externalId}
                     </span>
                     <ChannelChip channel={item.channel} />

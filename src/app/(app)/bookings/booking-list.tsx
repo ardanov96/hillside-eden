@@ -92,17 +92,17 @@ export async function BookingList({ organizationId, searchParams }: BookingListP
             detail.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="outline" className="gap-2 shadow-xs">
+        <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:items-center">
+          <Button asChild variant="outline" className="gap-2 shadow-xs justify-center">
             <Link href="/bookings/import">
-              <Upload className="h-4 w-4" />
-              <span>Impor File OTA</span>
+              <Upload className="h-4 w-4 shrink-0" />
+              <span className="truncate">Impor File OTA</span>
             </Link>
           </Button>
-          <Button asChild className="gap-2 shadow-xs">
+          <Button asChild className="gap-2 shadow-xs justify-center">
             <Link href="/bookings/new">
-              <Plus className="h-4 w-4" />
-              <span>Tambah Booking Manual</span>
+              <Plus className="h-4 w-4 shrink-0" />
+              <span className="truncate">Tambah Booking</span>
             </Link>
           </Button>
         </div>
