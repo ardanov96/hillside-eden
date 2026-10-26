@@ -16,6 +16,7 @@ import type { ChannelCode, BookingStatus } from "@prisma/client";
 export interface DashboardFilterParams {
   organizationId: string;
   propertyId?: string;
+  channel?: ChannelCode;
   from?: string;
   to?: string;
 }
@@ -87,12 +88,13 @@ const CHANNEL_LABELS: Record<ChannelCode, { label: string; color: string }> = {
 export async function getDashboardSummary(
   params: DashboardFilterParams,
 ): Promise<DashboardSummaryResult> {
-  const { organizationId, propertyId, from, to } = params;
+  const { organizationId, propertyId, channel, from, to } = params;
 
   // Klausa filter dasar
   const whereBooking: Record<string, unknown> = {
     organizationId,
     ...(propertyId ? { propertyId } : {}),
+    ...(channel ? { channel } : {}),
   };
 
   if (from || to) {

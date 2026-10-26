@@ -26,12 +26,15 @@ describe("parseGlobalFilter", () => {
     expect(f.period).toBe("this_month");
     expect(f.range).toEqual({ start: "2026-10-01", end: "2026-10-31" });
     expect(f.propertyId).toBeUndefined();
+    expect(f.channel).toBeUndefined();
     expect(f.from).toBeUndefined();
     expect(f.to).toBeUndefined();
   });
 
-  it("mengambil propertyId", () => {
+  it("mengambil propertyId dan channel", () => {
     expect(parseGlobalFilter({ propertyId: "prop_abc" }, TODAY).propertyId).toBe("prop_abc");
+    expect(parseGlobalFilter({ channel: "AIRBNB" }, TODAY).channel).toBe("AIRBNB");
+    expect(parseGlobalFilter({ channel: "bukan_channel" }, TODAY).channel).toBeUndefined();
   });
 
   it("period tidak dikenal jatuh ke this_month", () => {
@@ -188,6 +191,12 @@ describe("globalFilterQueryString", () => {
     expect(qs).toBe("?period=this_month");
   });
 
+  it("menyertakan channel bila ditentukan", () => {
+    expect(globalFilterQueryString({ channel: "AIRBNB", period: "this_month" })).toBe(
+      "?channel=AIRBNB&period=this_month",
+    );
+  });
+
   it("selalu menyertakan period (default), meski tanpa propertyId", () => {
     expect(globalFilterQueryString({ period: "this_month" })).toBe("?period=this_month");
   });
@@ -197,21 +206,23 @@ describe("mergeKeepingNonGlobal", () => {
   it("mempertahankan parameter lokal dan menimpa parameter global", () => {
     const merged = mergeKeepingNonGlobal(
       {
-        channel: "AIRBNB",
+        search: "HM123",
         status: "CONFIRMED",
         page: "3",
         sort: "checkIn:asc",
         propertyId: "lama",
+        channel: "TIKET_COM",
         period: "this_month",
       },
-      { propertyId: "baru", period: "last_month" },
+      { propertyId: "baru", channel: "AIRBNB", period: "last_month" },
     );
     expect(merged).toEqual({
-      channel: "AIRBNB",
+      search: "HM123",
       status: "CONFIRMED",
       page: "3",
       sort: "checkIn:asc",
       propertyId: "baru",
+      channel: "AIRBNB",
       period: "last_month",
     });
   });
@@ -238,19 +249,22 @@ describe("mergeKeepingNonGlobal", () => {
     });
   });
 
-  it("string kosong menghapus kunci (dropdown Semua properti)", () => {
-    const merged = mergeKeepingNonGlobal({ propertyId: "lama", page: "2" }, { propertyId: "" });
+  it("string kosong menghapus kunci (dropdown Semua properti / Semua saluran)", () => {
+    const merged = mergeKeepingNonGlobal(
+      { propertyId: "lama", channel: "AIRBNB", page: "2" },
+      { propertyId: "", channel: "" },
+    );
     expect(merged).toEqual({ page: "2" });
   });
 
   it("membuang nilai kosong yang sudah ada di URL saat ini", () => {
-    const merged = mergeKeepingNonGlobal({ channel: "", status: "AIRBNB" }, {});
-    expect(merged).toEqual({ status: "AIRBNB" });
+    const merged = mergeKeepingNonGlobal({ search: "", status: "CONFIRMED" }, {});
+    expect(merged).toEqual({ status: "CONFIRMED" });
   });
 
   it("mengambil elemen pertama dari array", () => {
-    const merged = mergeKeepingNonGlobal({ channel: ["AIRBNB", "TIKET_COM"] }, {});
-    expect(merged.channel).toBe("AIRBNB");
+    const merged = mergeKeepingNonGlobal({ status: ["CONFIRMED", "PENDING"] }, {});
+    expect(merged.status).toBe("CONFIRMED");
   });
 });
 
@@ -273,8 +287,14 @@ describe("serializeParams", () => {
 });
 
 describe("konstanta", () => {
-  it("GLOBAL_FILTER_KEYS berisi keempat kunci", () => {
-    expect([...GLOBAL_FILTER_KEYS].sort()).toEqual(["from", "period", "propertyId", "to"]);
+  it("GLOBAL_FILTER_KEYS berisi kelima kunci", () => {
+    expect([...GLOBAL_FILTER_KEYS].sort()).toEqual([
+      "channel",
+      "from",
+      "period",
+      "propertyId",
+      "to",
+    ]);
   });
 
   it("PERIOD_PRESETS berisi 4 preset tanpa duplikat", () => {

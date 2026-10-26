@@ -18,8 +18,34 @@ import { endOfMonth, startOfMonth, subDays } from "@/lib/dates";
 import type { DateRange, StayDate } from "@/lib/dates";
 
 /** Kunci URL yang dimanipulasi filter global. */
-export const GLOBAL_FILTER_KEYS = ["propertyId", "period", "from", "to"] as const;
+export const GLOBAL_FILTER_KEYS = ["propertyId", "channel", "period", "from", "to"] as const;
 export type GlobalFilterKey = (typeof GLOBAL_FILTER_KEYS)[number];
+
+/** Preset saluran / OTA yang terdaftar secara default. */
+export const CHANNEL_PRESETS = [
+  { value: "AIRBNB", label: "Airbnb" },
+  { value: "TIKET_COM", label: "Tiket.com" },
+  { value: "TRAVELOKA", label: "Traveloka" },
+  { value: "BOOKING_COM", label: "Booking.com" },
+  { value: "AGODA", label: "Agoda" },
+  { value: "EXPEDIA", label: "Expedia" },
+  { value: "DIRECT", label: "Direct Booking" },
+  { value: "MANUAL", label: "Manual" },
+] as const;
+
+export const CHANNEL_VALUES = CHANNEL_PRESETS.map((c) => c.value);
+export type ChannelPreset = (typeof CHANNEL_PRESETS)[number]["value"];
+
+export const CHANNEL_LABEL: Record<ChannelPreset, string> = {
+  AIRBNB: "Airbnb",
+  TIKET_COM: "Tiket.com",
+  TRAVELOKA: "Traveloka",
+  BOOKING_COM: "Booking.com",
+  AGODA: "Agoda",
+  EXPEDIA: "Expedia",
+  DIRECT: "Direct Booking",
+  MANUAL: "Manual",
+};
 
 /** Preset periode yang dikenal. */
 export const PERIOD_PRESETS = ["this_month", "last_month", "this_year", "custom"] as const;
@@ -27,6 +53,7 @@ export type PeriodPreset = (typeof PERIOD_PRESETS)[number];
 
 const PRESET_SET = new Set<string>(PERIOD_PRESETS);
 const GLOBAL_KEY_SET = new Set<string>(GLOBAL_FILTER_KEYS);
+const CHANNEL_SET = new Set<string>(CHANNEL_VALUES);
 
 /** Label Indonesia untuk dropdown periode (docs/07-ui-spec.md §2). */
 export const PERIOD_LABEL: Record<PeriodPreset, string> = {
@@ -39,6 +66,7 @@ export const PERIOD_LABEL: Record<PeriodPreset, string> = {
 /** Nilai yang direpresentasikan di URL; tidak butuh jam dinding. */
 export interface GlobalFilterSelection {
   propertyId?: string;
+  channel?: ChannelPreset;
   period: PeriodPreset;
   /** Dipakai hanya saat period = "custom". Batas bawah inklusif. */
   from?: StayDate;
@@ -74,6 +102,14 @@ function pickDate(
   return s;
 }
 
+function pickChannel(
+  raw: Record<string, string | string[] | undefined>,
+): ChannelPreset | undefined {
+  const s = pickString(raw, "channel");
+  if (s && CHANNEL_SET.has(s)) return s as ChannelPreset;
+  return undefined;
+}
+
 function pickPreset(raw: Record<string, string | string[] | undefined>): PeriodPreset {
   const s = pickString(raw, "period");
   if (s && PRESET_SET.has(s)) return s as PeriodPreset;
@@ -89,11 +125,13 @@ export function parseGlobalFilterSelection(
   raw: Record<string, string | string[] | undefined>,
 ): GlobalFilterSelection {
   const propertyId = pickString(raw, "propertyId");
+  const channel = pickChannel(raw);
   const period = pickPreset(raw);
   const from = pickDate(raw, "from");
   const to = pickDate(raw, "to");
   const out: GlobalFilterSelection = { period };
   if (propertyId !== undefined) out.propertyId = propertyId;
+  if (channel !== undefined) out.channel = channel;
   if (from !== undefined) out.from = from;
   if (to !== undefined) out.to = to;
   return out;
@@ -168,6 +206,7 @@ export function globalFilterQueryString(f: GlobalFilterSelection): string {
 export function globalParams(f: GlobalFilterSelection): Record<string, string> {
   const out: Record<string, string> = {};
   if (f.propertyId) out.propertyId = f.propertyId;
+  if (f.channel) out.channel = f.channel;
   out.period = f.period;
   if (f.period === "custom") {
     if (f.from) out.from = f.from;

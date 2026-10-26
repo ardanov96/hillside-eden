@@ -13,8 +13,13 @@ import { PlusCircle, CalendarCheck2, BedDouble, Wallet, Sparkles } from "lucide-
 
 import { auth } from "@/auth";
 import { formatIDR } from "@/lib/format-id";
-import { parseGlobalFilterSelection } from "@/lib/filters/global-filter";
+import {
+  parseGlobalFilterSelection,
+  CHANNEL_LABEL,
+  type ChannelPreset,
+} from "@/lib/filters/global-filter";
 import { getDashboardSummary } from "@/server/queries/dashboard";
+import type { ChannelCode } from "@prisma/client";
 import { AdminCnKpiCard } from "@/components/dashboard/admincn-kpi-card";
 import { TremorFinancialChart } from "@/components/dashboard/tremor-financial-chart";
 import { AdminCnPerformanceCard } from "@/components/dashboard/admincn-performance-card";
@@ -44,10 +49,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const filter = parseGlobalFilterSelection(flatParams);
 
-  // Ambil data dashboard agregasi aktual dari database
+  // Ambil data dashboard agregasi aktual dari database dengan filter properti, channel, dan tanggal
   const summary = await getDashboardSummary({
     organizationId: session.user.organizationId,
     propertyId: filter.propertyId ?? undefined,
+    channel: (filter.channel as ChannelCode) ?? undefined,
     from: filter.from ?? undefined,
     to: filter.to ?? undefined,
   });
@@ -104,7 +110,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           value={formatIDR(summary.gross.value)}
           badgeText="+14.8%"
           badgeType="positive"
-          subtitle="semua saluran OTA"
+          subtitle={
+            filter.channel
+              ? `saluran ${CHANNEL_LABEL[filter.channel as ChannelPreset] ?? filter.channel}`
+              : "semua saluran OTA"
+          }
           visualType="bar-sparkline"
           barHeights={[35, 60, 85, 45, 95, 70, 90]}
           barColor="emerald"
@@ -116,7 +126,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           value={formatIDR(summary.commission.value)}
           badgeText="14.0% est."
           badgeType="warning"
-          subtitle="potongan estimasi"
+          subtitle={
+            filter.channel
+              ? `potongan ${CHANNEL_LABEL[filter.channel as ChannelPreset] ?? filter.channel}`
+              : "potongan estimasi"
+          }
           visualType="bar-sparkline"
           barHeights={[40, 70, 60, 85, 55, 90, 65]}
           barColor="amber"
@@ -128,7 +142,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           value={formatIDR(summary.net.value)}
           badgeText="+15.6%"
           badgeType="positive"
-          subtitle="setelah komisi OTA"
+          subtitle={
+            filter.channel
+              ? `setelah komisi ${CHANNEL_LABEL[filter.channel as ChannelPreset] ?? filter.channel}`
+              : "setelah komisi OTA"
+          }
           visualType="line-sparkline"
         />
 
