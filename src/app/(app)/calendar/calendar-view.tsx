@@ -199,7 +199,7 @@ export function CalendarView({ data, propertyOptions, selectedPropertyId }: Cale
       )}
 
       {/* Kartu Metrik Okupansi Bulan Ini */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs">
           <span className="text-xs text-muted-foreground block">Okupansi Portofolio</span>
           <div className="flex items-baseline gap-2 mt-1">

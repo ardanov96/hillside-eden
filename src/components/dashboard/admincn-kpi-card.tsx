@@ -137,19 +137,19 @@ export function AdminCnKpiCard({
       </div>
 
       {/* 2. Value: Generous & Legible */}
-      <div className="mt-3.5">
+      <div className="mt-3.5 min-w-0">
         {isRupiah ? (
-          <div className="flex items-baseline gap-1" title={value}>
-            <span className="text-sm font-semibold text-slate-400 dark:text-zinc-500 select-none">
+          <div className="flex items-baseline gap-1 min-w-0" title={value}>
+            <span className="text-xs sm:text-sm font-semibold text-slate-400 dark:text-zinc-500 select-none shrink-0">
               Rp
             </span>
-            <span className="text-2xl sm:text-[26px] font-extrabold tracking-tight text-slate-900 tabular-nums dark:text-white leading-none">
+            <span className="text-xl sm:text-2xl xl:text-[26px] font-extrabold tracking-tight text-slate-900 tabular-nums dark:text-white leading-none truncate">
               {value.slice(3)}
             </span>
           </div>
         ) : (
           <div
-            className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-900 tabular-nums dark:text-white leading-none"
+            className="text-xl sm:text-2xl xl:text-[28px] font-extrabold tracking-tight text-slate-900 tabular-nums dark:text-white leading-none truncate"
             title={value}
           >
             {value}
@@ -158,7 +158,7 @@ export function AdminCnKpiCard({
       </div>
 
       {/* 3. Footer: Trend Badge & Context Subtitle */}
-      <div className="mt-4 flex items-center gap-2 pt-2.5 border-t border-slate-100 dark:border-zinc-800/80 text-xs">
+      <div className="mt-4 flex items-center gap-2 pt-2.5 border-t border-slate-100 dark:border-zinc-800/80 text-xs min-w-0">
         {badgeText ? (
           <span
             className={cn(
@@ -177,7 +177,7 @@ export function AdminCnKpiCard({
           </span>
         ) : null}
         {subtitle ? (
-          <span className="text-xs text-slate-500 dark:text-zinc-400" title={subtitle}>
+          <span className="text-xs text-slate-500 dark:text-zinc-400 truncate" title={subtitle}>
             {subtitle}
           </span>
         ) : null}

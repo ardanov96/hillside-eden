@@ -118,9 +118,9 @@ export function AppShell({ userEmail, properties, children }: AppShellProps) {
          ========================================================================= */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Sticky Top Header */}
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-6 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/95 shadow-2xs">
+        <header className="sticky top-0 z-20 flex min-h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 sm:px-6 py-2 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/95 shadow-2xs gap-3 flex-wrap sm:flex-nowrap">
           {/* Global Filter Bar Toolbar */}
-          <div className="flex flex-1 items-center">
+          <div className="flex flex-1 items-center min-w-0">
             <Suspense
               fallback={
                 <div className="h-8 w-64 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
@@ -131,7 +131,7 @@ export function AppShell({ userEmail, properties, children }: AppShellProps) {
           </div>
 
           {/* Right Status Indicator */}
-          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 ml-4">
+          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 shrink-0">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:border-emerald-900/80 dark:bg-emerald-950/50 dark:text-emerald-300">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Sistem Aktif
@@ -140,7 +140,7 @@ export function AppShell({ userEmail, properties, children }: AppShellProps) {
         </header>
 
         {/* Content Body */}
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 xl:p-8">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
 

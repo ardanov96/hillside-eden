@@ -326,7 +326,7 @@ export function ReportsView({
           )}
 
           {/* 3. Baris Kartu KPI Utama (Gross -> Komisi -> Net -> Beban -> Hasil Operasional) */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {/* Card 1: Gross */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
               <span className="text-xs font-bold uppercase tracking-tight text-slate-500 dark:text-zinc-400">

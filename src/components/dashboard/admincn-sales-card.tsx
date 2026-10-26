@@ -42,14 +42,14 @@ export function AdminCnSalesCard({ totalGross, channels }: AdminCnSalesCardProps
         </div>
 
         {/* Big Value */}
-        <div className="mt-2 flex items-baseline gap-1.5">
-          <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500 select-none">
+        <div className="mt-2 flex items-baseline gap-1.5 flex-wrap min-w-0">
+          <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500 select-none shrink-0">
             Rp
           </span>
-          <span className="text-xl font-bold tracking-tight text-slate-900 tabular-nums sm:text-2xl dark:text-white">
+          <span className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 tabular-nums dark:text-white truncate">
             {formatIDR(totalGross).slice(3)}
           </span>
-          <span className="ml-1.5 inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          <span className="ml-1 inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
             <ArrowUpRight className="h-3.5 w-3.5 stroke-[2.5]" />
             +14.8%
           </span>
@@ -58,13 +58,18 @@ export function AdminCnSalesCard({ totalGross, channels }: AdminCnSalesCardProps
         {/* Breakdown Channel Rows matching AdminCN */}
         <div className="mt-4 space-y-2.5">
           {topChannels.map((c) => (
-            <div key={c.channel} className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
-                  <span className="font-medium text-slate-600 dark:text-zinc-300">{c.label}</span>
+            <div key={c.channel} className="space-y-1 min-w-0">
+              <div className="flex items-center justify-between text-xs gap-2 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: c.color }}
+                  />
+                  <span className="font-medium text-slate-600 dark:text-zinc-300 truncate">
+                    {c.label}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="tabular-nums font-semibold text-slate-900 dark:text-white">
                     {formatIDR(c.gross)}
                   </span>

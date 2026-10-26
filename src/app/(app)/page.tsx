@@ -96,8 +96,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </div>
 
-      {/* 2. TOP SECTION: 6 KPI Cards divided into 2 Rows (3 cards per row) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* 2. TOP SECTION: 6 KPI Cards divided into 2 Rows on Desktop, Responsive 2-Col on Tablet */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {/* Card 1: Nilai booking (gross) with Bar Sparkline */}
         <AdminCnKpiCard
           title="Booking (Gross)"
@@ -169,14 +169,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </div>
 
       {/* 3. MIDDLE SECTION: The AdminCN 3-Column Analytics Row */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {/* Left Column (lg:col-span-6): Monthly Recharts Bar Chart */}
-        <div className="lg:col-span-6">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+        {/* Left Column: Monthly Recharts Bar Chart (Full on tablet, 6-col on desktop) */}
+        <div className="col-span-12 xl:col-span-6">
           <TremorFinancialChart data={summary.monthlyTrend} />
         </div>
 
-        {/* Middle Column (lg:col-span-3): Performance & Efficiency Report */}
-        <div className="lg:col-span-3">
+        {/* Middle Column: Performance & Efficiency Report (Side-by-side on tablet, 3-col on desktop) */}
+        <div className="col-span-12 sm:col-span-6 xl:col-span-3">
           <AdminCnPerformanceCard
             netAmount={netNum}
             expensesAmount={expNum}
@@ -185,21 +185,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           />
         </div>
 
-        {/* Right Column (lg:col-span-3): OTA Sales Share with Mini Area Wave */}
-        <div className="lg:col-span-3">
+        {/* Right Column: OTA Sales Share with Mini Area Wave (Side-by-side on tablet, 3-col on desktop) */}
+        <div className="col-span-12 sm:col-span-6 xl:col-span-3">
           <AdminCnSalesCard totalGross={grossNum} channels={summary.channelDistribution} />
         </div>
       </div>
 
       {/* 4. BOTTOM SECTION: Channel Breakdown Detail & Recent Bookings Table */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {/* Left Column (lg:col-span-4): All Channels Detail */}
-        <div className="lg:col-span-4">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+        {/* Left Column: All Channels Detail */}
+        <div className="col-span-12 xl:col-span-4">
           <ChannelBreakdownCard channels={summary.channelDistribution} />
         </div>
 
-        {/* Right Column (lg:col-span-8): Recent Reservations Feed */}
-        <div className="lg:col-span-8">
+        {/* Right Column: Recent Reservations Feed */}
+        <div className="col-span-12 xl:col-span-8">
           <RecentBookingsCard bookings={summary.recentBookings} />
         </div>
       </div>

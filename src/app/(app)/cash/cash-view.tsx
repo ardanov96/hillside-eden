@@ -108,7 +108,7 @@ export function CashView({ cashSummary, reconciliation, commissionRules }: CashV
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/80">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/80">
           <button
             type="button"
             onClick={() => setActiveTab("flow")}
@@ -151,7 +151,7 @@ export function CashView({ cashSummary, reconciliation, commissionRules }: CashV
       </div>
 
       {/* 5 Top KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* 1. Kas Masuk */}
         <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
           <div className="flex items-center justify-between">
