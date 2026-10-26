@@ -72,12 +72,7 @@ services:
       WORKER_ENABLED: "true"
       STORAGE_DRIVER: local
       STORAGE_LOCAL_PATH: /app/storage
-    command:
-      [
-        "node",
-        "-e",
-        "setInterval(() => { console.log(new Date().toISOString(), 'worker heartbeat'); }, 60000);",
-      ]
+    command: ["pnpm", "worker"]
     volumes:
       - storage_data:/app/storage
 
