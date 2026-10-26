@@ -241,8 +241,8 @@ export async function getCalendarData(input: {
   }));
 
   const collisionReport = detectScheduleCollisions({
-    bookings: collisionBookings,
-    blocks: collisionBlocks,
+    bookings: collisionBookings.filter((b) => b.checkIn < b.checkOut),
+    blocks: collisionBlocks.filter((blk) => blk.startDate < blk.endDate),
     units: collisionUnits,
   });
 

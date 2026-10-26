@@ -26,7 +26,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { Decimal } from "@/lib/decimal";
-import { daysBetween } from "@/lib/dates";
+import { daysBetween, toStayDate } from "@/lib/dates";
 import { money, round } from "@/lib/money";
 import type { Currency } from "@/lib/money";
 import { allocateBookingToUnits, type AllocatableUnit } from "@/domain/allocation";
@@ -46,6 +46,8 @@ export interface UpsertTx {
   bookingUnit: Prisma.BookingUnitDelegate;
   listingUnit: Prisma.ListingUnitDelegate;
   unit: Prisma.UnitDelegate;
+  periodLock?: Prisma.PeriodLockDelegate;
+  auditLog?: Prisma.AuditLogDelegate;
 }
 
 /** Input apply. */
@@ -369,6 +371,60 @@ export async function applyBookingEvent(
   }
 
   if (isLater) {
+    // Cek apakah booking berada di periode yang sudah LOCKED (Bug 7: Post-Lock Variance)
+    if (tx.periodLock && tx.auditLog) {
+      try {
+        const checkInDate = new Date(existing.checkIn);
+        const y = checkInDate.getUTCFullYear();
+        const m = String(checkInDate.getUTCMonth() + 1).padStart(2, "0");
+        const periodDate = new Date(`${y}-${m}-01T00:00:00.000Z`);
+
+        const lock = await tx.periodLock.findUnique({
+          where: {
+            organizationId_period: {
+              organizationId,
+              period: periodDate,
+            },
+          },
+        });
+
+        if (lock) {
+          const grossChanged = !existing.grossAmount.equals(inferred.grossAmount);
+          const statusChanged = existing.status !== booking.status;
+          const datesChanged =
+            toStayDate(existing.checkIn) !== booking.checkIn ||
+            toStayDate(existing.checkOut) !== booking.checkOut;
+
+          if (grossChanged || statusChanged || datesChanged) {
+            await tx.auditLog.create({
+              data: {
+                organizationId,
+                actorId: input.actorId ?? null,
+                action: "booking.post_lock_variance",
+                entityType: "Booking",
+                entityId: existing.id,
+                before: {
+                  status: existing.status,
+                  grossAmount: existing.grossAmount.toString(),
+                  checkIn: toStayDate(existing.checkIn),
+                  checkOut: toStayDate(existing.checkOut),
+                },
+                after: {
+                  status: booking.status,
+                  grossAmount: inferred.grossAmount.toString(),
+                  checkIn: booking.checkIn,
+                  checkOut: booking.checkOut,
+                  periodLockedAt: lock.lockedAt,
+                },
+              },
+            });
+          }
+        }
+      } catch {
+        // Non-fatal guard
+      }
+    }
+
     // Update kolom Booking dengan nilai event (last-writer-wins).
     await tx.booking.update({
       where: { id: existing.id },

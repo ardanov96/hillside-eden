@@ -553,8 +553,8 @@ export async function getDashboardCollisions(
   }));
 
   const report = detectScheduleCollisions({
-    bookings: collisionBookings,
-    blocks: collisionBlocks,
+    bookings: collisionBookings.filter((b) => b.checkIn < b.checkOut),
+    blocks: collisionBlocks.filter((blk) => blk.startDate < blk.endDate),
     units: collisionUnits,
   });
 

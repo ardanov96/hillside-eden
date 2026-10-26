@@ -103,7 +103,7 @@ function validateStayDates(checkIn: StayDate, checkOut: StayDate, context: strin
   if (!isStayDate(checkOut)) {
     throw new Error(`${context}: checkOut invalid (${checkOut})`);
   }
-  if (checkIn >= checkOut) {
+  if (checkIn > checkOut) {
     throw new Error(`${context}: checkOut (${checkOut}) must be > checkIn (${checkIn})`);
   }
 }
@@ -127,7 +127,7 @@ export function detectScheduleCollisions(input: CollisionDetectionInput): Collis
     validateStayDates(blk.startDate, blk.endDate, `Block ${blk.id}`);
   }
 
-  const activeBookings = bookings.filter((b) => b.status === "CONFIRMED");
+  const activeBookings = bookings.filter((b) => b.status === "CONFIRMED" && b.checkIn < b.checkOut);
 
   // Petakan booking aktif per unitId (booking estate otomatis masuk ke semua unit anggotanya)
   const bookingsByUnit = new Map<string, CollisionBooking[]>();
@@ -139,9 +139,10 @@ export function detectScheduleCollisions(input: CollisionDetectionInput): Collis
     }
   }
 
-  // Petakan blocks per unitId
+  // Petakan blocks per unitId (abaikan blok 0-malam)
   const blocksByUnit = new Map<string, CollisionBlock[]>();
   for (const blk of blocks) {
+    if (blk.startDate >= blk.endDate) continue;
     for (const uid of blk.unitIds) {
       const list = blocksByUnit.get(uid) ?? [];
       list.push(blk);

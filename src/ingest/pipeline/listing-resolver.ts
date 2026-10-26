@@ -33,6 +33,27 @@ export interface ListingResolverDb {
         organizationId?: true;
       };
     }): Promise<{ id: string; propertyId: string; organizationId: string } | null>;
+    findMany?(args: {
+      where: {
+        organizationId: string;
+        channel: ChannelCode;
+      };
+      select?: {
+        id?: true;
+        propertyId?: true;
+        organizationId?: true;
+        name?: true;
+        externalId?: true;
+      };
+    }): Promise<
+      Array<{
+        id: string;
+        propertyId: string;
+        organizationId: string;
+        name?: string;
+        externalId?: string;
+      }>
+    >;
     findUnique(args: {
       where: { id: string };
       select?: { id?: true; propertyId?: true; organizationId?: true };
@@ -68,6 +89,8 @@ export interface ResolveListingOptions {
  * - OTA (CSV/email/ical):
  *   1. cari Listing by (organizationId, channel, externalListingId).
  *   2. cari Listing by (organizationId, channel, name: booking.listingName) (docs/06 §6).
+ *   3. fallback: jika hanya ada 1 listing aktif untuk channel ini di org, cocokkan.
+ *   4. fallback: fuzzy keyword match nama properti/listing.
  *   - Ketemu -> resolved.
  *   - Tidak ketemu -> needsReview 'listing-not-found'.
  */
@@ -135,6 +158,43 @@ export async function resolveListing(
       where: { organizationId, channel, name: booking.listingName },
       select: { id: true, propertyId: true, organizationId: true },
     });
+  }
+
+  // 3. Fallback: jika findMany didukung, cek apakah hanya ada 1 listing atau ada keyword match
+  if (!found && db.listing.findMany) {
+    const channelListings = await db.listing.findMany({
+      where: { organizationId, channel },
+      select: { id: true, propertyId: true, organizationId: true, name: true, externalId: true },
+    });
+    if (channelListings.length === 1) {
+      found = channelListings[0]!;
+    } else if (channelListings.length > 1 && booking.listingName) {
+      const searchTarget = booking.listingName.toLowerCase();
+      const tokens = searchTarget.split(/[\s\-–—,/]+/).filter((w) => w.length >= 4);
+      let bestMatch: (typeof channelListings)[0] | null = null;
+      let highestScore = 0;
+
+      for (const l of channelListings) {
+        const lName = (l.name ?? "").toLowerCase();
+        let score = 0;
+        if (lName && (searchTarget.includes(lName) || lName.includes(searchTarget))) {
+          score += 10;
+        }
+        for (const t of tokens) {
+          if (lName.includes(t)) {
+            score += 1;
+          }
+        }
+        if (score > highestScore) {
+          highestScore = score;
+          bestMatch = l;
+        }
+      }
+
+      if (bestMatch && highestScore > 0) {
+        found = bestMatch;
+      }
+    }
   }
 
   if (!found) {

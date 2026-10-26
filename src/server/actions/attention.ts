@@ -61,6 +61,7 @@ export async function resolveAndReprocessItemAction(input: {
       id: true,
       name: true,
       propertyId: true,
+      externalId: true,
     },
   });
 
@@ -96,6 +97,31 @@ export async function resolveAndReprocessItemAction(input: {
   // 4. Terapkan event dalam transaksi serializable
   try {
     await withSerializableTransaction(prisma, async (tx) => {
+      // Sinkronkan externalId jika booking memiliki externalListingId dan listing masih pakai placeholder
+      if (
+        booking.externalListingId &&
+        targetListing.externalId !== booking.externalListingId &&
+        (targetListing.externalId.startsWith("he-") ||
+          targetListing.externalId.startsWith("uh-") ||
+          targetListing.externalId.startsWith("pending-"))
+      ) {
+        const conflict = await tx.listing.findUnique({
+          where: {
+            organizationId_channel_externalId: {
+              organizationId,
+              channel: booking.channel,
+              externalId: booking.externalListingId,
+            },
+          },
+        });
+        if (!conflict) {
+          await tx.listing.update({
+            where: { id: targetListing.id },
+            data: { externalId: booking.externalListingId },
+          });
+        }
+      }
+
       // Apply booking event
       await applyBookingEvent(tx as never, {
         organizationId,

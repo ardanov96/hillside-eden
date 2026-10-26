@@ -95,6 +95,7 @@ export async function syncIcalToListing(
   let upsertedCount = 0;
   const errors: string[] = [];
   const now = new Date();
+  const validUids: string[] = [];
 
   for (const event of events) {
     try {
@@ -125,9 +126,32 @@ export async function syncIcalToListing(
         },
       });
       upsertedCount++;
+      validUids.push(event.uid);
     } catch (err) {
       errors.push(`Gagal menyimpan CalendarBlock [${event.uid}]: ${(err as Error).message}`);
     }
+  }
+
+  // Bersihkan ghost blocks: hapus blok iCal lama yang sudah dihapus/dibatalkan di OTA dan tidak ada di feed terbaru
+  try {
+    if (validUids.length > 0) {
+      await prisma.calendarBlock.deleteMany({
+        where: {
+          listingId,
+          source: "ICAL",
+          uid: { notIn: validUids },
+        },
+      });
+    } else if (events.length === 0 && errors.length === 0) {
+      await prisma.calendarBlock.deleteMany({
+        where: {
+          listingId,
+          source: "ICAL",
+        },
+      });
+    }
+  } catch (err) {
+    errors.push(`Gagal membersihkan ghost blocks iCal: ${(err as Error).message}`);
   }
 
   return {

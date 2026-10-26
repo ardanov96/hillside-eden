@@ -336,7 +336,47 @@ async function main() {
   await seedListingUnit(heEstateTraveloka.id, cottage2.id);
   await seedListingUnit(heEstateTraveloka.id, cottage3.id);
 
-  // Ubud Hillside: 1 listing Airbnb (4 kamar tapi hanya 2 yang dijual).
+  // Booking.com, Agoda, Expedia: aktif untuk Hillside Eden (Estate) & Ubud Hillside
+  const heEstateBookingCom = await seedListing(
+    org.id,
+    propHE.id,
+    ChannelCode.BOOKING_COM,
+    "he-bookingcom-estate",
+    "Hillside Eden Bali - Estate (Booking.com)",
+    "https://www.booking.com/hotel/id/hillside-eden-bali.html",
+  );
+  await seedListingUnit(heEstateBookingCom.id, villa.id);
+  await seedListingUnit(heEstateBookingCom.id, cottage1.id);
+  await seedListingUnit(heEstateBookingCom.id, cottage2.id);
+  await seedListingUnit(heEstateBookingCom.id, cottage3.id);
+
+  const heEstateAgoda = await seedListing(
+    org.id,
+    propHE.id,
+    ChannelCode.AGODA,
+    "he-agoda-estate",
+    "Hillside Eden Bali - Estate (Agoda)",
+    "https://www.agoda.com/hillside-eden-bali/hotel/bali-id.html",
+  );
+  await seedListingUnit(heEstateAgoda.id, villa.id);
+  await seedListingUnit(heEstateAgoda.id, cottage1.id);
+  await seedListingUnit(heEstateAgoda.id, cottage2.id);
+  await seedListingUnit(heEstateAgoda.id, cottage3.id);
+
+  const heEstateExpedia = await seedListing(
+    org.id,
+    propHE.id,
+    ChannelCode.EXPEDIA,
+    "he-expedia-estate",
+    "Hillside Eden Bali - Estate (Expedia)",
+    "https://www.expedia.co.id/Bali-Hotels-Hillside-Eden.h",
+  );
+  await seedListingUnit(heEstateExpedia.id, villa.id);
+  await seedListingUnit(heEstateExpedia.id, cottage1.id);
+  await seedListingUnit(heEstateExpedia.id, cottage2.id);
+  await seedListingUnit(heEstateExpedia.id, cottage3.id);
+
+  // Ubud Hillside: Airbnb, Booking.com, Agoda, Expedia (2 kamar sellable)
   const uhAirbnb = await seedListing(
     org.id,
     propUH.id,
@@ -348,8 +388,41 @@ async function main() {
   await seedListingUnit(uhAirbnb.id, uhRoom1.id);
   await seedListingUnit(uhAirbnb.id, uhRoom2.id);
 
+  const uhBookingCom = await seedListing(
+    org.id,
+    propUH.id,
+    ChannelCode.BOOKING_COM,
+    "uh-bookingcom-rooms",
+    "Ubud Hillside - 2 kamar pribadi (Booking.com)",
+    null,
+  );
+  await seedListingUnit(uhBookingCom.id, uhRoom1.id);
+  await seedListingUnit(uhBookingCom.id, uhRoom2.id);
+
+  const uhAgoda = await seedListing(
+    org.id,
+    propUH.id,
+    ChannelCode.AGODA,
+    "uh-agoda-rooms",
+    "Ubud Hillside - 2 kamar pribadi (Agoda)",
+    null,
+  );
+  await seedListingUnit(uhAgoda.id, uhRoom1.id);
+  await seedListingUnit(uhAgoda.id, uhRoom2.id);
+
+  const uhExpedia = await seedListing(
+    org.id,
+    propUH.id,
+    ChannelCode.EXPEDIA,
+    "uh-expedia-rooms",
+    "Ubud Hillside - 2 kamar pribadi (Expedia)",
+    null,
+  );
+  await seedListingUnit(uhExpedia.id, uhRoom1.id);
+  await seedListingUnit(uhExpedia.id, uhRoom2.id);
+
   console.log(
-    "[seed] listings: 4 (1 aktif Airbnb Hillside Eden, 2 placeholder nonaktif, 1 Airbnb Ubud Hillside)",
+    "[seed] listings: 10 (Hillside Eden 4 OTA aktif + 2 placeholder, Ubud Hillside 4 OTA aktif)",
   );
 
   // 5. Default ExpenseCategory

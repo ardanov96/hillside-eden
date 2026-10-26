@@ -12,6 +12,7 @@ type ListingRow = {
   organizationId: string;
   channel: import("@/adapters/types").ChannelCode;
   externalId: string;
+  name?: string;
 };
 
 function makeFakeDb(listings: ListingRow[]): ListingResolverDb {
@@ -22,11 +23,23 @@ function makeFakeDb(listings: ListingRow[]): ListingResolverDb {
           (l) =>
             l.organizationId === where.organizationId &&
             l.channel === where.channel &&
-            l.externalId === where.externalId,
+            (where.externalId ? l.externalId === where.externalId : true) &&
+            (where.name ? l.name === where.name : true),
         );
         return row
           ? { id: row.id, propertyId: row.propertyId, organizationId: row.organizationId }
           : null;
+      },
+      async findMany({ where }) {
+        return listings
+          .filter((l) => l.organizationId === where.organizationId && l.channel === where.channel)
+          .map((l) => ({
+            id: l.id,
+            propertyId: l.propertyId,
+            organizationId: l.organizationId,
+            name: l.name,
+            externalId: l.externalId,
+          }));
       },
       async findUnique({ where }) {
         const row = listings.find((l) => l.id === where.id);
@@ -138,6 +151,60 @@ describe("resolveListing (OTA path)", () => {
     ]);
     const res = await resolveListing(db, { organizationId: ORG, booking: bnb() });
     expect(res.kind).toBe("needsReview");
+  });
+
+  it("fallback ke single active listing jika hanya ada 1 listing untuk channel tersebut", async () => {
+    const db = makeFakeDb([
+      {
+        id: "L-SINGLE",
+        propertyId: "P-SINGLE",
+        organizationId: ORG,
+        channel: "BOOKING_COM",
+        externalId: "he-bookingcom-estate",
+        name: "Hillside Eden Bali - Estate (Booking.com)",
+      },
+    ]);
+    const b = bnb({
+      channel: "BOOKING_COM",
+      externalListingId: "unmapped-room-999",
+      listingName: "Three Bedroom Villa with Private Pool",
+    });
+    const res = await resolveListing(db, { organizationId: ORG, booking: b });
+    expect(res.kind).toBe("resolved");
+    if (res.kind === "resolved") {
+      expect(res.listingId).toBe("L-SINGLE");
+    }
+  });
+
+  it("fallback ke keyword matching jika ada multiple listings", async () => {
+    const db = makeFakeDb([
+      {
+        id: "L-HE",
+        propertyId: "P-HE",
+        organizationId: ORG,
+        channel: "AGODA",
+        externalId: "he-agoda-estate",
+        name: "Hillside Eden Bali Estate",
+      },
+      {
+        id: "L-UH",
+        propertyId: "P-UH",
+        organizationId: ORG,
+        channel: "AGODA",
+        externalId: "uh-agoda-rooms",
+        name: "Ubud Hillside Private Rooms",
+      },
+    ]);
+    const b = bnb({
+      channel: "AGODA",
+      externalListingId: "room-agoda-unknown",
+      listingName: "Ubud Hillside - 2 Bedroom",
+    });
+    const res = await resolveListing(db, { organizationId: ORG, booking: b });
+    expect(res.kind).toBe("resolved");
+    if (res.kind === "resolved") {
+      expect(res.listingId).toBe("L-UH");
+    }
   });
 });
 

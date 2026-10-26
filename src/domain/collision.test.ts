@@ -278,7 +278,7 @@ describe("domain/collision (S2-06: Deteksi bentrok jadwal)", () => {
       );
     });
 
-    it("melempar error jika checkOut <= checkIn", () => {
+    it("melempar error jika checkOut < checkIn (tanggal terbalik)", () => {
       const reversedBooking: CollisionBooking = {
         id: "b-rev",
         status: "CONFIRMED",
@@ -289,6 +289,19 @@ describe("domain/collision (S2-06: Deteksi bentrok jadwal)", () => {
       expect(() => detectScheduleCollisions({ bookings: [reversedBooking] })).toThrow(
         /checkOut .* must be > checkIn/,
       );
+    });
+
+    it("tidak melempar error pada reservasi transit / day-use dengan checkIn === checkOut", () => {
+      const transitBooking: CollisionBooking = {
+        id: "b-transit",
+        status: "CONFIRMED",
+        unitIds: ["u1"],
+        checkIn: "2026-10-15",
+        checkOut: "2026-10-15",
+      };
+      const report = detectScheduleCollisions({ bookings: [transitBooking] });
+      expect(report.hasCollisions).toBe(false);
+      expect(report.collisions).toHaveLength(0);
     });
   });
 });
