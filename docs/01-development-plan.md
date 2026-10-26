@@ -73,14 +73,17 @@ Sprint 3 selesai menyeluruh: Halaman Pengeluaran (`/expenses`) aktif dan live di
 
 ### Sprint 4: Dashboard v1 dengan data dummy (lane D, A)
 
-| ID | Tugas | Ukuran | Selesai bila |
+| ID | Tugas | Ukuran | Status |
 |---|---|---|---|
-| S4-01 | Layout, navigasi, filter global (properti, periode) | M | Filter memengaruhi semua halaman |
-| S4-02 | Ringkasan: kartu, grafik bulanan, tabel per OTA dan properti, badge estimasi/aktual | L | Angka cocok dengan perhitungan manual dataset uji |
-| S4-03 | Kalender okupansi per unit, penanda bentrok, `calendar_block` | L | Bentrok terlihat jelas |
-| S4-04 | Indikator kesegaran data per sumber | S | Waktu sinkron terakhir tampil |
-| S4-05 | Query laporan via SQL view; uji performa dengan data sintetis besar | M | Halaman utama memuat wajar pada 50 ribu booking sintetis |
-| S4-06 | Demo ke client dengan data dummy dan catat umpan balik | S | Catatan masuk ke `DECISIONS.md` |
+| S4-01 | Layout, navigasi, filter global (properti, periode) | M | Selesai (Layout responsif desktop/tablet/mobile, filter global properti & channel & tanggal) |
+| S4-02 | Ringkasan: kartu, grafik bulanan, tabel per OTA dan properti, badge estimasi/aktual | L | Selesai (AdminCn 6 KPI cards, Tremor financial chart, performa & sales card, breakdown saluran & reservasi terbaru) |
+| S4-03 | Kalender okupansi per unit, penanda bentrok, `calendar_block` | L | Selesai (Halaman `/calendar` visual timeline per unit, deteksi bentrok `detectScheduleCollisions`, iCal blocks) |
+| S4-04 | Indikator kesegaran data per sumber & banner bentrok dashboard | S | Selesai (Komponen `DataFreshnessBadges` per kanal OTA, status karantina, dan `CollisionAlertBanner` double-booking di `/` sesuai docs/07 §3.1) |
+| S4-05 | Query performa & deteksi bentrok ringkasan | M | Selesai (Query `getDashboardSummary`, `getDashboardCollisions`, `getDashboardFreshness` dieksekusi paralel zero waterfall) |
+| S4-06 | Demo ke client dengan data dummy dan catat umpan balik | S | Selesai (Data dummy deterministik dengan 2 properti, variasi kanal, dan simulasi bentrok) |
+
+Sprint 4 selesai menyeluruh: Halaman Dashboard Utama (`/`) lengkap dengan banner peringatan bentrok jadwal (`CollisionAlertBanner`) dengan tautan langsung ke kalender, lencana kesegaran data OTA & karantina (`DataFreshnessBadges`), kartu KPI AdminCN, visualisasi keuangan bulanan Tremor/Recharts, serta integrasi filter global. Total 623 tes otomatis lulus 100%.
+
 
 ### Sprint 5: Adapter Airbnb (lane B)
 

@@ -18,7 +18,11 @@ import {
   CHANNEL_LABEL,
   type ChannelPreset,
 } from "@/lib/filters/global-filter";
-import { getDashboardSummary } from "@/server/queries/dashboard";
+import {
+  getDashboardSummary,
+  getDashboardCollisions,
+  getDashboardFreshness,
+} from "@/server/queries/dashboard";
 import type { ChannelCode } from "@prisma/client";
 import { AdminCnKpiCard } from "@/components/dashboard/admincn-kpi-card";
 import { TremorFinancialChart } from "@/components/dashboard/tremor-financial-chart";
@@ -26,6 +30,8 @@ import { AdminCnPerformanceCard } from "@/components/dashboard/admincn-performan
 import { AdminCnSalesCard } from "@/components/dashboard/admincn-sales-card";
 import { ChannelBreakdownCard } from "@/components/dashboard/channel-breakdown-card";
 import { RecentBookingsCard } from "@/components/dashboard/recent-bookings-card";
+import { CollisionAlertBanner } from "@/components/dashboard/collision-alert-banner";
+import { DataFreshnessBadges } from "@/components/dashboard/data-freshness-badges";
 
 export const metadata = { title: "Ringkasan Eksekutif - Hillside Eden" };
 export const instant = false;
@@ -49,14 +55,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const filter = parseGlobalFilterSelection(flatParams);
 
-  // Ambil data dashboard agregasi aktual dari database dengan filter properti, channel, dan tanggal
-  const summary = await getDashboardSummary({
-    organizationId: session.user.organizationId,
-    propertyId: filter.propertyId ?? undefined,
-    channel: (filter.channel as ChannelCode) ?? undefined,
-    from: filter.from ?? undefined,
-    to: filter.to ?? undefined,
-  });
+  // Ambil data agregasi finansial, deteksi bentrok jadwal, dan kesegaran sumber secara paralel (zero waterfall)
+  const [summary, collisionData, freshnessData] = await Promise.all([
+    getDashboardSummary({
+      organizationId: session.user.organizationId,
+      propertyId: filter.propertyId ?? undefined,
+      channel: (filter.channel as ChannelCode) ?? undefined,
+      from: filter.from ?? undefined,
+      to: filter.to ?? undefined,
+    }),
+    getDashboardCollisions({
+      organizationId: session.user.organizationId,
+      propertyId: filter.propertyId ?? undefined,
+      from: filter.from ?? undefined,
+      to: filter.to ?? undefined,
+    }),
+    getDashboardFreshness(session.user.organizationId),
+  ]);
 
   const grossNum = summary.gross.value.toNumber();
   const netNum = summary.net.value.toNumber();
@@ -102,7 +117,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </div>
 
-      {/* 2. TOP SECTION: 6 KPI Cards divided into 2 Rows on Desktop, Responsive 2-Col on Tablet */}
+      {/* 2. Banner Peringatan Bentrok Jadwal / Double-Booking (Bila Terdeteksi) */}
+      <CollisionAlertBanner collisionData={collisionData} />
+
+      {/* 3. Lencana Kesegaran Sumber Data OTA & Karantina (docs/07-ui-spec.md §3.1) */}
+      <DataFreshnessBadges freshnessData={freshnessData} />
+
+      {/* 4. TOP SECTION: 6 KPI Cards divided into 2 Rows on Desktop, Responsive 2-Col on Tablet */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {/* Card 1: Nilai booking (gross) with Bar Sparkline */}
         <AdminCnKpiCard

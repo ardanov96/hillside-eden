@@ -12,6 +12,14 @@
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@/lib/decimal";
 import type { ChannelCode, BookingStatus } from "@prisma/client";
+import {
+  detectScheduleCollisions,
+  type CollisionBooking,
+  type CollisionBlock,
+  type CollisionUnit,
+  type CollisionItem,
+} from "@/domain/collision";
+import { toStayDate, fromStayDate, type StayDate } from "@/lib/dates";
 
 export interface DashboardFilterParams {
   organizationId: string;
@@ -340,5 +348,339 @@ export async function getDashboardSummary(
     monthlyTrend,
     channelDistribution,
     recentBookings,
+  };
+}
+
+export interface DashboardCollisionParams {
+  organizationId: string;
+  propertyId?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface DashboardCollisionItemDto {
+  id: string;
+  unitId: string;
+  unitName: string;
+  propertyName?: string;
+  severity: "COLLISION" | "WARNING";
+  kind: "BOOKING_VS_BOOKING" | "BOOKING_VS_BLOCK" | "UNSELLABLE_UNIT";
+  overlapStart: string;
+  overlapEnd: string;
+  overlapNights: number;
+  message: string;
+  bookingA: {
+    id: string;
+    channel?: string;
+    externalId?: string;
+    listingName?: string;
+    guestName?: string;
+    checkIn: string;
+    checkOut: string;
+  };
+  bookingB?: {
+    id: string;
+    channel?: string;
+    externalId?: string;
+    listingName?: string;
+    guestName?: string;
+    checkIn: string;
+    checkOut: string;
+  };
+  block?: {
+    id: string;
+    summary?: string | null;
+    source?: string;
+    startDate: string;
+    endDate: string;
+  };
+}
+
+export interface DashboardCollisionResult {
+  hasCollisions: boolean;
+  hasWarnings: boolean;
+  totalIssues: number;
+  collisions: DashboardCollisionItemDto[];
+  warnings: DashboardCollisionItemDto[];
+  recommendedCalendarUrl: string;
+}
+
+/**
+ * Deteksi bentrok jadwal & peringatan inventori untuk Dashboard Ringkasan.
+ * Mengikuti docs/07-ui-spec.md §3.1: "Bila ada bentrok jadwal: banner peringatan dengan tautan ke Kalender."
+ */
+export async function getDashboardCollisions(
+  params: DashboardCollisionParams,
+): Promise<DashboardCollisionResult> {
+  const { organizationId, propertyId, from, to } = params;
+
+  // 1. Ambil seluruh unit pada organisasi (dan properti terkait bila ada filter)
+  const unitsData = await prisma.unit.findMany({
+    where: {
+      property: {
+        organizationId,
+        isActive: true,
+        ...(propertyId ? { id: propertyId } : {}),
+      },
+      isActive: true,
+    },
+    include: {
+      property: { select: { id: true, name: true } },
+      inventory: true,
+    },
+  });
+
+  const unitMap = new Map<string, { unitName: string; propertyName: string }>();
+  for (const u of unitsData) {
+    unitMap.set(u.id, { unitName: u.name, propertyName: u.property.name });
+  }
+
+  // 2. Tentukan rentang tanggal evaluasi
+  let startDate: Date;
+  let endDate: Date;
+
+  if (from && to) {
+    startDate = fromStayDate(from);
+    endDate = fromStayDate(to);
+  } else if (from) {
+    startDate = fromStayDate(from);
+    endDate = new Date(startDate.getTime() + 180 * 24 * 60 * 60 * 1000);
+  } else if (to) {
+    endDate = fromStayDate(to);
+    startDate = new Date(endDate.getTime() - 180 * 24 * 60 * 60 * 1000);
+  } else {
+    // Default: evaluasi dari 30 hari yang lalu hingga 180 hari ke depan
+    startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    endDate = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
+  }
+
+  // 3. Ambil booking yang beririsan
+  const bookingsData = await prisma.booking.findMany({
+    where: {
+      organizationId,
+      status: { in: ["CONFIRMED", "PENDING"] },
+      ...(propertyId ? { propertyId } : {}),
+      checkIn: { lt: endDate },
+      checkOut: { gt: startDate },
+    },
+    include: {
+      units: { select: { unitId: true } },
+      listing: { select: { id: true, name: true, channel: true } },
+      guest: { select: { displayName: true } },
+      property: { select: { id: true, name: true } },
+    },
+    orderBy: { checkIn: "asc" },
+  });
+
+  // 4. Ambil calendar blocks (iCal) yang beririsan
+  const calendarBlocksData = await prisma.calendarBlock.findMany({
+    where: {
+      listing: {
+        organizationId,
+        ...(propertyId ? { propertyId } : {}),
+      },
+      startDate: { lt: endDate },
+      endDate: { gt: startDate },
+    },
+    include: {
+      listing: {
+        include: {
+          listingUnits: { select: { unitId: true } },
+        },
+      },
+    },
+  });
+
+  // 5. Konversi ke domain collision
+  const collisionBookings: CollisionBooking[] = bookingsData.map((b) => ({
+    id: b.id,
+    channel: b.channel,
+    externalId: b.externalId,
+    status: b.status as "CONFIRMED" | "PENDING",
+    unitIds: b.units.map((u) => u.unitId),
+    checkIn: toStayDate(b.checkIn),
+    checkOut: toStayDate(b.checkOut),
+    listingName: b.listing?.name,
+    guestName: b.guest?.displayName ?? undefined,
+  }));
+
+  const collisionBlocks: CollisionBlock[] = calendarBlocksData.map((cb) => ({
+    id: cb.id,
+    listingId: cb.listingId,
+    unitIds: cb.listing.listingUnits.map((lu) => lu.unitId),
+    startDate: toStayDate(cb.startDate),
+    endDate: toStayDate(cb.endDate),
+    summary: cb.summary,
+    source: cb.source,
+  }));
+
+  const collisionUnits: CollisionUnit[] = unitsData.map((u) => ({
+    id: u.id,
+    name: u.name,
+    isSellable: (stayDate: StayDate) => {
+      const dt = fromStayDate(stayDate);
+      const match = u.inventory.find(
+        (inv) => inv.validFrom <= dt && (!inv.validTo || inv.validTo >= dt),
+      );
+      return match ? match.isSellable : true;
+    },
+  }));
+
+  const report = detectScheduleCollisions({
+    bookings: collisionBookings,
+    blocks: collisionBlocks,
+    units: collisionUnits,
+  });
+
+  // 6. Format Collision Items
+  const mapCollisionItem = (item: CollisionItem): DashboardCollisionItemDto => {
+    const meta = unitMap.get(item.unitId);
+    return {
+      id: item.id,
+      unitId: item.unitId,
+      unitName: meta?.unitName || item.unitName || "Unit",
+      propertyName: meta?.propertyName,
+      severity: item.severity,
+      kind: item.kind,
+      overlapStart: item.overlapStart,
+      overlapEnd: item.overlapEnd,
+      overlapNights: item.overlapNights,
+      message: item.message,
+      bookingA: {
+        id: item.bookingA.id,
+        channel: item.bookingA.channel,
+        externalId: item.bookingA.externalId,
+        listingName: item.bookingA.listingName,
+        guestName: item.bookingA.guestName,
+        checkIn: item.bookingA.checkIn,
+        checkOut: item.bookingA.checkOut,
+      },
+      bookingB: item.bookingB
+        ? {
+            id: item.bookingB.id,
+            channel: item.bookingB.channel,
+            externalId: item.bookingB.externalId,
+            listingName: item.bookingB.listingName,
+            guestName: item.bookingB.guestName,
+            checkIn: item.bookingB.checkIn,
+            checkOut: item.bookingB.checkOut,
+          }
+        : undefined,
+      block: item.block
+        ? {
+            id: item.block.id,
+            summary: item.block.summary,
+            source: item.block.source,
+            startDate: item.block.startDate,
+            endDate: item.block.endDate,
+          }
+        : undefined,
+    };
+  };
+
+  const formattedCollisions = report.collisions.map(mapCollisionItem);
+  const formattedWarnings = report.warnings.map(mapCollisionItem);
+
+  // Rekomendasi URL kalender: arahkan ke bulan di mana bentrok pertama terjadi
+  let recommendedCalendarUrl = "/calendar";
+  const firstIssue = formattedCollisions[0] || formattedWarnings[0];
+  if (firstIssue) {
+    const [y, m] = firstIssue.overlapStart.split("-");
+    const p = new URLSearchParams();
+    if (y) p.set("year", y);
+    if (m) p.set("month", String(parseInt(m, 10)));
+    if (propertyId) p.set("propertyId", propertyId);
+    recommendedCalendarUrl = `/calendar?${p.toString()}`;
+  }
+
+  return {
+    hasCollisions: report.hasCollisions,
+    hasWarnings: report.hasWarnings,
+    totalIssues: report.totalIssues,
+    collisions: formattedCollisions,
+    warnings: formattedWarnings,
+    recommendedCalendarUrl,
+  };
+}
+
+export interface DashboardFreshnessSourceDto {
+  channel: ChannelCode;
+  label: string;
+  color: string;
+  lastSyncAt: Date | null;
+  status: "fresh" | "stale" | "no_data";
+}
+
+export interface DashboardFreshnessResult {
+  sources: DashboardFreshnessSourceDto[];
+  needsReviewCount: number;
+}
+
+/**
+ * Status kesegaran data per sumber OTA dan jumlah item karantina.
+ * Mengikuti docs/07-ui-spec.md §3.1:
+ * "Lencana kesegaran data per sumber: nama sumber, waktu sinkron terakhir, jumlah item 'perlu perhatian'."
+ */
+export async function getDashboardFreshness(
+  organizationId: string,
+): Promise<DashboardFreshnessResult> {
+  const channelsToCheck: ChannelCode[] = [
+    "AIRBNB",
+    "TIKET_COM",
+    "TRAVELOKA",
+    "BOOKING_COM",
+    "AGODA",
+    "EXPEDIA",
+  ];
+
+  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+  const [sources, needsReviewCount] = await Promise.all([
+    Promise.all(
+      channelsToCheck.map(async (ch) => {
+        const info = CHANNEL_LABELS[ch] || { label: ch, color: "#64748b" };
+
+        const latestBatch = await prisma.importBatch.findFirst({
+          where: { organizationId, channel: ch },
+          orderBy: { receivedAt: "desc" },
+          select: { receivedAt: true },
+        });
+
+        let lastSyncAt = latestBatch?.receivedAt ?? null;
+
+        if (!lastSyncAt) {
+          const latestBlock = await prisma.calendarBlock.findFirst({
+            where: { listing: { organizationId, channel: ch } },
+            orderBy: { fetchedAt: "desc" },
+            select: { fetchedAt: true },
+          });
+          if (latestBlock) lastSyncAt = latestBlock.fetchedAt;
+        }
+
+        let status: "fresh" | "stale" | "no_data" = "no_data";
+        if (lastSyncAt) {
+          status = lastSyncAt >= fortyEightHoursAgo ? "fresh" : "stale";
+        }
+
+        return {
+          channel: ch,
+          label: info.label,
+          color: info.color,
+          lastSyncAt,
+          status,
+        };
+      }),
+    ),
+    prisma.importItem.count({
+      where: {
+        batch: { organizationId },
+        status: { in: ["NEEDS_REVIEW", "FAILED"] },
+      },
+    }),
+  ]);
+
+  return {
+    sources,
+    needsReviewCount,
   };
 }
