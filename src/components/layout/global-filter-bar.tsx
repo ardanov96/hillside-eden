@@ -6,8 +6,9 @@
  * yang berlaku melintasi seluruh halaman dashboard.
  */
 import type { FormEvent } from "react";
+import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Building2, CalendarDays, Filter, Globe } from "lucide-react";
+import { Building2, CalendarDays, Filter, Globe, Loader2 } from "lucide-react";
 
 import {
   CHANNEL_PRESETS,
@@ -20,7 +21,6 @@ import {
   type PeriodPreset,
 } from "@/lib/filters/global-filter";
 import { Button } from "@/components/ui/button";
-
 import { cn } from "@/lib/utils";
 
 export interface PropertyOption {
@@ -44,28 +44,82 @@ export function GlobalFilterBar({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const current = Object.fromEntries(searchParams.entries());
-  const { propertyId, channel, period, from, to } = parseGlobalFilterSelection(current);
+  const parsed = parseGlobalFilterSelection(current);
+
+  const [customActive, setCustomActive] = useState(parsed.period === "custom");
+  const [prevPeriod, setPrevPeriod] = useState(parsed.period);
+  if (parsed.period !== prevPeriod) {
+    setPrevPeriod(parsed.period);
+    setCustomActive(parsed.period === "custom");
+  }
+
+  const isCustom = customActive || parsed.period === "custom";
+  const selectedPeriod: PeriodPreset = isCustom ? "custom" : parsed.period;
+
+  const [fromDate, setFromDate] = useState(parsed.from ?? "");
+  const [toDate, setToDate] = useState(parsed.to ?? "");
+  const [prevFrom, setPrevFrom] = useState(parsed.from ?? "");
+  const [prevTo, setPrevTo] = useState(parsed.to ?? "");
+  if ((parsed.from ?? "") !== prevFrom || (parsed.to ?? "") !== prevTo) {
+    setPrevFrom(parsed.from ?? "");
+    setPrevTo(parsed.to ?? "");
+    setFromDate(parsed.from ?? "");
+    setToDate(parsed.to ?? "");
+  }
+
+  const selectedProperty = parsed.propertyId ?? "";
+  const selectedChannel = parsed.channel ?? "";
+
+  function executeNavigation(updates: Partial<Record<GlobalFilterKey, string>>) {
+    const merged = mergeKeepingNonGlobal(current, updates);
+    startTransition(() => {
+      router.push(`${pathname}${serializeParams(merged)}`);
+      onApplied?.();
+    });
+  }
+
+  function handlePropertyChange(newProp: string) {
+    executeNavigation({
+      propertyId: newProp,
+      channel: selectedChannel,
+      period: selectedPeriod,
+      ...(selectedPeriod === "custom" ? { from: fromDate, to: toDate } : {}),
+    });
+  }
+
+  function handleChannelChange(newChan: string) {
+    executeNavigation({
+      propertyId: selectedProperty,
+      channel: newChan,
+      period: selectedPeriod,
+      ...(selectedPeriod === "custom" ? { from: fromDate, to: toDate } : {}),
+    });
+  }
+
+  function handlePeriodChange(newPer: PeriodPreset) {
+    if (newPer === "custom") {
+      setCustomActive(true);
+    } else {
+      setCustomActive(false);
+      executeNavigation({
+        propertyId: selectedProperty,
+        channel: selectedChannel,
+        period: newPer,
+      });
+    }
+  }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const fd = new FormData(event.currentTarget);
-    const nextPeriod = (fd.get("period") as PeriodPreset | null) ?? "this_month";
-
-    const updates: Partial<Record<GlobalFilterKey, string>> = {
-      propertyId: (fd.get("propertyId") as string | null) ?? "",
-      channel: (fd.get("channel") as string | null) ?? "",
-      period: nextPeriod,
-    };
-    if (nextPeriod === "custom") {
-      updates.from = (fd.get("from") as string | null) ?? "";
-      updates.to = (fd.get("to") as string | null) ?? "";
-    }
-
-    const merged = mergeKeepingNonGlobal(current, updates);
-    router.push(`${pathname}${serializeParams(merged)}`);
-    onApplied?.();
+    executeNavigation({
+      propertyId: selectedProperty,
+      channel: selectedChannel,
+      period: selectedPeriod,
+      ...(selectedPeriod === "custom" ? { from: fromDate, to: toDate } : {}),
+    });
   }
 
   if (isMobile) {
@@ -84,7 +138,8 @@ export function GlobalFilterBar({
             <select
               id="global-property-m"
               name="propertyId"
-              defaultValue={propertyId ?? ""}
+              value={selectedProperty}
+              onChange={(e) => handlePropertyChange(e.target.value)}
               className="w-full cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
             >
               <option value="">Semua Properti (Portofolio)</option>
@@ -110,7 +165,8 @@ export function GlobalFilterBar({
             <select
               id="global-channel-m"
               name="channel"
-              defaultValue={channel ?? ""}
+              value={selectedChannel}
+              onChange={(e) => handleChannelChange(e.target.value)}
               className="w-full cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
             >
               <option value="">Semua Saluran (OTA)</option>
@@ -136,7 +192,8 @@ export function GlobalFilterBar({
             <select
               id="global-period-m"
               name="period"
-              defaultValue={period}
+              value={selectedPeriod}
+              onChange={(e) => handlePeriodChange(e.target.value as PeriodPreset)}
               className="w-full cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
             >
               {PERIOD_PRESETS.map((p) => (
@@ -148,14 +205,15 @@ export function GlobalFilterBar({
           </div>
         </div>
 
-        {period === "custom" ? (
-          <div className="grid grid-cols-2 gap-2 pt-1">
+        {selectedPeriod === "custom" ? (
+          <div className="grid grid-cols-2 gap-2 pt-1 animate-in fade-in-50 duration-150">
             <div>
               <span className="text-[10px] text-muted-foreground block mb-1">Mulai:</span>
               <input
                 name="from"
                 type="date"
-                defaultValue={from ?? ""}
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-medium text-foreground dark:border-zinc-800 dark:bg-zinc-800"
               />
             </div>
@@ -164,16 +222,25 @@ export function GlobalFilterBar({
               <input
                 name="to"
                 type="date"
-                defaultValue={to ?? ""}
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-medium text-foreground dark:border-zinc-800 dark:bg-zinc-800"
               />
             </div>
           </div>
         ) : null}
 
-        <Button type="submit" className="w-full h-9 gap-1.5 font-semibold shadow-xs mt-1">
-          <Filter className="h-4 w-4" />
-          <span>Terapkan Filter</span>
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="w-full h-9 gap-1.5 font-semibold shadow-xs mt-1"
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Filter className="h-4 w-4" />
+          )}
+          <span>{isPending ? "Menerapkan..." : "Terapkan Filter"}</span>
         </Button>
       </form>
     );
@@ -194,7 +261,8 @@ export function GlobalFilterBar({
         <select
           id="global-property"
           name="propertyId"
-          defaultValue={propertyId ?? ""}
+          value={selectedProperty}
+          onChange={(e) => handlePropertyChange(e.target.value)}
           className="cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
         >
           <option value="">Semua Properti</option>
@@ -215,7 +283,8 @@ export function GlobalFilterBar({
         <select
           id="global-channel"
           name="channel"
-          defaultValue={channel ?? ""}
+          value={selectedChannel}
+          onChange={(e) => handleChannelChange(e.target.value)}
           className="cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
         >
           <option value="">Semua Saluran</option>
@@ -236,7 +305,8 @@ export function GlobalFilterBar({
         <select
           id="global-period"
           name="period"
-          defaultValue={period}
+          value={selectedPeriod}
+          onChange={(e) => handlePeriodChange(e.target.value as PeriodPreset)}
           className="cursor-pointer bg-transparent text-xs font-semibold text-foreground focus:outline-none"
         >
           {PERIOD_PRESETS.map((p) => (
@@ -248,13 +318,14 @@ export function GlobalFilterBar({
       </div>
 
       {/* Custom Date Range if selected */}
-      {period === "custom" ? (
-        <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 shadow-2xs">
+      {selectedPeriod === "custom" ? (
+        <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 shadow-2xs animate-in fade-in-50 duration-150">
           <input
             id="global-from"
             name="from"
             type="date"
-            defaultValue={from ?? ""}
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
             aria-label="Tanggal mulai"
             className="bg-transparent text-xs font-medium text-foreground focus:outline-none"
           />
@@ -263,16 +334,27 @@ export function GlobalFilterBar({
             id="global-to"
             name="to"
             type="date"
-            defaultValue={to ?? ""}
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
             aria-label="Tanggal akhir"
             className="bg-transparent text-xs font-medium text-foreground focus:outline-none"
           />
         </div>
       ) : null}
 
-      <Button type="submit" size="sm" variant="default" className="h-8 gap-1.5 px-3 shadow-xs">
-        <Filter className="h-3.5 w-3.5" />
-        <span>Terapkan</span>
+      <Button
+        type="submit"
+        size="sm"
+        variant="default"
+        disabled={isPending}
+        className="h-8 gap-1.5 px-3 shadow-xs"
+      >
+        {isPending ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Filter className="h-3.5 w-3.5" />
+        )}
+        <span>{isPending ? "Menerapkan..." : "Terapkan"}</span>
       </Button>
     </form>
   );

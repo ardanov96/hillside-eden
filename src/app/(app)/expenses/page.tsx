@@ -4,6 +4,8 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
+import { parseGlobalFilter } from "@/lib/filters/global-filter";
+import { todayInWITA } from "@/lib/dates";
 import {
   getExpenses,
   getExpenseSummary,
@@ -36,12 +38,20 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   const organizationId = session.user.organizationId;
   const rawParams = await searchParams;
 
-  const propertyId = typeof rawParams.propertyId === "string" ? rawParams.propertyId : "ALL";
+  const gf = parseGlobalFilter(rawParams, todayInWITA());
+
+  const propertyId =
+    typeof rawParams.propertyId === "string" && rawParams.propertyId
+      ? rawParams.propertyId
+      : (gf.propertyId ?? "ALL");
   const categoryId = typeof rawParams.categoryId === "string" ? rawParams.categoryId : "ALL";
   const status = typeof rawParams.status === "string" ? rawParams.status : "ALL";
   const search = typeof rawParams.search === "string" ? rawParams.search : "";
   const page =
     typeof rawParams.page === "string" ? Math.max(1, parseInt(rawParams.page, 10) || 1) : 1;
+
+  const from = gf.range?.start ?? undefined;
+  const to = gf.range?.end ?? undefined;
 
   const [expensesData, summary, categories, properties, otherIncomes, recurringTemplates] =
     await Promise.all([
@@ -54,16 +64,22 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
             ? (status as "DRAFT" | "VERIFIED")
             : undefined,
         search: search.trim() || undefined,
+        from,
+        to,
         page,
         pageSize: 25,
       }),
       getExpenseSummary(organizationId, {
         propertyId: propertyId !== "ALL" ? propertyId : undefined,
+        from,
+        to,
       }),
       getExpenseCategories(organizationId),
       getOrganizationProperties(organizationId),
       getOtherIncomes(organizationId, {
         propertyId: propertyId !== "ALL" ? propertyId : undefined,
+        from,
+        to,
       }),
       getRecurringTemplates(organizationId),
     ]);

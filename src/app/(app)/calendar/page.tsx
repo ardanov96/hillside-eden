@@ -7,6 +7,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { toStayDate } from "@/lib/dates";
+import { parseGlobalFilter } from "@/lib/filters/global-filter";
 import { getCalendarData } from "@/server/queries/calendar";
 import { getPropertyOptions } from "@/server/queries/listings";
 import { CalendarView } from "./calendar-view";
@@ -30,14 +31,26 @@ export default async function CalendarPage(props: CalendarPageProps) {
 
   // Tentukan default tanggal saat ini dalam WITA
   const todayWita = toStayDate(new Date());
-  const [currentYearStr, currentMonthStr] = todayWita.split("-");
-  const defaultYear = Number.parseInt(currentYearStr ?? "2026", 10);
-  const defaultMonth = Number.parseInt(currentMonthStr ?? "1", 10);
+  const gf = parseGlobalFilter(sp, todayWita);
+
+  let defaultYear: number;
+  let defaultMonth: number;
+  if (gf.range?.start) {
+    const [y, m] = gf.range.start.split("-");
+    defaultYear = Number.parseInt(y ?? "2026", 10);
+    defaultMonth = Number.parseInt(m ?? "1", 10);
+  } else {
+    const [currentYearStr, currentMonthStr] = todayWita.split("-");
+    defaultYear = Number.parseInt(currentYearStr ?? "2026", 10);
+    defaultMonth = Number.parseInt(currentMonthStr ?? "1", 10);
+  }
 
   const yearParam = typeof sp.year === "string" ? Number.parseInt(sp.year, 10) : defaultYear;
   const monthParam = typeof sp.month === "string" ? Number.parseInt(sp.month, 10) : defaultMonth;
   const propertyIdParam =
-    typeof sp.propertyId === "string" && sp.propertyId ? sp.propertyId : undefined;
+    typeof sp.propertyId === "string" && sp.propertyId
+      ? sp.propertyId
+      : (gf.propertyId ?? undefined);
 
   const year = Number.isNaN(yearParam) ? defaultYear : yearParam;
   const month = Number.isNaN(monthParam) ? defaultMonth : Math.max(1, Math.min(12, monthParam));

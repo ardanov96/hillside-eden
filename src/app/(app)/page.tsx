@@ -13,11 +13,8 @@ import { PlusCircle, CalendarCheck2, BedDouble, Wallet, Sparkles } from "lucide-
 
 import { auth } from "@/auth";
 import { formatIDR } from "@/lib/format-id";
-import {
-  parseGlobalFilterSelection,
-  CHANNEL_LABEL,
-  type ChannelPreset,
-} from "@/lib/filters/global-filter";
+import { parseGlobalFilter, CHANNEL_LABEL, type ChannelPreset } from "@/lib/filters/global-filter";
+import { todayInWITA } from "@/lib/dates";
 import {
   getDashboardSummary,
   getDashboardCollisions,
@@ -53,22 +50,22 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     if (typeof v === "string") flatParams[k] = v;
   }
 
-  const filter = parseGlobalFilterSelection(flatParams);
+  const gf = parseGlobalFilter(flatParams, todayInWITA());
 
   // Ambil data agregasi finansial, deteksi bentrok jadwal, dan kesegaran sumber secara paralel (zero waterfall)
   const [summary, collisionData, freshnessData] = await Promise.all([
     getDashboardSummary({
       organizationId: session.user.organizationId,
-      propertyId: filter.propertyId ?? undefined,
-      channel: (filter.channel as ChannelCode) ?? undefined,
-      from: filter.from ?? undefined,
-      to: filter.to ?? undefined,
+      propertyId: gf.propertyId ?? undefined,
+      channel: (gf.channel as ChannelCode) ?? undefined,
+      from: gf.range?.start ?? undefined,
+      to: gf.range?.end ?? undefined,
     }),
     getDashboardCollisions({
       organizationId: session.user.organizationId,
-      propertyId: filter.propertyId ?? undefined,
-      from: filter.from ?? undefined,
-      to: filter.to ?? undefined,
+      propertyId: gf.propertyId ?? undefined,
+      from: gf.range?.start ?? undefined,
+      to: gf.range?.end ?? undefined,
     }),
     getDashboardFreshness(session.user.organizationId),
   ]);
@@ -132,8 +129,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           badgeText="+14.8%"
           badgeType="positive"
           subtitle={
-            filter.channel
-              ? `saluran ${CHANNEL_LABEL[filter.channel as ChannelPreset] ?? filter.channel}`
+            gf.channel
+              ? `saluran ${CHANNEL_LABEL[gf.channel as ChannelPreset] ?? gf.channel}`
               : "semua saluran OTA"
           }
           visualType="bar-sparkline"
@@ -148,8 +145,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           badgeText="14.0% est."
           badgeType="warning"
           subtitle={
-            filter.channel
-              ? `potongan ${CHANNEL_LABEL[filter.channel as ChannelPreset] ?? filter.channel}`
+            gf.channel
+              ? `potongan ${CHANNEL_LABEL[gf.channel as ChannelPreset] ?? gf.channel}`
               : "potongan estimasi"
           }
           visualType="bar-sparkline"
@@ -164,8 +161,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           badgeText="+15.6%"
           badgeType="positive"
           subtitle={
-            filter.channel
-              ? `setelah komisi ${CHANNEL_LABEL[filter.channel as ChannelPreset] ?? filter.channel}`
+            gf.channel
+              ? `setelah komisi ${CHANNEL_LABEL[gf.channel as ChannelPreset] ?? gf.channel}`
               : "setelah komisi OTA"
           }
           visualType="line-sparkline"

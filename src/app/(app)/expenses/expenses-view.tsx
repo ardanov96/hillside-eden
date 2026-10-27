@@ -112,10 +112,12 @@ export function ExpensesView({
   const [actionFeedback, setActionFeedback] = React.useState<ExpenseActionResult | null>(null);
 
   // Filter local state
-  const [selectedProp, setSelectedProp] = React.useState(currentPropertyId);
-  const [selectedCat, setSelectedCat] = React.useState(currentCategoryId);
-  const [selectedStat, setSelectedStat] = React.useState(currentStatus);
   const [searchQuery, setSearchQuery] = React.useState(currentSearch);
+  const [prevSearch, setPrevSearch] = React.useState(currentSearch);
+  if (currentSearch !== prevSearch) {
+    setPrevSearch(currentSearch);
+    setSearchQuery(currentSearch);
+  }
 
   // Sinkronkan filter ke URL
   const applyFilters = (newParams: Record<string, string>) => {
@@ -381,9 +383,8 @@ export function ExpensesView({
 
               {/* Properti */}
               <select
-                value={selectedProp}
+                value={currentPropertyId}
                 onChange={(e) => {
-                  setSelectedProp(e.target.value);
                   applyFilters({ propertyId: e.target.value });
                 }}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
@@ -399,9 +400,8 @@ export function ExpensesView({
 
               {/* Kategori */}
               <select
-                value={selectedCat}
+                value={currentCategoryId}
                 onChange={(e) => {
-                  setSelectedCat(e.target.value);
                   applyFilters({ categoryId: e.target.value });
                 }}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
@@ -416,9 +416,8 @@ export function ExpensesView({
 
               {/* Status */}
               <select
-                value={selectedStat}
+                value={currentStatus}
                 onChange={(e) => {
-                  setSelectedStat(e.target.value);
                   applyFilters({ status: e.target.value });
                 }}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"

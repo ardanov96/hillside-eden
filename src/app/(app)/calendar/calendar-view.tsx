@@ -4,7 +4,7 @@
  * Komponen Tampilan Kalender Okupansi & Deteksi Bentrok (S10-01).
  */
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -59,6 +59,7 @@ const CHANNEL_COLORS: Record<string, { bg: string; text: string; border: string 
 
 export function CalendarView({ data, propertyOptions, selectedPropertyId }: CalendarViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedCell, setSelectedCell] = React.useState<CalendarDayCell | null>(null);
   const [selectedUnitName, setSelectedUnitName] = React.useState<string>("");
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -76,7 +77,7 @@ export function CalendarView({ data, propertyOptions, selectedPropertyId }: Cale
       nextYear += 1;
     }
 
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
     params.set("year", String(nextYear));
     params.set("month", String(nextMonth));
     if (selectedPropertyId) {
@@ -86,11 +87,13 @@ export function CalendarView({ data, propertyOptions, selectedPropertyId }: Cale
   };
 
   const handlePropertyChange = (newPropId: string) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
     params.set("year", String(year));
     params.set("month", String(month));
     if (newPropId !== "ALL") {
       params.set("propertyId", newPropId);
+    } else {
+      params.delete("propertyId");
     }
     router.push(`/calendar?${params.toString()}`);
   };

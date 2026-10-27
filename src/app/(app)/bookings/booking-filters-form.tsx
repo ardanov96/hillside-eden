@@ -1,21 +1,27 @@
+"use client";
+
 /**
- * Form filter halaman Bookings (S2-07.2 + S4-01).
+ * Form filter halaman Bookings (S2-07.2 + S4-01) - Client Component.
  *
- * - Submit memakai method GET ke `/bookings`, jadi tidak butuh JS.
- * - Setiap perubahan filter full reload; sesuai ekspektasi tabel admin
- *   di §7-ui-spec (mobile-first untuk form, desktop untuk tabel; ini
- *   tabel admin yang lebih cocok ke desktop).
- * - Kunci global (propertyId + rentang tanggal) dipertahankan lewat
- *   hidden inputs sehingga filter global tidak hilang saat user mengubah
- *   filter lokal.
+ * - Submit memakai router.push dengan useTransition() untuk transisi client-side
+ *   yang mulus tanpa reload otomatis/refresh layar penuh.
+ * - Kunci global (propertyId + rentang tanggal) dipertahankan lewat helper
+ *   sehingga filter global tidak hilang saat user mengubah filter lokal.
  * - Reset mempertahankan hanya filter global; filter lokal dikosongkan.
  *
  * Sumber kebenaran: docs/07-ui-spec.md §3.2.
  */
+import type { FormEvent } from "react";
+import { useState, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Filter, Loader2, RotateCcw } from "lucide-react";
+
 import { INPUT_CLASS } from "./ui-primitives";
 import type { PreservedGlobalParams } from "./preserved-params";
 import type { StayDate } from "@/lib/dates";
 import { globalFilterQueryString } from "@/lib/filters/global-filter";
+import { Button } from "@/components/ui/button";
 
 export interface FilterOption {
   value: string;
@@ -50,9 +56,6 @@ function globalQ(sp: PreservedGlobalParams | undefined): string {
   });
 }
 
-import { Filter, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
 export function BookingFiltersForm({
   channelOptions,
   statusOptions,
@@ -60,11 +63,50 @@ export function BookingFiltersForm({
   preserved,
   resultCount,
 }: BookingFiltersFormProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const [search, setSearch] = useState(values.search ?? "");
+  const [prevSearch, setPrevSearch] = useState(values.search ?? "");
+  if ((values.search ?? "") !== prevSearch) {
+    setPrevSearch(values.search ?? "");
+    setSearch(values.search ?? "");
+  }
+
+  const channel = values.channel ?? "";
+  const status = values.status ?? "";
+
+  function applyFilter(overrides?: { search?: string; channel?: string; status?: string }) {
+    const s = overrides?.search !== undefined ? overrides.search : search;
+    const c = overrides?.channel !== undefined ? overrides.channel : channel;
+    const st = overrides?.status !== undefined ? overrides.status : status;
+
+    const sp = new URLSearchParams();
+    if (s.trim()) sp.set("search", s.trim());
+    if (c) sp.set("channel", c);
+    if (st) sp.set("status", st);
+
+    if (preserved?.propertyId) sp.set("propertyId", preserved.propertyId);
+    if (preserved?.period) sp.set("period", preserved.period);
+    if (preserved?.period === "custom" && preserved.from) sp.set("from", preserved.from);
+    if (preserved?.period === "custom" && preserved.to) sp.set("to", preserved.to);
+
+    const qs = sp.toString();
+    startTransition(() => {
+      router.push(qs ? `/bookings?${qs}` : "/bookings");
+    });
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    applyFilter();
+  }
+
   const resetHref = `/bookings${globalQ(preserved)}`;
+
   return (
     <form
-      method="get"
-      action="/bookings"
+      onSubmit={handleSubmit}
       className="grid gap-4 rounded-xl border border-border bg-card p-4 shadow-xs sm:grid-cols-2 xl:grid-cols-4"
     >
       <div className="space-y-1.5 sm:col-span-2 xl:col-span-2">
@@ -75,7 +117,8 @@ export function BookingFiltersForm({
           id="search"
           name="search"
           type="search"
-          defaultValue={values.search ?? ""}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Misal: HMABC123..."
           maxLength={64}
           className={INPUT_CLASS}
@@ -89,7 +132,10 @@ export function BookingFiltersForm({
         <select
           id="channel"
           name="channel"
-          defaultValue={values.channel ?? ""}
+          value={channel}
+          onChange={(e) => {
+            applyFilter({ channel: e.target.value });
+          }}
           className={INPUT_CLASS}
         >
           <option value="">Semua Saluran</option>
@@ -108,7 +154,10 @@ export function BookingFiltersForm({
         <select
           id="status"
           name="status"
-          defaultValue={values.status ?? ""}
+          value={status}
+          onChange={(e) => {
+            applyFilter({ status: e.target.value });
+          }}
           className={INPUT_CLASS}
         >
           <option value="">Semua Status</option>
@@ -120,27 +169,20 @@ export function BookingFiltersForm({
         </select>
       </div>
 
-      {preserved?.propertyId ? (
-        <input type="hidden" name="propertyId" value={preserved.propertyId} />
-      ) : null}
-      {preserved?.period ? <input type="hidden" name="period" value={preserved.period} /> : null}
-      {preserved?.period === "custom" && preserved.from ? (
-        <input type="hidden" name="from" value={preserved.from} />
-      ) : null}
-      {preserved?.period === "custom" && preserved.to ? (
-        <input type="hidden" name="to" value={preserved.to} />
-      ) : null}
-
       <div className="flex flex-wrap items-center gap-2 pt-2 sm:col-span-2 xl:col-span-4 border-t border-border/60">
-        <Button type="submit" size="sm" className="gap-1.5 shadow-xs">
-          <Filter className="h-3.5 w-3.5" />
-          <span>Terapkan Filter</span>
+        <Button type="submit" size="sm" disabled={isPending} className="gap-1.5 shadow-xs">
+          {isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Filter className="h-3.5 w-3.5" />
+          )}
+          <span>{isPending ? "Menerapkan..." : "Terapkan Filter"}</span>
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <a href={resetHref} className="gap-1.5">
+          <Link href={resetHref} className="gap-1.5">
             <RotateCcw className="h-3.5 w-3.5" />
             <span>Reset</span>
-          </a>
+          </Link>
         </Button>
         {typeof resultCount === "number" ? (
           <span className="ml-auto text-xs font-medium text-muted-foreground">

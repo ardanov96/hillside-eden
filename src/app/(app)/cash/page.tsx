@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { auth } from "@/auth";
-import { parseGlobalFilterSelection } from "@/lib/filters/global-filter";
+import { parseGlobalFilter } from "@/lib/filters/global-filter";
+import { todayInWITA } from "@/lib/dates";
 import { getCashFlowSummary } from "@/server/queries/cash";
 import { getCommissionReconciliation, listCommissionRules } from "@/server/queries/commissions";
 import { CashView } from "./cash-view";
@@ -33,21 +34,21 @@ export default async function CashPage({ searchParams }: CashPageProps) {
     if (typeof v === "string") flatParams[k] = v;
   }
 
-  const filter = parseGlobalFilterSelection(flatParams);
+  const gf = parseGlobalFilter(flatParams, todayInWITA());
 
   // Ambil data agregasi arus kas, rekonsiliasi komisi, dan aturan komisi
   const [cashSummary, reconciliation, commissionRules] = await Promise.all([
     getCashFlowSummary({
       organizationId,
-      propertyId: filter.propertyId ?? undefined,
-      from: filter.from ?? undefined,
-      to: filter.to ?? undefined,
+      propertyId: gf.propertyId ?? undefined,
+      from: gf.range?.start ?? undefined,
+      to: gf.range?.end ?? undefined,
     }),
     getCommissionReconciliation({
       organizationId,
-      propertyId: filter.propertyId ?? undefined,
-      from: filter.from ?? undefined,
-      to: filter.to ?? undefined,
+      propertyId: gf.propertyId ?? undefined,
+      from: gf.range?.start ?? undefined,
+      to: gf.range?.end ?? undefined,
     }),
     listCommissionRules(),
   ]);

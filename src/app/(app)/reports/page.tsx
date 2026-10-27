@@ -10,6 +10,8 @@ import { connection } from "next/server";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { parseGlobalFilter } from "@/lib/filters/global-filter";
+import { todayInWITA } from "@/lib/dates";
 import { getMonthlyOwnerReport, getPeriodLockList } from "@/server/queries/reports";
 import { ReportsView } from "./reports-view";
 
@@ -28,10 +30,25 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   }
 
   const rawParams = await searchParams;
+  const gf = parseGlobalFilter(rawParams, todayInWITA());
+
+  let year = Number(rawParams.year);
+  let month = Number(rawParams.month);
+
+  if ((!year || !month) && gf.range?.start) {
+    const [y, m] = gf.range.start.split("-");
+    if (!year && y) year = Number.parseInt(y, 10);
+    if (!month && m) month = Number.parseInt(m, 10);
+  }
+
   const now = new Date();
-  const year = Number(rawParams.year) || now.getUTCFullYear();
-  const month = Number(rawParams.month) || now.getUTCMonth() + 1;
-  const propertyId = typeof rawParams.propertyId === "string" ? rawParams.propertyId : null;
+  if (!year) year = now.getFullYear();
+  if (!month) month = now.getMonth() + 1;
+
+  const propertyId =
+    typeof rawParams.propertyId === "string" && rawParams.propertyId
+      ? rawParams.propertyId
+      : (gf.propertyId ?? null);
 
   const [report, periodsList, properties] = await Promise.all([
     getMonthlyOwnerReport({

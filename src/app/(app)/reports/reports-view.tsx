@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   FileText,
@@ -51,6 +51,7 @@ export function ReportsView({
   currentPropertyId,
 }: ReportsViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"report" | "closing">("report");
   const [isPending, startTransition] = useTransition();
 
@@ -64,7 +65,7 @@ export function ReportsView({
   const isLocked = report.lock.isLocked;
 
   const handlePeriodChange = (year: number, month: number) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
     params.set("year", year.toString());
     params.set("month", month.toString());
     if (currentPropertyId) params.set("propertyId", currentPropertyId);
@@ -72,10 +73,14 @@ export function ReportsView({
   };
 
   const handlePropertyChange = (propId: string) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
     params.set("year", currentYear.toString());
     params.set("month", currentMonth.toString());
-    if (propId) params.set("propertyId", propId);
+    if (propId) {
+      params.set("propertyId", propId);
+    } else {
+      params.delete("propertyId");
+    }
     router.push(`/reports?${params.toString()}`);
   };
 
