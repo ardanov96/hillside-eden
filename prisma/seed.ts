@@ -376,6 +376,20 @@ async function main() {
   await seedListingUnit(heEstateExpedia.id, cottage2.id);
   await seedListingUnit(heEstateExpedia.id, cottage3.id);
 
+  // Direct Website: hillsideedenubud.com
+  const heEstateDirect = await seedListing(
+    org.id,
+    propHE.id,
+    ChannelCode.DIRECT,
+    "he-direct-website",
+    "Hillside Eden Ubud - Direct Website",
+    "https://hillsideedenubud.com",
+  );
+  await seedListingUnit(heEstateDirect.id, villa.id);
+  await seedListingUnit(heEstateDirect.id, cottage1.id);
+  await seedListingUnit(heEstateDirect.id, cottage2.id);
+  await seedListingUnit(heEstateDirect.id, cottage3.id);
+
   // Ubud Hillside: Airbnb, Booking.com, Agoda, Expedia (2 kamar sellable)
   const uhAirbnb = await seedListing(
     org.id,

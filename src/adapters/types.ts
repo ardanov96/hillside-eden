@@ -69,6 +69,13 @@ export type RawInput =
   | {
       kind: "manual";
       payload: unknown;
+    }
+  | {
+      kind: "webhook";
+      channel: ChannelCode;
+      source?: string;
+      payload: unknown;
+      headers?: Record<string, string>;
     };
 
 /**

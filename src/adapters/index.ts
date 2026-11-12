@@ -10,3 +10,4 @@ export * from "./airbnb";
 export * from "./ical";
 export * from "./tiket";
 export * from "./traveloka";
+export * from "./direct";
