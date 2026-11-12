@@ -61,3 +61,6 @@ next-env.d.ts
 akses_OTA.txt
 *credential*
 dashboardimages.jpg
+
+# Raw client export files with PII (use fixtures/real with anonymized PII)
+booking-report-*.csv

@@ -113,17 +113,29 @@ export function parseLocalizedDate(
   // 2. Pola DD/MM/YYYY atau DD-MM-YYYY
   const slashHyphenMatch = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/.exec(raw);
   if (slashHyphenMatch) {
-    if (pattern === "MM/DD/YYYY") {
-      const m = Number(slashHyphenMatch[1]);
-      const d = Number(slashHyphenMatch[2]);
-      const y = Number(slashHyphenMatch[3]);
-      return formatStayDate(y, m, d);
-    }
-    // Default atau DD/MM/YYYY atau DD-MM-YYYY
-    const d = Number(slashHyphenMatch[1]);
-    const m = Number(slashHyphenMatch[2]);
+    const num1 = Number(slashHyphenMatch[1]);
+    const num2 = Number(slashHyphenMatch[2]);
     const y = Number(slashHyphenMatch[3]);
-    return formatStayDate(y, m, d);
+
+    if (pattern === "MM/DD/YYYY") {
+      return formatStayDate(y, num1, num2);
+    }
+    if (pattern === "DD/MM/YYYY" || pattern === "DD-MM-YYYY") {
+      return formatStayDate(y, num2, num1);
+    }
+
+    // Pola AUTO: Cek bila salah satu angka pasti merupakan tanggal (> 12)
+    if (num1 <= 12 && num2 > 12) {
+      // Format US: MM/DD/YYYY (num1 = bulan, num2 = tanggal)
+      return formatStayDate(y, num1, num2);
+    }
+    if (num1 > 12 && num2 <= 12) {
+      // Format ID/EU: DD/MM/YYYY (num1 = tanggal, num2 = bulan)
+      return formatStayDate(y, num2, num1);
+    }
+
+    // Default untuk AUTO bila keduanya <= 12: gunakan format lokal umum DD/MM/YYYY
+    return formatStayDate(y, num2, num1);
   }
 
   // 3. Pola D MMM YYYY / D MMMM YYYY (mis. "20 Okt 2026", "20 Oktober 2026", "5 Aug 2026")

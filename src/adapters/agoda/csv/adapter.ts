@@ -16,17 +16,32 @@ export class AgodaCsvAdapter implements SourceAdapter {
 
     const lower = contentStr.slice(0, 1500).toLowerCase();
 
-    const isAgodaHeader =
+    // 1. Header Agoda YCS Extranet
+    const isAgodaYcsHeader =
       (lower.includes("booking id") || lower.includes("reference id")) &&
       (lower.includes("total inclusive rate") ||
         lower.includes("customer name") ||
         lower.includes("room type"));
 
+    // 2. Header Agoda Partner Portal (Agoda Homes)
+    // Contoh: PropertyName,BookingId,GuestName,CheckinDate,CheckoutDate,RoomTypeName,Adults,Children,PaymentModel
+    const isAgodaHomesHeader =
+      lower.includes("bookingid") &&
+      (lower.includes("propertyname") ||
+        lower.includes("checkindate") ||
+        lower.includes("roomtypename") ||
+        lower.includes("paymentmodel"));
+
     const isAgodaFilename =
       input.filename?.toLowerCase().includes("agoda") ||
-      input.filename?.toLowerCase().includes("ycs");
+      input.filename?.toLowerCase().includes("ycs") ||
+      input.filename?.toLowerCase().startsWith("booking-report-");
 
-    return isAgodaHeader || (Boolean(isAgodaFilename) && lower.includes("booking id"));
+    return (
+      isAgodaYcsHeader ||
+      isAgodaHomesHeader ||
+      (Boolean(isAgodaFilename) && (lower.includes("booking id") || lower.includes("bookingid")))
+    );
   }
 
   async parse(input: RawInput): Promise<ParseResult> {

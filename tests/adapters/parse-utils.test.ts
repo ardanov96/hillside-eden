@@ -50,6 +50,13 @@ describe("parseOtaDate (Bug 2: Multi-format Date Parsing)", () => {
     expect(parseOtaDate("October 20, 2026")).toBe("2026-10-20");
   });
 
+  it("mengenali format tanggal US dengan timestamp (Agoda Partner Portal)", () => {
+    expect(parseOtaDate("12/30/2026 00:00:00", "MM/DD/YYYY")).toBe("2026-12-30");
+    expect(parseOtaDate("01/02/2027 00:00:00", "MM/DD/YYYY")).toBe("2027-01-02");
+    // Auto-detect bila salah satu angka > 12
+    expect(parseOtaDate("12/30/2026 00:00:00")).toBe("2026-12-30");
+  });
+
   it("mengembalikan undefined untuk nilai kosong atau tidak valid", () => {
     expect(parseOtaDate("")).toBeUndefined();
     expect(parseOtaDate(null)).toBeUndefined();

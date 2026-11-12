@@ -31,6 +31,20 @@ describe("AgodaCsvAdapter", () => {
       expect(adapter.supports(input)).toBe(true);
     });
 
+    it("mengenali CSV Agoda Partner Portal (Agoda Homes)", () => {
+      const realPath = join(
+        process.cwd(),
+        "fixtures/real/agoda/csv/booking-report-agoda-homes-sample.csv",
+      );
+      const realContent = readFileSync(realPath, "utf-8");
+      const input: RawInput = {
+        kind: "csv",
+        filename: "booking-report-20261112035816_7cfdd0d684504cf292b844cb33fb407f.csv",
+        content: realContent,
+      };
+      expect(adapter.supports(input)).toBe(true);
+    });
+
     it("menolak input non-CSV", () => {
       const input: RawInput = {
         kind: "email",
@@ -107,6 +121,48 @@ describe("AgodaCsvAdapter", () => {
       expect(ev4.booking.collectType).toBe("HOTEL_COLLECT");
       expect(ev4.booking.grossAmount).toBe("7200000.00");
       expect(ev4.booking.commissionAmount).toBe("1080000.00");
+    });
+
+    it("mem-parse CSV Agoda Partner Portal (Agoda Homes) riil sesuai golden expected", async () => {
+      const realPath = join(
+        process.cwd(),
+        "fixtures/real/agoda/csv/booking-report-agoda-homes-sample.csv",
+      );
+      const expectedPath = join(
+        process.cwd(),
+        "fixtures/real/agoda/csv/booking-report-agoda-homes-sample.expected.json",
+      );
+      const realContent = readFileSync(realPath, "utf-8");
+      const expectedJson = JSON.parse(readFileSync(expectedPath, "utf-8"));
+
+      const input: RawInput = {
+        kind: "csv",
+        filename: "booking-report-20261112035816_7cfdd0d684504cf292b844cb33fb407f.csv",
+        content: realContent,
+      };
+
+      const res = await adapter.parse(input);
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+
+      expect(res.events).toHaveLength(1);
+      const ev = res.events[0]!;
+      const expectedEv = expectedJson.events[0]!;
+
+      expect(ev.eventType).toBe(expectedEv.eventType);
+      expect(ev.confidence).toBe(expectedEv.confidence);
+      expect(ev.booking.channel).toBe(expectedEv.booking.channel);
+      expect(ev.booking.externalId).toBe(expectedEv.booking.externalId);
+      expect(ev.booking.externalListingId).toBe(expectedEv.booking.externalListingId);
+      expect(ev.booking.listingName).toBe(expectedEv.booking.listingName);
+      expect(ev.booking.status).toBe(expectedEv.booking.status);
+      expect(ev.booking.checkIn).toBe(expectedEv.booking.checkIn);
+      expect(ev.booking.checkOut).toBe(expectedEv.booking.checkOut);
+      expect(ev.booking.nights).toBe(expectedEv.booking.nights);
+      expect(ev.booking.guestsCount).toBe(expectedEv.booking.guestsCount);
+      expect(ev.booking.guestName).toBe(expectedEv.booking.guestName);
+      expect(ev.booking.collectType).toBe(expectedEv.booking.collectType);
+      expect(ev.booking.currency).toBe(expectedEv.booking.currency);
     });
 
     it("mengembalikan error jika header tidak ditemukan", async () => {

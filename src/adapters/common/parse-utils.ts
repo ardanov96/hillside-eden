@@ -7,6 +7,7 @@
 import { Decimal } from "@/lib/decimal";
 import { isStayDate, type StayDate } from "@/lib/dates";
 import { tryParseLocalizedDate } from "@/adapters/csv-generic/date-parser";
+import type { DateFormatPattern } from "@/adapters/csv-generic/profile";
 
 /**
  * Normalisasi nominal uang dari teks mentah OTA menjadi string Decimal (2 desimal).
@@ -120,15 +121,21 @@ export function parseOtaAmount(raw: string | number | Decimal | null | undefined
 /**
  * Normalisasi tanggal dari berbagai format ekspor extranet OTA menjadi StayDate (YYYY-MM-DD).
  */
-export function parseOtaDate(raw: string | undefined | null): StayDate | undefined {
+export function parseOtaDate(
+  raw: string | undefined | null,
+  preferredPattern: DateFormatPattern = "AUTO",
+): StayDate | undefined {
   if (!raw) return undefined;
   const trimmed = raw.trim();
   if (!trimmed) return undefined;
 
+  // Bersihkan timestamp jam jika ada di akhir (mis. "12/30/2026 00:00:00" -> "12/30/2026")
+  const dateOnly = trimmed.replace(/\s+\d{1,2}:\d{2}(:\d{2})?.*$/, "");
+
   // Jika sudah ISO YYYY-MM-DD
-  if (isStayDate(trimmed)) return trimmed as StayDate;
+  if (isStayDate(dateOnly)) return dateOnly as StayDate;
 
   // Coba parse dengan parser tanggal multi-format (DD/MM/YYYY, MM/DD/YYYY, D MMM YYYY, dsb.)
-  const parsed = tryParseLocalizedDate(trimmed, "AUTO");
+  const parsed = tryParseLocalizedDate(dateOnly, preferredPattern);
   return parsed ?? undefined;
 }

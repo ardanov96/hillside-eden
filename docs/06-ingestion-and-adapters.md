@@ -84,6 +84,9 @@ Aturan adapter:
 | Sumber | Jalur | Pemicu | Isi yang diharapkan | Status fixture |
 |---|---|---|---|---|
 | Airbnb | CSV reservasi, CSV riwayat transaksi, email konfirmasi/ubah/batal, iCal | Unggah, email masuk, job iCal | Kode konfirmasi, tanggal, tamu, nilai, biaya layanan, payout | **Menunggu** |
+| Agoda | CSV reservasi (Partner Portal & YCS), CSV payout | Unggah | Kode konfirmasi, tanggal check-in/out, nama kamar/ID listing, jumlah tamu, model pembayaran | **Fixture riil tersedia** (`fixtures/real/agoda/`) |
+| Booking.com | CSV reservasi extranet | Unggah | Kode konfirmasi, tanggal, nama tamu, tarif kamar, komisi, model pembayaran | Sintetis siap (menunggu riil) |
+| Expedia | CSV reservasi Partner Central | Unggah | Kode konfirmasi, tanggal, nama tamu, total tarif, model pembayaran | Sintetis siap (menunggu riil) |
 | Tiket.com | Email notifikasi, ekspor extranet | Email masuk, unggah | Lihat catatan OD-11 | **Menunggu** + akses belum terverifikasi |
 | Traveloka | Email notifikasi, ekspor extranet | Email masuk, unggah | Lihat catatan OD-10 | **Menunggu** + identitas listing belum jelas |
 | Manual | Form UI | Pengguna | Sama dengan `NormalizedBooking` | Tidak perlu |

@@ -22,12 +22,19 @@ export function parseAgodaReservationsCsv(content: string): {
     const row = rows[i];
     if (!row || row.length === 0 || row[0]?.startsWith("#")) continue;
     const joined = row.map((c) => c.toLowerCase().trim()).join(",");
-    if (
+    const isYcs =
       (joined.includes("booking id") || joined.includes("reference id")) &&
       (joined.includes("check-in") ||
         joined.includes("total inclusive rate") ||
-        joined.includes("customer"))
-    ) {
+        joined.includes("customer"));
+    const isHomes =
+      joined.includes("bookingid") &&
+      (joined.includes("checkindate") ||
+        joined.includes("roomtypename") ||
+        joined.includes("guestname") ||
+        joined.includes("paymentmodel"));
+
+    if (isYcs || isHomes) {
       headerRowIndex = i;
       break;
     }
@@ -36,40 +43,76 @@ export function parseAgodaReservationsCsv(content: string): {
   if (headerRowIndex === -1 || !rows[headerRowIndex]) {
     return {
       events: [],
-      errors: ["Header ekspor reservasi Agoda YCS tidak ditemukan"],
+      errors: ["Header ekspor reservasi Agoda (YCS atau Partner Portal) tidak ditemukan"],
     };
   }
 
   const header = rows[headerRowIndex]!.map((c) => c.toLowerCase().trim());
+  const isHomes = header.some((h) => h.includes("bookingid") || h.includes("checkindate"));
+
   const colIndex = {
     bookingId: header.findIndex(
-      (h) => h.includes("booking id") || h.includes("reference id") || h.includes("booking no"),
+      (h) =>
+        h.includes("booking id") ||
+        h.includes("reference id") ||
+        h.includes("booking no") ||
+        h === "bookingid" ||
+        h.includes("bookingid"),
     ),
     guest: header.findIndex(
-      (h) => h.includes("customer") || h.includes("guest") || h.includes("lead guest"),
+      (h) =>
+        h.includes("customer") ||
+        h.includes("guest") ||
+        h.includes("lead guest") ||
+        h === "guestname" ||
+        h.includes("guestname"),
     ),
     room: header.findIndex(
-      (h) => h.includes("room type") || h.includes("room") || h.includes("rate plan"),
+      (h) =>
+        h.includes("room type") ||
+        h.includes("room") ||
+        h.includes("rate plan") ||
+        h === "roomtypename" ||
+        h.includes("roomtypename"),
     ),
     checkIn: header.findIndex(
-      (h) => h.includes("check-in") || h.includes("checkin") || h.includes("arrival"),
+      (h) =>
+        h.includes("check-in") ||
+        h.includes("checkin") ||
+        h.includes("arrival") ||
+        h === "checkindate" ||
+        h.includes("checkindate"),
     ),
     checkOut: header.findIndex(
-      (h) => h.includes("check-out") || h.includes("checkout") || h.includes("departure"),
+      (h) =>
+        h.includes("check-out") ||
+        h.includes("checkout") ||
+        h.includes("departure") ||
+        h === "checkoutdate" ||
+        h.includes("checkoutdate"),
     ),
     total: header.findIndex(
       (h) =>
         h.includes("total inclusive") ||
         h.includes("total amount") ||
         h.includes("total rate") ||
-        h.includes("inclusive rate"),
+        h.includes("inclusive rate") ||
+        h === "total" ||
+        h === "amount",
     ),
     commission: header.findIndex((h) => h.includes("commission") || h.includes("komisi")),
-    status: header.findIndex((h) => h.includes("status")),
+    status: header.findIndex((h) => h === "status" || h.includes("status")),
     payment: header.findIndex(
-      (h) => h.includes("payment model") || h.includes("payment") || h.includes("channel collect"),
+      (h) =>
+        h.includes("payment model") ||
+        h.includes("payment") ||
+        h === "paymentmodel" ||
+        h.includes("paymentmodel") ||
+        h.includes("channel collect"),
     ),
     currency: header.findIndex((h) => h.includes("currency") || h.includes("mata uang")),
+    adults: header.findIndex((h) => h === "adults" || h.includes("adult")),
+    children: header.findIndex((h) => h === "children" || h.includes("child")),
   };
 
   for (let r = headerRowIndex + 1; r < rows.length; r++) {
@@ -96,8 +139,9 @@ export function parseAgodaReservationsCsv(content: string): {
     const checkInRaw = (colIndex.checkIn >= 0 ? (row[colIndex.checkIn] ?? "") : "").trim();
     const checkOutRaw = (colIndex.checkOut >= 0 ? (row[colIndex.checkOut] ?? "") : "").trim();
 
-    const checkIn = parseOtaDate(checkInRaw);
-    const checkOut = parseOtaDate(checkOutRaw);
+    const preferredPattern = isHomes ? "MM/DD/YYYY" : "AUTO";
+    const checkIn = parseOtaDate(checkInRaw, preferredPattern);
+    const checkOut = parseOtaDate(checkOutRaw, preferredPattern);
 
     if (!checkIn || !checkOut) {
       errors.push(
@@ -108,10 +152,19 @@ export function parseAgodaReservationsCsv(content: string): {
 
     const nights = Math.max(1, nightsBetween(checkIn, checkOut));
     const guestName = colIndex.guest >= 0 ? row[colIndex.guest]?.trim() : undefined;
-    const listingName =
-      colIndex.room >= 0 && row[colIndex.room]?.trim()
-        ? row[colIndex.room]!.trim()
-        : "Hillside Eden (Agoda)";
+
+    let listingName = "Hillside Eden (Agoda)";
+    let externalListingId: string | undefined;
+
+    if (colIndex.room >= 0 && row[colIndex.room]?.trim()) {
+      const rawRoom = row[colIndex.room]!.trim();
+      listingName = rawRoom;
+      // Ekstrak ID dalam tanda kurung bila ada, misal: "Rumah (1388437228)"
+      const match = rawRoom.match(/^(.*?)\s*\(([0-9]+)\)$/);
+      if (match) {
+        externalListingId = match[2];
+      }
+    }
 
     const grossAmount = parseOtaAmount(colIndex.total >= 0 ? row[colIndex.total] : undefined);
 
@@ -122,7 +175,11 @@ export function parseAgodaReservationsCsv(content: string): {
 
     const rawPayment = (colIndex.payment >= 0 ? (row[colIndex.payment] ?? "") : "").toUpperCase();
     let collectType: CollectType = "CHANNEL_COLLECT";
-    if (rawPayment.includes("HOTEL") || rawPayment.includes("PROPERTY")) {
+    if (
+      rawPayment.includes("HOTEL") ||
+      rawPayment.includes("PROPERTY") ||
+      rawPayment.includes("BAYAR DI PROPERTI")
+    ) {
       collectType = "HOTEL_COLLECT";
     }
 
@@ -130,6 +187,13 @@ export function parseAgodaReservationsCsv(content: string): {
       colIndex.currency >= 0 && row[colIndex.currency]?.trim()
         ? row[colIndex.currency]!.trim().toUpperCase()
         : "IDR";
+
+    let guestsCount: number | undefined;
+    const adults = colIndex.adults >= 0 ? parseInt(row[colIndex.adults] || "0", 10) : 0;
+    const children = colIndex.children >= 0 ? parseInt(row[colIndex.children] || "0", 10) : 0;
+    if (adults > 0 || children > 0) {
+      guestsCount = adults + children;
+    }
 
     const rawPayload: Record<string, unknown> = {};
     for (let c = 0; c < header.length; c++) {
@@ -144,11 +208,13 @@ export function parseAgodaReservationsCsv(content: string): {
       booking: {
         channel: "AGODA",
         externalId,
+        externalListingId,
         listingName,
         status,
         checkIn,
         checkOut,
         nights,
+        guestsCount,
         guestName,
         currency,
         grossAmount,
