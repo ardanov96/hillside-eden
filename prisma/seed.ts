@@ -354,7 +354,7 @@ async function main() {
     org.id,
     propHE.id,
     ChannelCode.AGODA,
-    "he-agoda-estate",
+    "1388437228",
     "Hillside Eden Bali - Estate (Agoda)",
     "https://www.agoda.com/hillside-eden-bali/hotel/bali-id.html",
   );
