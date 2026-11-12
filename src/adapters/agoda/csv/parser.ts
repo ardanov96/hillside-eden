@@ -23,9 +23,14 @@ export function parseAgodaReservationsCsv(content: string): {
     if (!row || row.length === 0 || row[0]?.startsWith("#")) continue;
     const joined = row.map((c) => c.toLowerCase().trim()).join(",");
     const isYcs =
-      (joined.includes("booking id") || joined.includes("reference id")) &&
+      (joined.includes("booking id") ||
+        joined.includes("reference id") ||
+        joined.includes("reference_id") ||
+        joined.includes("bookingid")) &&
       (joined.includes("check-in") ||
         joined.includes("total inclusive rate") ||
+        joined.includes("total_inclusive_rate") ||
+        joined.includes("staydatefrom") ||
         joined.includes("customer"));
     const isHomes =
       joined.includes("bookingid") &&
@@ -70,6 +75,7 @@ export function parseAgodaReservationsCsv(content: string): {
     room: header.findIndex(
       (h) =>
         h.includes("room type") ||
+        h.includes("roomtype") ||
         h.includes("room") ||
         h.includes("rate plan") ||
         h === "roomtypename" ||
@@ -81,7 +87,9 @@ export function parseAgodaReservationsCsv(content: string): {
         h.includes("checkin") ||
         h.includes("arrival") ||
         h === "checkindate" ||
-        h.includes("checkindate"),
+        h.includes("checkindate") ||
+        h.includes("staydatefrom") ||
+        h.includes("stay_date_from"),
     ),
     checkOut: header.findIndex(
       (h) =>
@@ -89,11 +97,14 @@ export function parseAgodaReservationsCsv(content: string): {
         h.includes("checkout") ||
         h.includes("departure") ||
         h === "checkoutdate" ||
-        h.includes("checkoutdate"),
+        h.includes("checkoutdate") ||
+        h.includes("staydateto") ||
+        h.includes("stay_date_to"),
     ),
     total: header.findIndex(
       (h) =>
         h.includes("total inclusive") ||
+        h.includes("total_inclusive") ||
         h.includes("total amount") ||
         h.includes("total rate") ||
         h.includes("inclusive rate") ||
@@ -111,8 +122,12 @@ export function parseAgodaReservationsCsv(content: string): {
         h.includes("channel collect"),
     ),
     currency: header.findIndex((h) => h.includes("currency") || h.includes("mata uang")),
-    adults: header.findIndex((h) => h === "adults" || h.includes("adult")),
-    children: header.findIndex((h) => h === "children" || h.includes("child")),
+    adults: header.findIndex(
+      (h) => h === "adults" || h.includes("adult") || h.includes("no_of_adult"),
+    ),
+    children: header.findIndex(
+      (h) => h === "children" || h.includes("child") || h.includes("no_of_children"),
+    ),
   };
 
   for (let r = headerRowIndex + 1; r < rows.length; r++) {
