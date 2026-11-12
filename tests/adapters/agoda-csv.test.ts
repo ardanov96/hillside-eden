@@ -165,6 +165,44 @@ describe("AgodaCsvAdapter", () => {
       expect(ev.booking.currency).toBe(expectedEv.booking.currency);
     });
 
+    it("mem-parse CSV Agoda 26-kolom dengan status Dibatalkan (riil golden test)", async () => {
+      const realPath = join(
+        process.cwd(),
+        "fixtures/real/agoda/csv/booking-report-agoda-homes-cancelled.csv",
+      );
+      const expectedPath = join(
+        process.cwd(),
+        "fixtures/real/agoda/csv/booking-report-agoda-homes-cancelled.expected.json",
+      );
+      const realContent = readFileSync(realPath, "utf-8");
+      const expectedJson = JSON.parse(readFileSync(expectedPath, "utf-8"));
+
+      const input: RawInput = {
+        kind: "csv",
+        filename: "booking-report-88476723-20261112080519_2968639daad14d52a65c783f8bf23f8c.csv",
+        content: realContent,
+      };
+
+      const res = await adapter.parse(input);
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+
+      expect(res.events).toHaveLength(1);
+      const ev = res.events[0]!;
+      const expectedEv = expectedJson.events[0]!;
+
+      expect(ev.eventType).toBe("CANCELLED");
+      expect(ev.booking.status).toBe("CANCELLED");
+      expect(ev.booking.channel).toBe("AGODA");
+      expect(ev.booking.externalId).toBe(expectedEv.booking.externalId);
+      expect(ev.booking.externalListingId).toBe("1388437228");
+      expect(ev.booking.checkIn).toBe("2026-12-30");
+      expect(ev.booking.checkOut).toBe("2027-01-02");
+      expect(ev.booking.nights).toBe(3);
+      expect(ev.booking.guestsCount).toBe(14);
+      expect(ev.booking.collectType).toBe("CHANNEL_COLLECT");
+    });
+
     it("mengembalikan error jika header tidak ditemukan", async () => {
       const input: RawInput = {
         kind: "csv",
