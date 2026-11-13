@@ -443,7 +443,7 @@ export async function applyBookingEvent(
         collectType: inferred.collectType,
         // Hanya ditulis bila sumber menyediakannya (jangan menimpa data lama
         // dengan null ketika ekspor berikutnya tidak memuat kolom tanggal pesanan).
-        ...(inferred.bookedAt ? { bookedAt: inferred.bookedAt } : {}),
+        ...(inferred.bookedAt ? { bookedAt: inferred.bookedAt, bookedAtIsApprox: false } : {}),
         lastSeenAt: new Date(),
       },
     });

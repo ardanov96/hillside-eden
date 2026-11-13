@@ -8,7 +8,7 @@
  * rentang tanggal menginap/booking, pencarian kode konfirmasi), docs/05 §2
  * (terminologi "Pendapatan bersih (setelah komisi OTA)").
  */
-import type { BookingStatus, ChannelCode, Prisma } from "@prisma/client";
+import type { BookingStatus, ChannelCode, CollectType, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@/lib/decimal";
@@ -274,6 +274,9 @@ export async function getBookingDetail(
       property: { select: { id: true, name: true } },
       listing: { select: { id: true, name: true, externalId: true, channel: true } },
       guest: { select: { id: true, displayName: true, countryCode: true } },
+      importBatch: {
+        select: { id: true, filename: true, kind: true, receivedAt: true },
+      },
       units: {
         select: {
           unitId: true,
@@ -293,6 +296,7 @@ export async function getBookingDetail(
           importItem: {
             select: {
               id: true,
+              status: true,
               batch: { select: { id: true, filename: true, kind: true, receivedAt: true } },
             },
           },
@@ -343,6 +347,7 @@ export async function getBookingDetail(
     listing: b.listing,
     guest: b.guest,
     rawPayload: b.rawPayload,
+    importBatch: b.importBatch,
     units: b.units.map((u) => ({
       unitId: u.unitId,
       unitName: u.unit.name,
@@ -355,6 +360,7 @@ export async function getBookingDetail(
       occurredAt: e.occurredAt,
       diff: e.diff,
       importItemId: e.importItemId,
+      importItemStatus: e.importItem?.status ?? null,
       importBatch: e.importItem?.batch ?? null,
     })),
   };
@@ -378,7 +384,7 @@ export interface BookingDetail {
   commissionBasis: string | null;
   commissionIsEstimate: boolean;
   netAmount: Decimal | null;
-  collectType: string;
+  collectType: CollectType;
   fxRateToBase: Decimal;
   fxRateSource: string | null;
   bookedAt: Date | null;
@@ -389,6 +395,8 @@ export interface BookingDetail {
   listing: { id: string; name: string; externalId: string; channel: string };
   guest: { id: string; displayName: string | null; countryCode: string | null } | null;
   rawPayload: unknown;
+  /** Batch impor yang membuat booking ini (null bila input manual). */
+  importBatch: { id: string; filename: string | null; kind: string; receivedAt: Date } | null;
   units: Array<{
     unitId: string;
     unitName: string;
@@ -401,6 +409,7 @@ export interface BookingDetail {
     occurredAt: Date;
     diff: unknown;
     importItemId: string | null;
+    importItemStatus: string | null;
     importBatch: { id: string; filename: string | null; kind: string; receivedAt: Date } | null;
   }>;
 }

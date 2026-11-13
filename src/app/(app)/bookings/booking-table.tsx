@@ -4,10 +4,8 @@
  * Sumber kebenaran tampilan: docs/07-ui-spec.md §3.2 (Tabel dengan filter,
  * pencarian kode konfirmasi, panel detail saat baris diklik).
  *
- * Catatan sementara:
- * - Klik baris membuka panel detail (S2-07.3) via <BookingDetailDrawer>.
- * - Untuk sekarang baris adalah Link ke /bookings/[id] sehingga tetap
- *   dapat diketik tanpa JS. Drawer interaktif menyusul.
+ * Detail booking disajikan sebagai route `/bookings/[id]` (S2-07.3) supaya
+ * bisa di-bookmark dan dibagikan; seluruh baris menjadi area klik.
  */
 import Link from "next/link";
 import type { CommissionBasis } from "@prisma/client";
@@ -119,23 +117,23 @@ function BookingRowComponent({
   const netLabel =
     r.netAmount !== null ? formatCurrency(r.netAmount, r.currency as "IDR" | "USD") : "-";
   return (
-    <tr className={TABLE_ROW_CLASS}>
+    <tr className={`${TABLE_ROW_CLASS} group relative`}>
       <td className={TABLE_CELL_CLASS}>
+        {/* Link "stretched" menutupi seluruh baris: klik di kolom mana pun
+            (termasuk chip kanal) membuka detail booking. Link diletakkan di
+            atas isi baris (z-10) supaya tetap jadi target klik. */}
         <Link
           href={`/bookings/${r.id}`}
-          className="-m-3 inline-flex items-center gap-2 rounded-md p-0 font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+          className="absolute inset-0 z-10 rounded-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+          aria-label={`Lihat detail booking ${r.externalId}`}
         >
+          <span className="sr-only">Lihat detail booking {r.externalId}</span>
+        </Link>
+        <span className="pointer-events-none relative">
           <ChannelChip channel={r.channel} />
-        </Link>
+        </span>
       </td>
-      <td className={`${TABLE_CELL_CLASS} font-mono text-xs`}>
-        <Link
-          href={`/bookings/${r.id}`}
-          className="text-zinc-700 hover:underline dark:text-zinc-200"
-        >
-          {r.externalId}
-        </Link>
-      </td>
+      <td className={`${TABLE_CELL_CLASS} font-mono text-xs`}>{r.externalId}</td>
       <td className={TABLE_CELL_CLASS}>{r.propertyName}</td>
       <td className={TABLE_CELL_CLASS}>{r.listingName}</td>
       <td className={TABLE_CELL_CLASS}>{formatDateShort(r.checkIn)}</td>

@@ -38,7 +38,7 @@ Filter global di bilah atas: **Properti** (Semua properti / tiap properti) dan *
 - Setiap angka bergantung data tidak lengkap memiliki ikon info dengan penjelasan singkat.
 
 ### 3.2 Booking
-Tabel dengan filter (OTA, properti, status, rentang tanggal menginap/booking), pencarian kode konfirmasi. Baris membuka panel detail: ringkasan, alokasi unit, komisi (estimasi/aktual), **riwayat perubahan** (`booking_event`), tautan ke item impor asal.
+Tabel dengan filter (OTA, properti, status, rentang tanggal menginap/booking), pencarian kode konfirmasi. Baris membuka **halaman detail** (`/bookings/[id]`, dapat di-bookmark/dibagikan): ringkasan, alokasi unit, komisi (estimasi/aktual), **riwayat perubahan** (`booking_event`), tautan ke item impor asal.
 
 ### 3.3 Kalender
 Garis waktu per unit (baris = unit, kolom = hari), blok booking berwarna per OTA, `CalendarBlock` sebagai blok abu-abu bergaris, bentrok ditandai merah. Unit yang tidak dijual pada tanggal tertentu diberi arsiran.
@@ -62,7 +62,7 @@ Properti dan unit; listing OTA dan pemetaan listing↔unit; konfigurasi inventor
 
 - **Badge status data**: Estimasi / Aktual / Belum lengkap.
 - **Angka berpasangan**: gross dan net selalu ditampilkan bersama dan berurutan.
-- **Panel detail** (drawer) untuk booking dan item impor.
+- **Panel detail**: drawer atau halaman detail untuk booking dan item impor. Booking memakai route `/bookings/[id]` (OD-28).
 - **Tabel**: urut kolom, sticky header, ekspor CSV, kosong/error/loading konsisten.
 - **Konfirmasi aksi sensitif**: tutup buku, buka kembali periode, koreksi data terverifikasi.
 

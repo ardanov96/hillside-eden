@@ -45,7 +45,7 @@ Urutan ketergantungan: S0 → S1 → (S2 ∥ S3) → S4 → S5/S6 (diblokir) →
 
 ### Sprint 2: Ingest inti dan input manual (lane B, D)
 
-| ID | Tugas | Ukuran | Selesai bila |
+| ID | Tugas | Ukuran | Status / selesai bila |
 |---|---|---|---|
 | S2-01 | Kontrak adapter dan tipe `NormalizedBooking` | S | Tipe ada, didokumentasikan |
 | S2-02 | Pipeline ingest: simpan raw, `import_batch/item`, resolusi listing, upsert idempoten, `booking_event` diff, alokasi unit | L | Impor ulang berkas sama tidak menggandakan data |
@@ -54,6 +54,7 @@ Urutan ketergantungan: S0 → S1 → (S2 ∥ S3) → S4 → S5/S6 (diblokir) →
 | S2-05 | Impor CSV generik: profil pemetaan, parser angka dan tanggal locale Indonesia | L | Tes locale `1.500.000,00` dan `1,500,000.00` lulus |
 | S2-06 | Deteksi bentrok jadwal (domain) + tes | M | Estate vs unit terdeteksi |
 | S2-07 | Halaman Bookings: tabel, filter, detail dengan riwayat | M | Perubahan dan pembatalan terlihat di riwayat |
+| S2-07.3 | Detail booking sebagai route `/bookings/[id]` (ringkasan, alokasi unit, komisi estimasi/aktual, riwayat `booking_event`, asal impor) | M | Selesai (route dedicated + halaman detail + `loading`/`not-found`, seluruh baris tabel tertaut ke detail, helper label di `src/lib/booking-detail.ts`, OD-28, 713 tes lulus) |
 
 ### Sprint 3: Pengeluaran dan pendapatan lain (lane C, D). Paralel dengan Sprint 2
 

@@ -125,6 +125,86 @@ describe("applyBookingEvent - kolom tanggal", () => {
     expect((data.checkIn as Date).toISOString()).toBe("2026-12-30T00:00:00.000Z");
     expect((data.checkOut as Date).toISOString()).toBe("2027-01-02T00:00:00.000Z");
   });
+
+  /**
+   * Regression: booking lama yang dibuat tanpa `BookedDate` tertandai
+   * `bookedAtIsApprox = true`. Begitu sumber menyertakan tanggal pemesanan,
+   * penanda perkiraan harus dilepas (bukan tetap "perkiraan").
+   */
+  it("melepas penanda perkiraan saat update memuat bookedAt", async () => {
+    const captured: Array<Record<string, unknown>> = [];
+
+    const existing = {
+      id: "booking-1",
+      organizationId: "org-1",
+      propertyId: "property-1",
+      listingId: "listing-1",
+      channel: "AGODA",
+      externalId: "2064191544",
+      status: "CANCELLED",
+      checkIn: new Date("2026-12-30T00:00:00.000Z"),
+      checkOut: new Date("2027-01-02T00:00:00.000Z"),
+      nights: 3,
+      guestsCount: 14,
+      currency: "IDR",
+      grossAmount: new Decimal("0"),
+      taxesCollected: new Decimal("0"),
+      cancellationFee: new Decimal("0"),
+      commissionAmount: new Decimal("0"),
+      commissionRate: null,
+      commissionBasis: null,
+      collectType: "CHANNEL_COLLECT",
+      fxRateToBase: new Decimal("1"),
+      fxRateSource: null,
+      bookedAt: null,
+      bookedAtIsApprox: true,
+      firstSeenAt: new Date("2026-11-12T09:00:00.000Z"),
+      lastSeenAt: new Date("2026-11-12T09:00:00.000Z"),
+      rawPayload: null,
+    };
+
+    const tx = {
+      booking: {
+        findUnique: async () => existing,
+        update: async ({ data }: { data: Record<string, unknown> }) => {
+          captured.push(data);
+          return { id: "booking-1" };
+        },
+      },
+      bookingEvent: {
+        findFirst: async () => null,
+        create: async () => ({ id: "event-2" }),
+      },
+      listingUnit: { findMany: async () => [] },
+      bookingUnit: {
+        deleteMany: async () => ({ count: 0 }),
+        createMany: async () => ({ count: 0 }),
+      },
+    } as unknown as UpsertTx;
+
+    await applyBookingEvent(tx, {
+      organizationId: "org-1",
+      listingId: "listing-1",
+      propertyId: "property-1",
+      booking: {
+        channel: "AGODA",
+        externalId: "2064191544",
+        status: "CANCELLED",
+        checkIn: "2026-12-30",
+        checkOut: "2027-01-02",
+        currency: "IDR",
+        grossAmount: "0.00",
+        bookedAt: new Date("2026-11-03T00:00:00.000Z"),
+      },
+      eventType: "CANCELLED",
+      occurredAt: new Date("2026-11-12T10:00:00.000Z"),
+    });
+
+    expect(captured).toHaveLength(1);
+    const data = captured[0]!;
+    expect((data.bookedAt as Date).toISOString()).toBe("2026-11-03T00:00:00.000Z");
+    expect(data.bookedAtIsApprox).toBe(false);
+  });
 });
 
 describe("computeAllocation", () => {
