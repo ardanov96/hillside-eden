@@ -4,7 +4,12 @@
  */
 import { describe, expect, it } from "vitest";
 import { Decimal } from "@/lib/decimal";
-import { computeAllocation, inferBookingFields } from "@/ingest/pipeline/upsert";
+import {
+  applyBookingEvent,
+  computeAllocation,
+  inferBookingFields,
+  type UpsertTx,
+} from "@/ingest/pipeline/upsert";
 import type { NormalizedBooking } from "@/adapters/types";
 
 function nb(partial: Partial<NormalizedBooking> = {}): NormalizedBooking {
@@ -64,6 +69,61 @@ describe("inferBookingFields", () => {
 
   it("bookedAt null bila adapter tidak memberikan", () => {
     expect(inferBookingFields(nb()).bookedAt).toBeNull();
+  });
+});
+
+describe("applyBookingEvent - kolom tanggal", () => {
+  /**
+   * Regression: Prisma menolak string tanggal-only ("2026-12-30") untuk kolom
+   * @db.Date ("premature end of input. Expected ISO-8601 DateTime."). Nilai
+   * harus diteruskan sebagai objek Date (UTC midnight).
+   */
+  it("menulis checkIn/checkOut sebagai objek Date, bukan string", async () => {
+    const captured: Array<Record<string, unknown>> = [];
+
+    const tx = {
+      booking: {
+        findUnique: async () => null,
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+          captured.push(data);
+          return { id: "booking-1" };
+        },
+      },
+      bookingEvent: {
+        create: async () => ({ id: "event-1" }),
+      },
+      listingUnit: {
+        findMany: async () => [],
+      },
+      bookingUnit: {
+        deleteMany: async () => ({ count: 0 }),
+        createMany: async () => ({ count: 0 }),
+      },
+    } as unknown as UpsertTx;
+
+    await applyBookingEvent(tx, {
+      organizationId: "org-1",
+      listingId: "listing-1",
+      propertyId: "property-1",
+      booking: {
+        channel: "AGODA",
+        externalId: "2064191544",
+        status: "CANCELLED",
+        checkIn: "2026-12-30",
+        checkOut: "2027-01-02",
+        currency: "IDR",
+        grossAmount: "0.00",
+      },
+      eventType: "CANCELLED",
+      occurredAt: new Date("2026-11-12T09:00:00.000Z"),
+    });
+
+    expect(captured).toHaveLength(1);
+    const data = captured[0]!;
+    expect(data.checkIn).toBeInstanceOf(Date);
+    expect(data.checkOut).toBeInstanceOf(Date);
+    expect((data.checkIn as Date).toISOString()).toBe("2026-12-30T00:00:00.000Z");
+    expect((data.checkOut as Date).toISOString()).toBe("2027-01-02T00:00:00.000Z");
   });
 });
 

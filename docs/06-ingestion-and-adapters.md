@@ -95,6 +95,15 @@ Aturan adapter:
 
 **iCal tidak pernah menjadi booking** dan tidak masuk revenue. Hanya `CalendarBlock` untuk deteksi bentrok dan pemeriksaan silang okupansi.
 
+### 4.1 Ekspor CSV Agoda (Partner Portal)
+
+- Alur unduh yang dipakai: **Agoda Partner Portal > Reservasi > Ekspor CSV**. Menu **Analitik > Unduh sebagai CSV** berisi data agregat dan **tidak** bisa diimpor sebagai booking.
+- Nama berkas: `booking-report-<idProperti>-<timestamp>_<hash>.csv`. Filter kolom di layar ekspor mengubah **kombinasi kolom** hasil ekspor (terobservasi 9, 10, dan 26 kolom), jadi parser **wajib memetakan berdasarkan nama kolom**, bukan posisi kolom (**OD-27**).
+- Minimal dua kolom harus ikut diekspor: **ID reservasi** (`BookingIDExternal_reference_ID` / `Booking ID`) dan **tanggal menginap** (`StayDateFrom`/`StayDateTo` atau `CheckinDate`/`CheckoutDate`).
+- Nilai yang dipetakan: tanggal menginap, tanggal pemesanan (`BookedDate` -> `bookedAt`), status (ID & EN), model pembayaran (ID & EN -> `collectType`), kebangsaan (-> `countryCode` ISO2), jumlah tamu, jumlah malam, total inklusif, komisi, dan ID listing dari nama tipe kamar (`Rumah (1388437228)`).
+- Yang **tidak** boleh dianggap ID listing: kolom `RatePlan` (memuat ID rate plan, bukan ID listing).
+- Kolom `Analitik` tidak pernah dipakai.
+
 ## 5. Email masuk
 
 - Alamat khusus (mis. `bookings@<domain-client-atau-proyek>`). Client menambahkannya sebagai alamat notifikasi tambahan di extranet OTA, atau memasang aturan teruskan otomatis.

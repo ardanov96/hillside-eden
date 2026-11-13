@@ -159,6 +159,7 @@ Sprint 10 selesai menyeluruh: Halaman Kalender Okupansi (`/calendar`) live di na
 | S11-02 | Adapter & Parser CSV Agoda YCS Extranet | M | Selesai (`AgodaCsvAdapter`, `parseAgodaReservationsCsv`, fixture sintetis, lulus golden test) |
 | S11-03 | Adapter & Parser CSV Expedia Partner Central | M | Selesai (`ExpediaCsvAdapter`, `parseExpediaReservationsCsv`, fixture sintetis, lulus golden test) |
 | S11-04 | Registrasi Ingest Router & Integrasi Halaman `/bookings/import` | S | Selesai (Router auto & manual, filter saluran Booking.com, Agoda, Expedia, Generic CSV, kartu panduan extranet) |
+| S11-05 | Kompatibilitas filter kolom ekspor Agoda & perbaikan impor tanggal | M | Selesai (`parseAgodaReservationsCsv` berbasis nama kolom + alias, status/payment bilingual, `bookedAt` & `countryCode`, fix Prisma `@db.Date` di `upsert.ts`, rentang tanggal menginap pada feedback impor, fixture riil 9/10/26 kolom, OD-27) |
 
 Sprint 11 selesai menyeluruh: Keempat saluran OTA aktif client (Airbnb, Booking.com, Agoda, Expedia) kini memiliki adapter ingest deterministik khusus dengan dukungan deteksi otomatis, penanganan hotel collect vs channel collect, dan panduan extranet langsung di web UI. Total 651 tes otomatis lulus 100%.
 

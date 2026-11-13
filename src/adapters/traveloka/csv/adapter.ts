@@ -24,7 +24,18 @@ export class TravelokaCsvAdapter implements SourceAdapter {
 
     const isTravelokaName = input.filename?.toLowerCase().includes("traveloka");
 
-    return isTravelokaHeader || (isTravelokaName && lower.includes("booking id"));
+    // Berkas ekspor Agoda (YCS / Partner Portal) memakai header "Total Inclusive
+    // Rate" & "Payment Model". Jangan diklaim di sini, jika tidak file yang sama
+    // akan cocok dengan AgodaCsvAdapter dan router jadi ambigu (OD-27).
+    const isAgodaHeader =
+      lower.includes("total inclusive rate") ||
+      lower.includes("total_inclusive_rate") ||
+      lower.includes("payment model") ||
+      lower.includes("paymentmodel");
+
+    return (
+      !isAgodaHeader && (isTravelokaHeader || (isTravelokaName && lower.includes("booking id")))
+    );
   }
 
   async parse(input: RawInput): Promise<ParseResult> {

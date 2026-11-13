@@ -52,6 +52,7 @@ next-env.d.ts
 
 # Storage (file upload lokal)
 /storage/
+/.storage/
 
 # Environment override (selain .env.example)
 .env.local

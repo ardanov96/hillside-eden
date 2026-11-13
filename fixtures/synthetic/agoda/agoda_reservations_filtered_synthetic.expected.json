@@ -1,0 +1,66 @@
+{
+  "events": [
+    {
+      "eventType": "CREATED",
+      "confidence": "high",
+      "warnings": [],
+      "booking": {
+        "channel": "AGODA",
+        "externalId": "2064191545",
+        "externalListingId": "9900001",
+        "listingName": "Rumah (9900001)",
+        "status": "CONFIRMED",
+        "checkIn": "2026-12-01",
+        "checkOut": "2026-12-04",
+        "nights": 3,
+        "guestsCount": 2,
+        "guestName": "Budi Santoso",
+        "currency": "IDR",
+        "grossAmount": "4500000.00",
+        "collectType": "CHANNEL_COLLECT"
+      }
+    },
+    {
+      "eventType": "CREATED",
+      "confidence": "medium",
+      "warnings": [
+        "Jumlah malam pada berkas (5) berbeda dari selisih tanggal (2); selisih tanggal yang dipakai."
+      ],
+      "booking": {
+        "channel": "AGODA",
+        "externalId": "2064191546",
+        "externalListingId": "9900001",
+        "listingName": "Rumah (9900001)",
+        "status": "PENDING",
+        "checkIn": "2026-12-05",
+        "checkOut": "2026-12-07",
+        "nights": 2,
+        "guestsCount": 1,
+        "guestName": "Siti Aminah",
+        "currency": "IDR",
+        "grossAmount": "0.00",
+        "collectType": "HOTEL_COLLECT"
+      }
+    },
+    {
+      "eventType": "NO_SHOW",
+      "confidence": "high",
+      "warnings": [],
+      "booking": {
+        "channel": "AGODA",
+        "externalId": "2064191547",
+        "externalListingId": "9900001",
+        "listingName": "Rumah (9900001)",
+        "status": "NO_SHOW",
+        "checkIn": "2026-12-08",
+        "checkOut": "2026-12-09",
+        "nights": 1,
+        "guestsCount": 2,
+        "guestName": "Andi Wijaya",
+        "currency": "IDR",
+        "grossAmount": "0.00",
+        "collectType": "CHANNEL_COLLECT"
+      }
+    }
+  ]
+}

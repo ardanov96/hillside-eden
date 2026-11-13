@@ -1,0 +1,7 @@
+# SINTETIS: Ekspor reservasi Agoda dengan subset kolom & status berbahasa Indonesia.
+# Sifat: SINTETIS (dibuat untuk menguji kompatibilitas filter kolom Agoda).
+# Menguji: status ID/EN, model pembayaran alternatif, jam malam tidak sesuai, kolom nominal kosong.
+BookingIDExternal_reference_ID,Status,StayDateFrom,StayDateTo,Customer_Name,RoomType,No_of_night,No_of_adult,Total_inclusive_rate,Currency,PaymentModel
+2064191545,Dikonfirmasi,2026-12-01,2026-12-04,Budi Santoso,Rumah (9900001),3,2,4500000,IDR,Bayar ke Agoda
+2064191546,Menunggu,2026-12-05,2026-12-07,Siti Aminah,Rumah (9900001),5,1,0,IDR,Bayar ke Properti
+2064191547,Tidak datang,2026-12-08,2026-12-09,Andi Wijaya,Rumah (9900001),1,2,0,IDR,Bayar ke Agoda

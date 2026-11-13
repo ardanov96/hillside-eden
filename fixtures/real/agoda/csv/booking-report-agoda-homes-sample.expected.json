@@ -2,8 +2,11 @@
   "events": [
     {
       "eventType": "CREATED",
-      "confidence": "high",
-      "warnings": [],
+      "confidence": "medium",
+      "warnings": [
+        "Status reservasi tidak ditemukan; diasumsikan Dikonfirmasi.",
+        "Nominal total tidak ditemukan pada berkas; pendapatan dicatat 0 dan perlu dilengkapi manual."
+      ],
       "booking": {
         "channel": "AGODA",
         "externalId": "2064191544",
@@ -22,4 +25,3 @@
     }
   ]
 }
-

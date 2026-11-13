@@ -4,7 +4,25 @@
  * diuji lewat integration test dengan DB (tests/integration/).
  */
 import { describe, expect, it } from "vitest";
-import { computeContentHash } from "@/ingest/pipeline/pipeline";
+import { computeContentHash, computeStayDateRange } from "@/ingest/pipeline/pipeline";
+import type { ParsedBookingEvent } from "@/adapters/types";
+
+function ev(checkIn: string, checkOut: string): ParsedBookingEvent {
+  return {
+    eventType: "CREATED",
+    confidence: "high",
+    warnings: [],
+    booking: {
+      channel: "AGODA",
+      externalId: `X-${checkIn}`,
+      status: "CONFIRMED",
+      checkIn,
+      checkOut,
+      currency: "IDR",
+      grossAmount: "0.00",
+    },
+  };
+}
 
 describe("computeContentHash", () => {
   it("menghasilkan hash hex 64 karakter (SHA-256)", () => {
@@ -57,5 +75,27 @@ describe("computeContentHash", () => {
     expect(computeContentHash("a.v1", "teks")).toMatch(/^[0-9a-f]{64}$/);
     expect(computeContentHash("a.v1", 42)).toMatch(/^[0-9a-f]{64}$/);
     expect(computeContentHash("a.v1", null)).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe("computeStayDateRange", () => {
+  it("mengembalikan undefined bila tidak ada event", () => {
+    expect(computeStayDateRange([])).toBeUndefined();
+  });
+
+  it("mengambil check-in terkecil dan check-out terbesar", () => {
+    const range = computeStayDateRange([
+      ev("2026-12-30", "2027-01-02"),
+      ev("2026-11-10", "2026-11-12"),
+      ev("2026-12-01", "2026-12-05"),
+    ]);
+    expect(range).toEqual({ start: "2026-11-10", end: "2027-01-02" });
+  });
+
+  it("menangani satu event saja", () => {
+    expect(computeStayDateRange([ev("2026-12-30", "2027-01-02")])).toEqual({
+      start: "2026-12-30",
+      end: "2027-01-02",
+    });
   });
 });

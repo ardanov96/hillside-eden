@@ -23,6 +23,7 @@ import { createHash } from "node:crypto";
 import type { PrismaClient, ImportItemStatus, Prisma } from "@prisma/client";
 
 import type { ParsedBookingEvent, RawInput } from "@/adapters/types";
+import type { StayDate } from "@/lib/dates";
 import { withSerializableTransaction } from "@/server/prisma-tx";
 import type { RouterRegistry } from "./router";
 import { resolveListing } from "./listing-resolver";
@@ -40,6 +41,12 @@ export interface PipelineResult {
   failed: number;
   needsReview: number;
   payoutsLinked?: number;
+  /**
+   * Rentang tanggal menginap dari data yang berhasil diparse (check-in
+   * terkecil s.d. check-out terbesar). Dipakai UI untuk memberi tahu pengguna
+   * bahwa data hasil impor bisa berada di luar filter periode yang aktif.
+   */
+  stayDateRange?: { start: StayDate; end: StayDate };
   errors: Array<{ itemId: string; code: string; message: string }>;
 }
 
@@ -186,10 +193,28 @@ export async function runIngest(
     total: parseResult.events.length,
     ...stats,
     payoutsLinked,
+    stayDateRange: computeStayDateRange(parseResult.events),
     errors,
   };
   await finalizeBatch(prisma, input, batch.id, result);
   return result;
+}
+
+/**
+ * Hitung rentang tanggal menginap (check-in terkecil s.d. check-out terbesar)
+ * dari event yang berhasil diparse. Murni & deterministik.
+ */
+export function computeStayDateRange(
+  events: readonly ParsedBookingEvent[],
+): { start: StayDate; end: StayDate } | undefined {
+  let start: StayDate | null = null;
+  let end: StayDate | null = null;
+  for (const event of events) {
+    const { checkIn, checkOut } = event.booking;
+    if (start === null || checkIn < start) start = checkIn;
+    if (end === null || checkOut > end) end = checkOut;
+  }
+  return start !== null && end !== null ? { start, end } : undefined;
 }
 
 /**
@@ -354,6 +379,8 @@ async function recordImportItem(
       parsedPayload: safeJson({
         eventType: args.event.eventType,
         occurredAt: (args.event.occurredAt ?? args.receivedAt).toISOString(),
+        confidence: args.event.confidence,
+        warnings: args.event.warnings,
         booking: args.event.booking,
         ...(args.importItemExtra ?? {}),
       }),

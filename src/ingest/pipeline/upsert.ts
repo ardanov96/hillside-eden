@@ -26,7 +26,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { Decimal } from "@/lib/decimal";
-import { daysBetween, toStayDate } from "@/lib/dates";
+import { daysBetween, fromStayDate, toStayDate } from "@/lib/dates";
 import { money, round } from "@/lib/money";
 import type { Currency } from "@/lib/money";
 import { allocateBookingToUnits, type AllocatableUnit } from "@/domain/allocation";
@@ -294,8 +294,8 @@ export async function applyBookingEvent(
         channel: booking.channel,
         externalId: booking.externalId,
         status: booking.status,
-        checkIn: booking.checkIn,
-        checkOut: booking.checkOut,
+        checkIn: fromStayDate(booking.checkIn),
+        checkOut: fromStayDate(booking.checkOut),
         nights: inferred.nights,
         guestsCount: inferred.guestsCount,
         currency: inferred.currency,
@@ -430,8 +430,8 @@ export async function applyBookingEvent(
       where: { id: existing.id },
       data: {
         status: booking.status,
-        checkIn: booking.checkIn,
-        checkOut: booking.checkOut,
+        checkIn: fromStayDate(booking.checkIn),
+        checkOut: fromStayDate(booking.checkOut),
         nights: inferred.nights,
         guestsCount: inferred.guestsCount,
         currency: inferred.currency,
@@ -441,6 +441,9 @@ export async function applyBookingEvent(
         commissionAmount: inferred.commissionAmount,
         commissionRate: inferred.commissionRate,
         collectType: inferred.collectType,
+        // Hanya ditulis bila sumber menyediakannya (jangan menimpa data lama
+        // dengan null ketika ekspor berikutnya tidak memuat kolom tanggal pesanan).
+        ...(inferred.bookedAt ? { bookedAt: inferred.bookedAt } : {}),
         lastSeenAt: new Date(),
       },
     });

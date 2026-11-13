@@ -20,6 +20,7 @@ import { TravelokaCsvAdapter } from "@/adapters/traveloka/csv/adapter";
 import { GenericCsvAdapter } from "@/adapters/csv-generic/adapter";
 import type { CsvMappingProfile } from "@/adapters/csv-generic/profile";
 import { createStorageProvider } from "@/ingest/storage";
+import { formatStayDateId } from "@/lib/dates";
 import type { ChannelCode, RawInput } from "@/adapters/types";
 
 export interface ImportResultState {
@@ -36,6 +37,8 @@ export interface ImportResultState {
     needsReview: number;
     payoutsLinked: number;
   };
+  /** Rentang tanggal menginap dari data yang diimpor (check-in min s.d. check-out max). */
+  stayDateRange?: { start: string; end: string };
   errors?: Array<{ code: string; message: string }>;
 }
 
@@ -209,10 +212,17 @@ export async function importOtaCsvAction(
 
   const successMsg = `Impor selesai: ${result.created} booking baru dibuat, ${result.updated} diperbarui, ${result.duplicate} duplikat dilewati${result.needsReview > 0 ? `, ${result.needsReview} perlu perhatian` : ""}${result.payoutsLinked ? `, ${result.payoutsLinked} payout ditautkan` : ""}.`;
 
+  const rangeHint = result.stayDateRange
+    ? ` Rentang tanggal menginap: ${formatStayDateId(result.stayDateRange.start)} – ${formatStayDateId(result.stayDateRange.end)}.`
+    : "";
+  const visibilityHint =
+    ' Halaman Booking menyaring berdasarkan tanggal menginap; bila data tidak terlihat, ubah periode di bilah atas (mis. "Tahun berjalan" atau rentang kustom).';
+
   return {
     success: true,
-    message: successMsg,
+    message: successMsg + rangeHint + visibilityHint,
     batchId: result.batchId,
+    stayDateRange: result.stayDateRange,
     stats: {
       total: result.total,
       created: result.created,

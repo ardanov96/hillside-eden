@@ -1,8 +1,22 @@
 /**
- * Adapter CSV Agoda YCS Extranet.
+ * Adapter CSV Agoda (YCS Extranet & Agoda Partner Portal).
+ *
+ * Deteksi file "YCS Extranet" dan "Partner Portal" (Agoda Homes) sama-sama
+ * dipakai. Ekspor "Reservasi" dari Agoda Partner Portal bisa diekspor dengan kolom
+ * berbeda-beda sesuai filter yang dipilih pengguna, sehingga adapter ini
+ * mengenali file berdasarkan kolom ID reservasi + penanda khas Agoda, bukan
+ * berdasarkan daftar kolom tetap.
  */
 import type { SourceAdapter, RawInput, ParseResult } from "@/adapters/types";
+import { parseCsvRows } from "@/adapters/csv-generic/csv-tokenizer";
 import { parseAgodaReservationsCsv } from "./parser";
+import {
+  AGODA_COLUMN_ALIASES,
+  detectAgodaHeaderRow,
+  findAgodaColumn,
+  hasAgodaMarker,
+  normalizeHeader,
+} from "./mappings";
 
 export class AgodaCsvAdapter implements SourceAdapter {
   readonly id = "agoda.csv.v1";
@@ -14,34 +28,21 @@ export class AgodaCsvAdapter implements SourceAdapter {
     const contentStr =
       typeof input.content === "string" ? input.content : input.content.toString("utf-8");
 
-    const lower = contentStr.slice(0, 1500).toLowerCase();
+    const rows = parseCsvRows(contentStr);
+    const header = detectAgodaHeaderRow(rows) ?? detectLooseHeaderRow(rows);
+    if (!header) return false;
 
-    // 1. Header Agoda YCS Extranet
-    const isAgodaYcsHeader =
-      (lower.includes("booking id") || lower.includes("reference id")) &&
-      (lower.includes("total inclusive rate") ||
-        lower.includes("customer name") ||
-        lower.includes("room type"));
+    const hasMarker = hasAgodaMarker(header.headers);
+    if (hasMarker) return true;
 
-    // 2. Header Agoda Partner Portal (Agoda Homes)
-    // Contoh: PropertyName,BookingId,GuestName,CheckinDate,CheckoutDate,RoomTypeName,Adults,Children,PaymentModel
-    const isAgodaHomesHeader =
-      lower.includes("bookingid") &&
-      (lower.includes("propertyname") ||
-        lower.includes("checkindate") ||
-        lower.includes("roomtypename") ||
-        lower.includes("paymentmodel"));
+    // Tanpa penanda khas: hanya diterima bila nama berkasnya pola ekspor Agoda.
+    const filename = (input.filename ?? "").toLowerCase();
+    const filenameLooksAgoda =
+      /booking[-_ ]?report/.test(filename) ||
+      filename.includes("agoda") ||
+      filename.includes("ycs");
 
-    const isAgodaFilename =
-      input.filename?.toLowerCase().includes("agoda") ||
-      input.filename?.toLowerCase().includes("ycs") ||
-      input.filename?.toLowerCase().startsWith("booking-report-");
-
-    return (
-      isAgodaYcsHeader ||
-      isAgodaHomesHeader ||
-      (Boolean(isAgodaFilename) && (lower.includes("booking id") || lower.includes("bookingid")))
-    );
+    return filenameLooksAgoda;
   }
 
   async parse(input: RawInput): Promise<ParseResult> {
@@ -71,4 +72,25 @@ export class AgodaCsvAdapter implements SourceAdapter {
       events,
     };
   }
+}
+
+/**
+ * Deteksi longgar: baris pertama yang memuat kolom ID reservasi Agoda.
+ * Dipakai untuk `supports()` supaya berkas dengan kolom minimal (mis. hanya
+ * "Booking ID") tetap dikenali bila nama berkasnya pola ekspor Agoda.
+ */
+function detectLooseHeaderRow(
+  rows: readonly string[][],
+): { rowIndex: number; headers: string[]; original: string[] } | null {
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    if ((row[0] ?? "").trim().startsWith("#")) continue;
+    const original = row.map((c) => (c ?? "").trim());
+    const headers = original.map((c) => normalizeHeader(c));
+    if (findAgodaColumn(headers, AGODA_COLUMN_ALIASES.bookingId, new Set()) >= 0) {
+      return { rowIndex: i, headers, original };
+    }
+  }
+  return null;
 }

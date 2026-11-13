@@ -19,10 +19,12 @@ import {
   ArrowRight,
   Info,
   Sparkles,
+  CalendarRange,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatStayDateId } from "@/lib/dates";
 import { importOtaCsvAction, type ImportResultState } from "@/server/actions/import";
 
 const CHANNELS = [
@@ -34,7 +36,7 @@ const CHANNELS = [
   },
   { id: "AIRBNB", label: "Airbnb", desc: "Reservasi & Payout CSV", isAuto: false },
   { id: "BOOKING_COM", label: "Booking.com", desc: "Extranet Reservations CSV", isAuto: false },
-  { id: "AGODA", label: "Agoda", desc: "YCS Extranet Bookings CSV", isAuto: false },
+  { id: "AGODA", label: "Agoda", desc: "Partner Portal Reservasi CSV", isAuto: false },
   { id: "EXPEDIA", label: "Expedia", desc: "Partner Central CSV", isAuto: false },
   { id: "TIKET_COM", label: "Tiket.com", desc: "TIX Extranet Pesanan CSV", isAuto: false },
   { id: "TRAVELOKA", label: "Traveloka", desc: "Tera Extranet CSV", isAuto: false },
@@ -199,6 +201,24 @@ export function ImportForm() {
               </div>
             )}
 
+            {/* Rentang Tanggal Menginap (penting: halaman Booking memfilter tanggal) */}
+            {state.stayDateRange && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/20 p-3 text-xs text-blue-800 dark:text-blue-300">
+                <div className="flex items-start gap-2">
+                  <CalendarRange className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    Rentang tanggal menginap data yang diimpor:{" "}
+                    <strong>
+                      {formatStayDateId(state.stayDateRange.start)} –{" "}
+                      {formatStayDateId(state.stayDateRange.end)}
+                    </strong>
+                    . Daftar Booking menyaring berdasarkan rentang tanggal menginap; ubah periode di
+                    bilah atas (mis. &quot;Tahun berjalan&quot;) bila data tidak terlihat.
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Error Detail */}
             {state.errors && state.errors.length > 0 && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300 space-y-1">
@@ -356,8 +376,9 @@ export function ImportForm() {
             </div>
             <div className="p-2.5 rounded-lg bg-background border border-border/40">
               <strong className="text-foreground block mb-0.5">Agoda</strong>
-              Buka <em>Agoda YCS Extranet</em> &gt; menu <em>Bookings</em> &gt; pilih filter tanggal
-              &gt; klik <em>Export CSV</em>.
+              Buka <em>Agoda Partner Portal</em> &gt; menu <em>Reservasi</em> &gt; tentukan filter
+              tanggal &gt; klik <em>Ekspor CSV</em>. Kombinasi kolom hasil ekspor bebas dipilih;
+              pastikan kolom ID reservasi dan tanggal menginap ikut diekspor.
             </div>
             <div className="p-2.5 rounded-lg bg-background border border-border/40">
               <strong className="text-foreground block mb-0.5">Expedia</strong>
