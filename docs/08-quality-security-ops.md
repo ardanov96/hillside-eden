@@ -25,6 +25,7 @@ Lint, typecheck, unit/integrasi, `prisma validate`, `pnpm audit` (peringatan tin
 
 - **Autentikasi:** Auth.js credentials; password di-hash **argon2id**; sesi cookie `HttpOnly`, `Secure`, `SameSite=Lax`; batas laju dan penundaan progresif pada login; ganti password dan sesi kedaluwarsa.
 - **Otorisasi:** semua route dan server action memeriksa sesi dan `organization_id`. Peran disiapkan, hanya `OWNER` aktif.
+- **Proxy (gerbang pertama):** `src/proxy.ts` (Next.js 16, sebelumnya `middleware.ts`) menolak request tanpa sesi sebelum route dieksekusi — halaman di-redirect ke `/login`, endpoint API dibalas `401` JSON. Satu-satunya path publik: `/login`, `/api/health`, `/api/auth/*` (lihat ADR-029). Proxy tidak boleh memakai user-callback `auth(() => {})` karena `callbacks.authorized` akan diabaikan.
 - **Validasi:** semua input lewat Zod di batas server (form, webhook, upload).
 - **CSRF:** gunakan perlindungan bawaan Server Actions; endpoint webhook memakai tanda tangan/token rahasia.
 - **Header:** CSP ketat, `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'`.

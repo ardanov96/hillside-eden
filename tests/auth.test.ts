@@ -6,8 +6,10 @@
  * Tidak menyentuh DB / Next.js runtime.
  */
 import { describe, it, expect } from "vitest";
+import { NextRequest } from "next/server";
 import { ARGON2_PARAMS, hashPassword, verifyPassword } from "../src/lib/argon2";
 import { isPublicPath } from "../src/lib/auth-paths";
+import { decideProxyAuth } from "../src/lib/auth-guard";
 import authConfig from "../src/auth.config";
 
 describe("argon2id wrapper", () => {
@@ -89,32 +91,92 @@ describe("authConfig callbacks", () => {
     const authorized = authConfig.callbacks?.authorized;
     if (!authorized) throw new Error("authorized callback missing");
 
-    function mockRequest(pathname: string) {
-      return { nextUrl: { pathname } } as unknown as import("next/server").NextRequest;
+    function mockRequest(pathname: string, search = "") {
+      return new NextRequest(`http://localhost:3000${pathname}${search}`);
     }
 
-    it("menolak akses route terproteksi tanpa sesi", () => {
+    it("menolak akses halaman terproteksi tanpa sesi (redirect ke login)", async () => {
       const request = mockRequest("/dashboard");
-      expect(authorized({ auth: null, request })).toBe(false);
+      const result = await authorized({ auth: null, request });
+      expect(result).toBeInstanceOf(Response);
+      const res = result as Response;
+      expect(res.status).toBe(307);
+      const location = res.headers.get("location") ?? "";
+      expect(location).toContain("/login");
+      expect(location).toContain("callbackUrl");
     });
 
-    it("mengizinkan akses route terproteksi dengan sesi user", () => {
+    it("menolak akses endpoint API terproteksi tanpa sesi (401 JSON)", async () => {
+      const request = mockRequest("/api/bookings");
+      const result = await authorized({ auth: null, request });
+      expect(result).toBeInstanceOf(Response);
+      const res = result as Response;
+      expect(res.status).toBe(401);
+      await expect(res.json()).resolves.toEqual({ error: "Unauthorized" });
+    });
+
+    it("membawa callbackUrl berisi query string saat redirect", async () => {
+      const request = mockRequest("/bookings", "?period=this_month");
+      const result = (await authorized({ auth: null, request })) as Response;
+      const location = new URL(result.headers.get("location") ?? "");
+      expect(location.pathname).toBe("/login");
+      expect(location.searchParams.get("callbackUrl")).toBe("/bookings?period=this_month");
+    });
+
+    it("mengizinkan akses route terproteksi dengan sesi user", async () => {
       const request = mockRequest("/dashboard");
       const auth = {
         user: { id: "user-1", email: "test@example.com" },
         expires: "2099-01-01",
       };
-      expect(authorized({ auth, request })).toBe(true);
+      expect(await authorized({ auth, request })).toBe(true);
     });
 
-    it("mengizinkan akses route publik tanpa sesi", () => {
+    it("mengizinkan akses route publik tanpa sesi", async () => {
       const request = mockRequest("/login");
-      expect(authorized({ auth: null, request })).toBe(true);
+      expect(await authorized({ auth: null, request })).toBe(true);
     });
 
-    it("mengizinkan /api/health tanpa sesi", () => {
+    it("mengizinkan /api/health tanpa sesi", async () => {
       const request = mockRequest("/api/health");
-      expect(authorized({ auth: null, request })).toBe(true);
+      expect(await authorized({ auth: null, request })).toBe(true);
+    });
+  });
+
+  describe("decideProxyAuth (keputusan murni, tanpa runtime Next.js)", () => {
+    it("mengizinkan path publik tanpa sesi", () => {
+      expect(decideProxyAuth({ pathname: "/login", hasSession: false })).toEqual({ kind: "allow" });
+      expect(decideProxyAuth({ pathname: "/api/health", hasSession: false })).toEqual({
+        kind: "allow",
+      });
+    });
+
+    it("mengizinkan path terproteksi bila ada sesi", () => {
+      expect(decideProxyAuth({ pathname: "/bookings", hasSession: true })).toEqual({
+        kind: "allow",
+      });
+      expect(decideProxyAuth({ pathname: "/api/receipts/x", hasSession: true })).toEqual({
+        kind: "allow",
+      });
+    });
+
+    it("menolak endpoint API tanpa sesi dengan 401", () => {
+      expect(decideProxyAuth({ pathname: "/api/bookings", hasSession: false })).toEqual({
+        kind: "unauthorized",
+      });
+    });
+
+    it("mengarahkan halaman tanpa sesi ke login dan menyimpan callbackUrl", () => {
+      expect(
+        decideProxyAuth({ pathname: "/bookings", search: "?page=2", hasSession: false }),
+      ).toEqual({ kind: "redirect", callbackUrl: "/bookings?page=2" });
+    });
+
+    it("tidak menganggap /api sebagai terproteksi tanpa sesi", () => {
+      expect(decideProxyAuth({ pathname: "/api", hasSession: false })).toEqual({
+        kind: "redirect",
+        callbackUrl: "/api",
+      });
     });
   });
 

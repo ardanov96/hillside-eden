@@ -164,6 +164,17 @@ Sprint 10 selesai menyeluruh: Halaman Kalender Okupansi (`/calendar`) live di na
 
 Sprint 11 selesai menyeluruh: Keempat saluran OTA aktif client (Airbnb, Booking.com, Agoda, Expedia) kini memiliki adapter ingest deterministik khusus dengan dukungan deteksi otomatis, penanganan hotel collect vs channel collect, dan panduan extranet langsung di web UI. Total 651 tes otomatis lulus 100%.
 
+### Sprint 12: Perbaikan Keamanan P0 (hasil audit 13–14 November 2026) (lane E)
+
+Audit baca-saja terhadap kode + data produksi menemukan jalur tulis tanpa autentikasi ke ledger
+keuangan dan kebocoran rahasia. Tiga tiket P0 dikerjakan berurutan, satu commit per tiket.
+
+| ID | Tugas | Ukuran | Status / selesai bila |
+|---|---|---|---|
+| S12-01 | Proxy Next.js 16 (`src/middleware.ts` → `src/proxy.ts`) & tegakkan auth di seluruh route non-publik | M | Selesai (`callbacks.authorized` jadi satu-satunya gerbang lewat helper murni `src/lib/auth-guard.ts`; tanpa sesi halaman → `307 /login?callbackUrl=…`, endpoint API → `401` JSON; path publik tetap `/login`, `/api/health`, `/api/auth/*`; ADR-029; 720 tes lulus) |
+| S12-02 | Webhook fail-closed + anti-replay + whitelist path webhook | M | Dijadwalkan (secret webhook wajib ada, perbandingan byte eksak, HMAC ber-cap timestamp, whitelist `/api/webhooks/*` di proxy) |
+| S12-03 | `ENCRYPTION_KEY` wajib di produksi + validasi env saat boot + skrip rotasi kunci | M | Dijadwalkan (hapus fallback kunci yang tercetak di repo; `src/lib/env.ts` dijalankan saat start; skrip re-encrypt `IcalFeed`) |
+
 ## 4. Spesifikasi data dummy (S1-06)
 
 - 2 properti: satu dengan estate (4 unit: villa + 3 cottage, juga dijual sebagai paket), satu dengan 4 kamar di mana hanya 2 yang `isSellable`.
