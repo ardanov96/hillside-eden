@@ -6,14 +6,24 @@
  * - /api/auth/*             : handler NextAuth (callback OAuth, dll)
  * - /api/health             : health check (monitoring harus tetap bekerja
  *                             walau tidak ada user login, lihat docs/08 §9)
+ * - /api/webhooks/*         : endpoint webhook server-to-server. Endpoint ini
+ *                             TIDAK memakai sesi, tetapi WAJIB fail-closed:
+ *                             route memverifikasi secret sendiri dan menolak
+ *                             request bila secret belum dikonfigurasi (503).
  * - /_next/* dan /favicon.ico : aset Next.js & favicon
  *
- * Fungsi ini dipakai oleh middleware dan oleh unit test untuk memastikan
+ * Fungsi ini dipakai oleh proxy dan oleh unit test untuk memastikan
  * aturan allow/deny konsisten.
  */
 
 /** Path publik literal atau prefiks. */
-const PUBLIC_PREFIXES: ReadonlyArray<string> = ["/_next/", "/api/auth/"];
+const PUBLIC_PREFIXES: ReadonlyArray<string> = [
+  "/_next/",
+  "/api/auth/",
+  // Webhook ditolak proxy agar autentikasinya sendiri (secret/HMAC) yang
+  // menentukan — bukan sesi browser. Route wajib fail-closed (ADR-030).
+  "/api/webhooks/",
+];
 
 const PUBLIC_EXACT: ReadonlySet<string> = new Set<string>([
   "/login",

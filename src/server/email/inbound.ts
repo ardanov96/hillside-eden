@@ -13,6 +13,7 @@ import { AirbnbEmailAdapter } from "@/adapters/airbnb/email/adapter";
 import { AirbnbCsvAdapter } from "@/adapters/airbnb/csv/adapter";
 import { TiketEmailAdapter } from "@/adapters/tiket/email/adapter";
 import { TravelokaEmailAdapter } from "@/adapters/traveloka/email/adapter";
+import { isTrustedEmailDomain, parseEmailDomain } from "@/lib/webhook-auth";
 
 export interface InboundEmailPayload {
   from: string;
@@ -37,11 +38,15 @@ export const TRUSTED_EMAIL_DOMAINS = [
   "traveloka.com",
 ] as const;
 
+/**
+ * Apakah pengirim berada di whitelist domain OTA.
+ *
+ * Domain di-bandingkan **persis** terhadap whitelist (atau subdomainnya),
+ * bukan dengan `includes("@domain")` yang menerima domain palsu seperti
+ * `attacker@airbnb.com.evil.com`.
+ */
 export function isTrustedEmailSender(fromAddress: string): boolean {
-  const lower = fromAddress.toLowerCase();
-  return TRUSTED_EMAIL_DOMAINS.some(
-    (domain) => lower.includes(`@${domain}`) || lower.endsWith(`.${domain}`),
-  );
+  return isTrustedEmailDomain(parseEmailDomain(fromAddress), TRUSTED_EMAIL_DOMAINS);
 }
 
 export interface ProcessInboundEmailContext {

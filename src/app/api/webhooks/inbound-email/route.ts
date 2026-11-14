@@ -5,22 +5,48 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { processInboundEmail, isTrustedEmailSender } from "@/server/email/inbound";
+import { authenticateWebhookRequest, WEBHOOK_MIN_SECRET_LENGTH } from "@/lib/webhook-auth";
 
 export const instant = false;
 
 export async function POST(req: Request) {
-  // 1. Verifikasi secret token webhook jika dikonfigurasi di ENV
+  // 1. Fail-closed: secret WAJIB dikonfigurasi. Tanpa secret, endpoint menolak
+  //    semua request (503) alih-alih menerima email masuk tanpa autentikasi.
   const webhookSecret = process.env.INBOUND_EMAIL_WEBHOOK_SECRET;
-  if (webhookSecret) {
-    const authHeader = req.headers.get("x-webhook-secret") || req.headers.get("authorization");
-    if (!authHeader || !authHeader.includes(webhookSecret)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!webhookSecret || webhookSecret.length < WEBHOOK_MIN_SECRET_LENGTH) {
+    return NextResponse.json(
+      {
+        error:
+          "Webhook belum dikonfigurasi: set INBOUND_EMAIL_WEBHOOK_SECRET " +
+          `(minimal ${WEBHOOK_MIN_SECRET_LENGTH} karakter)`,
+      },
+      { status: 503 },
+    );
   }
 
+  // 2. Raw body diperlukan untuk verifikasi HMAC ber-timestamp.
+  let rawBodyText: string;
+  try {
+    rawBodyText = await req.text();
+  } catch {
+    return NextResponse.json({ error: "Gagal membaca body request" }, { status: 400 });
+  }
+
+  // 3. Autentikasi: shared secret (x-webhook-secret / Authorization: Bearer)
+  //    atau HMAC-SHA256 ber-timestamp atas `timestamp + "." + body`.
+  const auth = authenticateWebhookRequest({
+    secret: webhookSecret,
+    rawBody: rawBodyText,
+    headers: req.headers,
+  });
+  if (!auth.ok) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // 4. Parse JSON
   let rawBody: unknown;
   try {
-    rawBody = await req.json();
+    rawBody = JSON.parse(rawBodyText);
   } catch {
     return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }

@@ -7,26 +7,14 @@
  * Hotel Booking, WooCommerce, atau form reservasi kustom), memvalidasi secret,
  * memastikan listing DIRECT tersedia, dan mengalirkan event ke IngestPipeline.
  */
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DirectWebhookAdapter } from "@/adapters/direct/adapter";
 import { createRouterRegistry } from "@/ingest/pipeline/router";
 import { runIngest } from "@/ingest/pipeline/pipeline";
+import { authenticateWebhookRequest, WEBHOOK_MIN_SECRET_LENGTH } from "@/lib/webhook-auth";
 
 export const instant = false;
-
-/**
- * Verifikasi signature / secret token webhook secara aman (timing-attack resistant).
- */
-function verifySecret(received: string, expected: string): boolean {
-  if (received.length !== expected.length) return false;
-  try {
-    return timingSafeEqual(Buffer.from(received), Buffer.from(expected));
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Health check & discovery endpoint untuk tester webhook / admin.
@@ -45,7 +33,20 @@ export async function GET() {
 export async function POST(req: Request) {
   const webhookSecret = process.env.DIRECT_BOOKING_WEBHOOK_SECRET;
 
-  // Baca raw body text untuk keperluan verifikasi HMAC signature & JSON parsing
+  // 1. Fail-closed: secret WAJIB dikonfigurasi. Tanpa secret, endpoint menolak
+  //    semua request (503) alih-alih menerima webhook tanpa autentikasi.
+  if (!webhookSecret || webhookSecret.length < WEBHOOK_MIN_SECRET_LENGTH) {
+    return NextResponse.json(
+      {
+        error:
+          "Webhook belum dikonfigurasi: set DIRECT_BOOKING_WEBHOOK_SECRET " +
+          `(minimal ${WEBHOOK_MIN_SECRET_LENGTH} karakter)`,
+      },
+      { status: 503 },
+    );
+  }
+
+  // 2. Baca raw body text untuk verifikasi HMAC signature & JSON parsing.
   let rawBodyText: string;
   try {
     rawBodyText = await req.text();
@@ -53,44 +54,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Gagal membaca body request" }, { status: 400 });
   }
 
-  // 1. Verifikasi Autentikasi jika DIRECT_BOOKING_WEBHOOK_SECRET dikonfigurasi di ENV
-  if (webhookSecret) {
-    const authHeader = req.headers.get("x-webhook-secret") || req.headers.get("authorization");
-    const wcSignature = req.headers.get("x-wc-webhook-signature");
-
-    let isAuthorized = false;
-
-    // Cek header x-webhook-secret atau Authorization: Bearer <secret>
-    if (authHeader) {
-      const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-      if (verifySecret(token, webhookSecret)) {
-        isAuthorized = true;
-      }
-    }
-
-    // Cek signature WooCommerce HMAC-SHA256 (bila dikirim oleh webhook WooCommerce)
-    if (!isAuthorized && wcSignature) {
-      try {
-        const computedHmac = createHmac("sha256", webhookSecret)
-          .update(rawBodyText, "utf-8")
-          .digest("base64");
-        if (verifySecret(wcSignature.trim(), computedHmac.trim())) {
-          isAuthorized = true;
-        }
-      } catch {
-        isAuthorized = false;
-      }
-    }
-
-    if (!isAuthorized) {
-      return NextResponse.json(
-        { error: "Unauthorized: Webhook secret atau signature tidak valid" },
-        { status: 401 },
-      );
-    }
+  // 3. Autentikasi: shared secret (x-webhook-secret / Authorization: Bearer)
+  //    atau HMAC-SHA256 ber-timestamp atas `timestamp + "." + body`.
+  //    HMAC lama (atas body saja) ditolak karena dapat direplay selamanya.
+  const auth = authenticateWebhookRequest({
+    secret: webhookSecret,
+    rawBody: rawBodyText,
+    headers: req.headers,
+  });
+  if (!auth.ok) {
+    return NextResponse.json(
+      { error: `Unauthorized: Webhook secret atau signature tidak valid (${auth.reason})` },
+      { status: 401 },
+    );
   }
 
-  // 2. Parse JSON
+  // 4. Parse JSON
   let body: Record<string, unknown>;
   try {
     const parsed = JSON.parse(rawBodyText);
@@ -108,7 +87,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, message: "WooCommerce webhook ping received" });
   }
 
-  // 3. Dapatkan default Organization (Hillside Eden)
+  // 5. Dapatkan default Organization (Hillside Eden)
   const org = await prisma.organization.findFirst({
     select: { id: true, name: true },
   });
@@ -120,7 +99,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // 4. Pastikan listing DIRECT tersedia untuk Hillside Eden agar resolusi listing selalu berhasil
+  // 6. Pastikan listing DIRECT tersedia untuk Hillside Eden agar resolusi listing selalu berhasil
   const defaultProperty = await prisma.property.findFirst({
     where: { organizationId: org.id, slug: "hillside-eden" },
     select: { id: true },
@@ -154,10 +133,10 @@ export async function POST(req: Request) {
     });
   }
 
-  // 5. Inisialisasi Router dengan DirectWebhookAdapter
+  // 7. Inisialisasi Router dengan DirectWebhookAdapter
   const router = createRouterRegistry([new DirectWebhookAdapter()]);
 
-  // 6. Jalankan IngestPipeline
+  // 8. Jalankan IngestPipeline
   try {
     const result = await runIngest(prisma, router, {
       organizationId: org.id,

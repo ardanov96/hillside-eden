@@ -1,16 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createHmac } from "node:crypto";
 import { GET, POST } from "@/app/api/webhooks/direct-booking/route";
+import { WEBHOOK_MAX_SKEW_SECONDS } from "@/lib/webhook-auth";
 
 describe("Direct Booking Webhook Route Handler (/api/webhooks/direct-booking)", () => {
   const originalEnv = process.env.DIRECT_BOOKING_WEBHOOK_SECRET;
+  const SECRET = "test-direct-secret-key-12345678";
 
   beforeEach(() => {
-    process.env.DIRECT_BOOKING_WEBHOOK_SECRET = "test-direct-secret-key-12345678";
+    process.env.DIRECT_BOOKING_WEBHOOK_SECRET = SECRET;
   });
 
   afterEach(() => {
-    process.env.DIRECT_BOOKING_WEBHOOK_SECRET = originalEnv;
+    if (originalEnv === undefined) {
+      delete process.env.DIRECT_BOOKING_WEBHOOK_SECRET;
+    } else {
+      process.env.DIRECT_BOOKING_WEBHOOK_SECRET = originalEnv;
+    }
   });
 
   describe("GET /api/webhooks/direct-booking", () => {
@@ -40,6 +46,37 @@ describe("Direct Booking Webhook Route Handler (/api/webhooks/direct-booking)", 
       expect(json.error).toMatch(/Unauthorized/);
     });
 
+    it("gagal tertutup (503) bila secret webhook belum dikonfigurasi", async () => {
+      delete process.env.DIRECT_BOOKING_WEBHOOK_SECRET;
+
+      const req = new Request("http://localhost:3000/api/webhooks/direct-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: "HE-1" }),
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(503);
+      const json = await res.json();
+      expect(json.error).toMatch(/DIRECT_BOOKING_WEBHOOK_SECRET/);
+    });
+
+    it("gagal tertutup (503) bila secret webhook terlalu pendek", async () => {
+      process.env.DIRECT_BOOKING_WEBHOOK_SECRET = "pendek";
+
+      const req = new Request("http://localhost:3000/api/webhooks/direct-booking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-webhook-secret": "pendek",
+        },
+        body: JSON.stringify({ bookingId: "HE-1" }),
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(503);
+    });
+
     it("menolak request dengan secret token yang salah (401 Unauthorized)", async () => {
       const req = new Request("http://localhost:3000/api/webhooks/direct-booking", {
         method: "POST",
@@ -59,7 +96,7 @@ describe("Direct Booking Webhook Route Handler (/api/webhooks/direct-booking)", 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-webhook-secret": "test-direct-secret-key-12345678",
+          "x-webhook-secret": SECRET,
           "x-wc-webhook-topic": "webhook.ping",
         },
         body: JSON.stringify({ ping: true }),
@@ -76,7 +113,7 @@ describe("Direct Booking Webhook Route Handler (/api/webhooks/direct-booking)", 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          authorization: "Bearer test-direct-secret-key-12345678",
+          authorization: `Bearer ${SECRET}`,
           "x-wc-webhook-topic": "webhook.ping",
         },
         body: JSON.stringify({ ping: true }),
@@ -88,10 +125,33 @@ describe("Direct Booking Webhook Route Handler (/api/webhooks/direct-booking)", 
       expect(json.ok).toBe(true);
     });
 
-    it("menerima WooCommerce HMAC-SHA256 signature yang valid", async () => {
+    it("menerima HMAC-SHA256 ber-timestamp yang valid", async () => {
       const payloadString = JSON.stringify({ webhook_id: 123 });
-      const secret = "test-direct-secret-key-12345678";
-      const signature = createHmac("sha256", secret).update(payloadString).digest("base64");
+      const timestamp = String(Math.floor(Date.now() / 1000));
+      const signature = createHmac("sha256", SECRET)
+        .update(`${timestamp}.${payloadString}`)
+        .digest("base64");
+
+      const req = new Request("http://localhost:3000/api/webhooks/direct-booking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-wc-webhook-signature": signature,
+          "x-webhook-timestamp": timestamp,
+          "x-wc-webhook-topic": "webhook.ping",
+        },
+        body: payloadString,
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.ok).toBe(true);
+    });
+
+    it("menolak HMAC lama (atas body saja) karena dapat direplay (401)", async () => {
+      const payloadString = JSON.stringify({ webhook_id: 123 });
+      const signature = createHmac("sha256", SECRET).update(payloadString).digest("base64");
 
       const req = new Request("http://localhost:3000/api/webhooks/direct-booking", {
         method: "POST",
@@ -104,9 +164,29 @@ describe("Direct Booking Webhook Route Handler (/api/webhooks/direct-booking)", 
       });
 
       const res = await POST(req);
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(json.ok).toBe(true);
+      expect(res.status).toBe(401);
+    });
+
+    it("menolak HMAC dengan timestamp basi / di luar jendela skew (401)", async () => {
+      const payloadString = JSON.stringify({ webhook_id: 123 });
+      const timestamp = String(Math.floor(Date.now() / 1000) - WEBHOOK_MAX_SKEW_SECONDS - 60);
+      const signature = createHmac("sha256", SECRET)
+        .update(`${timestamp}.${payloadString}`)
+        .digest("base64");
+
+      const req = new Request("http://localhost:3000/api/webhooks/direct-booking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-wc-webhook-signature": signature,
+          "x-webhook-timestamp": timestamp,
+          "x-wc-webhook-topic": "webhook.ping",
+        },
+        body: payloadString,
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(401);
     });
 
     it("menolak payload bukan JSON valid dengan status 400", async () => {
@@ -114,7 +194,7 @@ describe("Direct Booking Webhook Route Handler (/api/webhooks/direct-booking)", 
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
-          "x-webhook-secret": "test-direct-secret-key-12345678",
+          "x-webhook-secret": SECRET,
         },
         body: "invalid-non-json-string",
       });

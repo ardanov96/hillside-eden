@@ -62,6 +62,9 @@ describe("isPublicPath", () => {
     "/_next/static/chunks/main.js",
     "/_next/image?url=foo",
     "/favicon.ico",
+    // Webhook: publik bagi proxy, tetapi route wajib fail-closed (ADR-030).
+    "/api/webhooks/direct-booking",
+    "/api/webhooks/inbound-email",
   ];
   const PROTECTED_CASES: ReadonlyArray<string> = [
     "/",
@@ -75,6 +78,8 @@ describe("isPublicPath", () => {
     "/api/v1/anything",
     "/api",
     "/settings",
+    // Prefix webhook hanya berlaku di bawah /api/webhooks/.
+    "/api/webhooksx/anything",
   ];
 
   it.each(PUBLIC_CASES)("mengizinkan path publik %s", (path) => {

@@ -172,7 +172,7 @@ keuangan dan kebocoran rahasia. Tiga tiket P0 dikerjakan berurutan, satu commit 
 | ID | Tugas | Ukuran | Status / selesai bila |
 |---|---|---|---|
 | S12-01 | Proxy Next.js 16 (`src/middleware.ts` → `src/proxy.ts`) & tegakkan auth di seluruh route non-publik | M | Selesai (`callbacks.authorized` jadi satu-satunya gerbang lewat helper murni `src/lib/auth-guard.ts`; tanpa sesi halaman → `307 /login?callbackUrl=…`, endpoint API → `401` JSON; path publik tetap `/login`, `/api/health`, `/api/auth/*`; ADR-029; 720 tes lulus) |
-| S12-02 | Webhook fail-closed + anti-replay + whitelist path webhook | M | Dijadwalkan (secret webhook wajib ada, perbandingan byte eksak, HMAC ber-cap timestamp, whitelist `/api/webhooks/*` di proxy) |
+| S12-02 | Webhook fail-closed + anti-replay + whitelist path webhook | M | Selesai (`src/lib/webhook-auth.ts`: secret wajib ≥ 16 karakter → tanpa secret route membalas `503`; perbandingan `timingSafeEqual`; HMAC wajib ber-timestamp atas `timestamp + "." + body`, skew ≤ 300 detik, HMAC body-only ditolak; whitelist `/api/webhooks/*` di proxy; domain email dibandingkan persis `attacker@airbnb.com.evil.com` ditolak; ADR-030) |
 | S12-03 | `ENCRYPTION_KEY` wajib di produksi + validasi env saat boot + skrip rotasi kunci | M | Dijadwalkan (hapus fallback kunci yang tercetak di repo; `src/lib/env.ts` dijalankan saat start; skrip re-encrypt `IcalFeed`) |
 
 ## 4. Spesifikasi data dummy (S1-06)
