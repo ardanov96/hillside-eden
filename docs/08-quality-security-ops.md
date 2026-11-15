@@ -24,6 +24,7 @@ Lint, typecheck, unit/integrasi, `prisma validate`, `pnpm audit` (peringatan tin
 ## 3. Keamanan aplikasi
 
 - **Autentikasi:** Auth.js credentials; password di-hash **argon2id**; sesi cookie `HttpOnly`, `Secure`, `SameSite=Lax`; batas laju dan penundaan progresif pada login; ganti password dan sesi kedaluwarsa.
+- **Host tepercaya (Auth.js v5):** Auth.js tidak mempercayai header `Host` secara default di produksi. Konfigurasi wajib: `AUTH_URL` (URL kanonis — dipakai untuk seluruh redirect, **pilihan utama**) atau `AUTH_TRUST_HOST=true` (hanya bila reverse proxy/platform dijamin men-set `Host`). Tanpa keduanya, validasi env saat boot menghentikan proses, bukan menunggu error `UntrustedHost` saat login (ADR-032, helper: `src/lib/auth-trust-host.ts`).
 - **Otorisasi:** semua route dan server action memeriksa sesi dan `organization_id`. Peran disiapkan, hanya `OWNER` aktif.
 - **Proxy (gerbang pertama):** `src/proxy.ts` (Next.js 16, sebelumnya `middleware.ts`) menolak request tanpa sesi sebelum route dieksekusi — halaman di-redirect ke `/login`, endpoint API dibalas `401` JSON. Satu-satunya path publik: `/login`, `/api/health`, `/api/auth/*` (lihat ADR-029). Proxy tidak boleh memakai user-callback `auth(() => {})` karena `callbacks.authorized` akan diabaikan.
 - **Validasi:** semua input lewat Zod di batas server (form, webhook, upload).
@@ -68,7 +69,7 @@ environment karena `prisma/schema.prisma` mendeklarasikan `directUrl` (ADR-014),
 termasuk saat `prisma validate` berjalan di CI. Tambahkan `connect_timeout=15`
 agar tetap cope dengan compute yang scale-to-zero.
 
-`DATABASE_URL`, `DIRECT_DATABASE_URL` (migrasi), `AUTH_SECRET`, `APP_BASE_URL`, `ENCRYPTION_KEY` (URL iCal), `STORAGE_DRIVER` dan kredensialnya, `INBOUND_EMAIL_*`, `DIRECT_BOOKING_WEBHOOK_SECRET`, `INBOUND_EMAIL_WEBHOOK_SECRET`, `SENTRY_DSN` (opsional), `TZ=Asia/Makassar` (untuk proses, namun logika tetap eksplisit zona).
+`DATABASE_URL`, `DIRECT_DATABASE_URL` (migrasi), `AUTH_SECRET`, `AUTH_URL`, `APP_BASE_URL`, `ENCRYPTION_KEY` (URL iCal), `STORAGE_DRIVER` dan kredensialnya, `INBOUND_EMAIL_*`, `DIRECT_BOOKING_WEBHOOK_SECRET`, `INBOUND_EMAIL_WEBHOOK_SECRET`, `SENTRY_DSN` (opsional), `TZ=Asia/Makassar` (untuk proses, namun logika tetap eksplisit zona).
 > `.env.example`, log, atau pesan commit. Isi lewat `.env` lokal atau secret
 > manager di platform deploy.
 
@@ -84,6 +85,7 @@ Wajib di produksi (`NODE_ENV=production`):
 |---|---|---|
 | `AUTH_SECRET` | ≥ 32 karakter | Dipakai Auth.js; tidak boleh sama dengan `ENCRYPTION_KEY` |
 | `ENCRYPTION_KEY` | ≥ 32 karakter | Kunci enkripsi `IcalFeed.urlEncrypted`; fallback ke `AUTH_SECRET` **tidak** berlaku di produksi (ADR-031). Rotasi: `pnpm encrypt:rotate --apply` |
+| `AUTH_URL` **atau** `AUTH_TRUST_HOST=true` | URL absolut (mis. `https://domain-resmi`) | Wajib agar Auth.js tidak melempar `UntrustedHost` (ADR-032). `AUTH_URL` = URL kanonis untuk seluruh redirect (**pilihan utama**); `AUTH_TRUST_HOST=true` hanya bila reverse proxy/platform dijamin men-set header `Host` |
 
 Variabel opsional: `DIRECT_BOOKING_WEBHOOK_SECRET` dan `INBOUND_EMAIL_WEBHOOK_SECRET` (minimal 16 karakter).
 Keduanya tidak mewajibkan start — endpoint webhook yang relevan membalas `503` selama secret belum diisi (fail-closed, ADR-030), sehingga situs direct booking yang belum dipakai tidak menghalangi deploy.

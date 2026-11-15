@@ -14,6 +14,7 @@
  * (mis. menghentikan proses saat boot).
  */
 import { z } from "zod";
+import { hasValidProductionTrustHost } from "./auth-trust-host";
 
 /** Panjang minimum `AUTH_SECRET` (karakter). */
 export const AUTH_SECRET_MIN_LENGTH = 32;
@@ -50,6 +51,18 @@ const EnvSchema = z
     // Lihat docs/08 §6.
     AUTH_SECRET: z.string().min(AUTH_SECRET_MIN_LENGTH).optional(),
     ENCRYPTION_KEY: z.string().min(ENCRYPTION_KEY_MIN_LENGTH).optional(),
+    // URL kanonis Auth.js (ADR-032). Wajib di produksi bila
+    // `AUTH_TRUST_HOST` tidak diset.
+    AUTH_URL: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      z.string().url().optional(),
+    ),
+    // Alternatif `AUTH_URL`: Izinkan Auth.js mempercayai header `Host`
+    // dari reverse proxy. Hanya bila proxy dijamin men-set Host dengan benar.
+    AUTH_TRUST_HOST: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      z.string().optional(),
+    ),
     OWNER_EMAIL: z.string().email().optional(),
     OWNER_PASSWORD: z.string().min(8).optional(),
   })
@@ -72,6 +85,21 @@ const EnvSchema = z
         code: z.ZodIssueCode.custom,
         path: ["ENCRYPTION_KEY"],
         message: `ENCRYPTION_KEY wajib di-set di produksi (>= ${ENCRYPTION_KEY_MIN_LENGTH} karakter).`,
+      });
+    }
+    if (
+      !hasValidProductionTrustHost({
+        authUrl: values.AUTH_URL,
+        authTrustHost: values.AUTH_TRUST_HOST,
+        nodeEnv: values.NODE_ENV,
+      })
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["AUTH_URL"],
+        message:
+          "AUTH_URL wajib di-set di produksi (URL kanonis Auth.js, mis. https://domain-resmi) " +
+          "atau AUTH_TRUST_HOST=true bila reverse proxy dijamin men-set header Host.",
       });
     }
   });

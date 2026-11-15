@@ -16,9 +16,33 @@ import type { NextAuthConfig } from "next-auth";
 import { NextResponse } from "next/server";
 import { isPublicPath } from "./lib/auth-paths";
 import { decideProxyAuth } from "./lib/auth-guard";
+import { resolveTrustHost } from "./lib/auth-trust-host";
 
 export { isPublicPath };
 export const isPathPublic = isPublicPath;
+
+/**
+ * Kebijakan `trustHost` Auth.js v5 (ADR-032).
+ *
+ * Auth.js v5 melempar `UntrustedHost` bila `trustHost` false, sehingga login
+ * produksi gagal total. Dua cara aman menyalakannya:
+ * 1. `AUTH_URL=https://domain-resmi` — **pilihan utama**: Auth.js memakai URL
+ *    kanonis ini (bukan header `Host`) untuk seluruh redirect.
+ * 2. `AUTH_TRUST_HOST=true` — hanya bila reverse proxy/platform Dijamin
+ *    menulis header `Host` yang benar.
+ *
+ * Di produksi, bila keduanya tidak diset, validasi env saat boot
+ * (`src/lib/env.ts` → `validateEnv()`) menghentikan proses — jadi aplikasi
+ * tidak pernah melayani traffic dengan konfigurasi setengah jadi.
+ *
+ * `process.env` di bundle edge (proxy) dibaca saat runtime, bukan saat build,
+ * sehingga nilai ini tetap mengikuti environment deployment.
+ */
+const trustHostDecision = resolveTrustHost({
+  authUrl: process.env.AUTH_URL,
+  authTrustHost: process.env.AUTH_TRUST_HOST,
+  nodeEnv: process.env.NODE_ENV,
+});
 
 const authConfig: NextAuthConfig = {
   pages: {
@@ -27,6 +51,7 @@ const authConfig: NextAuthConfig = {
   },
   // Strategi default "jwt" agar middleware edge tidak butuh DB session.
   session: { strategy: "jwt" },
+  trustHost: trustHostDecision.trustHost,
   callbacks: {
     /**
      * `authorized` adalah SATU-SATUNYA gerbang otorisasi di lapisan proxy.
