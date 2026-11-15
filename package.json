@@ -22,6 +22,7 @@
     "db:backup": "tsx scripts/backup-db.ts",
     "db:restore:verify": "tsx scripts/restore-and-verify.ts",
     "encrypt:rotate": "tsx scripts/rotate-encryption-key.ts",
+    "secrets:generate": "tsx scripts/generate-secrets.ts",
     "worker": "tsx scripts/worker.ts"
   },
   "prisma": {

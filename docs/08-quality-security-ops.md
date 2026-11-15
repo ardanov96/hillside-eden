@@ -90,6 +90,11 @@ Wajib di produksi (`NODE_ENV=production`):
 Variabel opsional: `DIRECT_BOOKING_WEBHOOK_SECRET` dan `INBOUND_EMAIL_WEBHOOK_SECRET` (minimal 16 karakter).
 Keduanya tidak mewajibkan start — endpoint webhook yang relevan membalas `503` selama secret belum diisi (fail-closed, ADR-030), sehingga situs direct booking yang belum dipakai tidak menghalangi deploy.
 
+Isi secret dengan `pnpm secrets:generate` (`scripts/generate-secrets.ts`): nilai acak kuat ditulis ke berkas env
+**tanpa dicetak** (kecuali `--show`), secret yang sudah ada tidak ditimpa, dan nilai placeholder dianggap tidak
+valid lalu digenerate ulang (ADR-033). Secret yang dikelola: `AUTH_SECRET`, `ENCRYPTION_KEY`,
+`DIRECT_BOOKING_WEBHOOK_SECRET`, `INBOUND_EMAIL_WEBHOOK_SECRET`, `OTA_VAULT_KEY`.
+
 ## 7. Migrasi database
 
 - Perubahan skema melalui Prisma Migrate; migrasi ditinjau seperti kode.
