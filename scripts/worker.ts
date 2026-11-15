@@ -5,7 +5,12 @@
  *   pnpm worker           -> berjalan terus dengan interval default 5 menit
  *   pnpm worker --once    -> eksekusi 1 siklus lalu keluar (cocok untuk Cron / CI)
  */
+import { validateEnv } from "../src/lib/env";
 import { startWorkerLoop } from "../src/worker/runner";
+
+// Worker adalah proses server-to-server: ia wajib menolak start bila
+// konfigurasi environment tidak valid (mis. ENCRYPTION_KEY kurang di produksi).
+validateEnv();
 
 const args = process.argv.slice(2);
 const runOnce = args.includes("--once");

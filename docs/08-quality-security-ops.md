@@ -68,11 +68,25 @@ environment karena `prisma/schema.prisma` mendeklarasikan `directUrl` (ADR-014),
 termasuk saat `prisma validate` berjalan di CI. Tambahkan `connect_timeout=15`
 agar tetap cope dengan compute yang scale-to-zero.
 
-`DATABASE_URL`, `DIRECT_DATABASE_URL` (migrasi), `AUTH_SECRET`, `APP_BASE_URL`, `ENCRYPTION_KEY` (URL iCal), `STORAGE_DRIVER` dan kredensialnya, `INBOUND_EMAIL_*`, `SENTRY_DSN` (opsional), `TZ=Asia/Makassar` (untuk proses, namun logika tetap eksplisit zona).
+`DATABASE_URL`, `DIRECT_DATABASE_URL` (migrasi), `AUTH_SECRET`, `APP_BASE_URL`, `ENCRYPTION_KEY` (URL iCal), `STORAGE_DRIVER` dan kredensialnya, `INBOUND_EMAIL_*`, `DIRECT_BOOKING_WEBHOOK_SECRET`, `INBOUND_EMAIL_WEBHOOK_SECRET`, `SENTRY_DSN` (opsional), `TZ=Asia/Makassar` (untuk proses, namun logika tetap eksplisit zona).
 > `.env.example`, log, atau pesan commit. Isi lewat `.env` lokal atau secret
 > manager di platform deploy.
 
 Semua nilai divalidasi saat start (Zod pada `lib/env`); aplikasi menolak jalan bila konfigurasi tidak valid.
+> Validasi dijalankan dari `src/instrumentation.ts` (`register()` → `src/instrumentation.node.ts` → `validateEnv()`)
+> dan juga oleh worker (`scripts/worker.ts`). Kegagalan validasi menghentikan proses dengan exit code 1 —
+> Next.js sendiri hanya mencatat kegagalan hook instrumentation tanpa menghentikan server, jadi proses
+> dihentikan secara eksplisit.
+
+Wajib di produksi (`NODE_ENV=production`):
+
+| Variabel | Syarat | Catatan |
+|---|---|---|
+| `AUTH_SECRET` | ≥ 32 karakter | Dipakai Auth.js; tidak boleh sama dengan `ENCRYPTION_KEY` |
+| `ENCRYPTION_KEY` | ≥ 32 karakter | Kunci enkripsi `IcalFeed.urlEncrypted`; fallback ke `AUTH_SECRET` **tidak** berlaku di produksi (ADR-031). Rotasi: `pnpm encrypt:rotate --apply` |
+
+Variabel opsional: `DIRECT_BOOKING_WEBHOOK_SECRET` dan `INBOUND_EMAIL_WEBHOOK_SECRET` (minimal 16 karakter).
+Keduanya tidak mewajibkan start — endpoint webhook yang relevan membalas `503` selama secret belum diisi (fail-closed, ADR-030), sehingga situs direct booking yang belum dipakai tidak menghalangi deploy.
 
 ## 7. Migrasi database
 

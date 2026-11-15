@@ -18,7 +18,7 @@ Dokumen ini merupakan panduan tinjauan keamanan dan checklist pengerasan pra-ril
 | **Privasi Tamu** | Minimisasi data & pembersihan UU PDP | **TERAPKAN** | Hanya inisial/nama dan kode negara. Modul sweeper [`guest-retention.ts`](file:///c:/Dev/hillside-eden/src/server/retention/guest-retention.ts) menganonimkan tamu kedaluwarsa. |
 | **Audit Mutasi** | Jejak Audit Keuangan Permanen | **TERAPKAN** | Semua koreksi, rekonsiliasi, dan tutup buku dicatat ke tabel `AuditLog` via [`writeAudit`](file:///c:/Dev/hillside-eden/src/ingest/pipeline/audit.ts). |
 | **Integritas Uang** | Tipe `Decimal(18,2)` tanpa float | **TERAPKAN** | Perhitungan keuangan murni menggunakan Prisma/Decimal tanpa rounding error IEEE 754. |
-| **Rahasia & Kunci** | Enkripsi Secret via Environment | **TERAPKAN** | Menggunakan `.env` aman; kredensial rahasia (iCal, DB URL) tidak pernah di-commit ke Git repo. |
+| **Rahasia & Kunci** | Enkripsi Secret via Environment | **TERAPKAN** | `.env` aman; kredensial rahasia (iCal, DB URL) tidak pernah di-commit. `ENCRYPTION_KEY` wajib di produksi (≥ 32 karakter), fallback literal dihapus dari `src/lib/crypto.ts`, validasi env saat boot (`src/instrumentation.ts` → `src/instrumentation.node.ts` → `validateEnv()`, kegagalan → process exit 1; diverifikasi: `next start` tanpa `ENCRYPTION_KEY` → exit 1, tanpa listener). Rotasi kunci: `pnpm encrypt:rotate --apply` (ADR-031). |
 
 ---
 
