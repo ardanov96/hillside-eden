@@ -34,6 +34,8 @@ Lint, typecheck, unit/integrasi, `prisma validate`, `pnpm audit` (peringatan tin
 - **Unggahan:** batas ukuran, daftar tipe MIME yang diizinkan, pemeriksaan isi (bukan hanya ekstensi), nama berkas diacak, penyimpanan di luar webroot, tidak pernah dieksekusi.
 - **Pengambilan iCal:** daftar putih domain, tolak IP privat/loopback (cegah SSRF), batas waktu dan ukuran respons. **URL iCal adalah rahasia**: simpan terenkripsi (`IcalFeed.urlEncrypted`), jangan masuk log.
 - **Rahasia:** hanya lewat variabel lingkungan atau secret manager; `.env` tidak di-commit; rotasi bila bocor.
+  Secret diisi dengan `pnpm secrets:generate` (tidak dicetak; secret lama tidak ditimpa) dan kredensial OTA
+  disimpan terenkripsi di `secrets/` lewat `pnpm secrets:vault` (ADR-033/ADR-034).
 - **Dependensi:** lockfile, audit rutin, hindari rilis kurang dari 14 hari, tinjau paket baru sebelum ditambahkan.
 - **Log:** pino terstruktur; **jangan mencatat** nama tamu, email, isi email mentah, atau URL rahasia.
 
@@ -94,6 +96,10 @@ Isi secret dengan `pnpm secrets:generate` (`scripts/generate-secrets.ts`): nilai
 **tanpa dicetak** (kecuali `--show`), secret yang sudah ada tidak ditimpa, dan nilai placeholder dianggap tidak
 valid lalu digenerate ulang (ADR-033). Secret yang dikelola: `AUTH_SECRET`, `ENCRYPTION_KEY`,
 `DIRECT_BOOKING_WEBHOOK_SECRET`, `INBOUND_EMAIL_WEBHOOK_SECRET`, `OTA_VAULT_KEY`.
+
+Kredensial OTA (eksternal, untuk operator manual) disimpan terenkripsi di
+`secrets/ota-credentials.enc.json` (AES-256-GCM, kunci `OTA_VAULT_KEY`) lewat `pnpm secrets:vault` (ADR-034).
+Berkas tersebut **tidak dibaca oleh kode aplikasi** dan tidak di-commit.
 
 ## 7. Migrasi database
 

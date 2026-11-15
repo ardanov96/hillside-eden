@@ -63,5 +63,8 @@ akses_OTA.txt
 *credential*
 dashboardimages.jpg
 
+# Vault kredensial OTA terenkripsi (kunci ada di .env / secret manager)
+/secrets/
+
 # Raw client export files with PII in root (use fixtures/real with anonymized PII)
 /booking-report-*.csv

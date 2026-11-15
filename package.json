@@ -23,6 +23,7 @@
     "db:restore:verify": "tsx scripts/restore-and-verify.ts",
     "encrypt:rotate": "tsx scripts/rotate-encryption-key.ts",
     "secrets:generate": "tsx scripts/generate-secrets.ts",
+    "secrets:vault": "tsx scripts/ota-vault.ts",
     "worker": "tsx scripts/worker.ts"
   },
   "prisma": {
