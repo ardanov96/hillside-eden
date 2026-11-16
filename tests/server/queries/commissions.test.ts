@@ -38,6 +38,7 @@ describe("Commission Rules Query & Mutation", () => {
         channel: "AIRBNB",
         rate: "1.25", // 125% -> invalid
         validFrom: "2026-01-01",
+        organizationId: "org-1",
       }),
     ).rejects.toThrow("Rate komisi harus di antara 0.0000 dan 1.0000");
 
@@ -46,6 +47,7 @@ describe("Commission Rules Query & Mutation", () => {
         channel: "AIRBNB",
         rate: "-0.05",
         validFrom: "2026-01-01",
+        organizationId: "org-1",
       }),
     ).rejects.toThrow("Rate komisi harus di antara 0.0000 dan 1.0000");
   });
@@ -57,6 +59,7 @@ describe("Commission Rules Query & Mutation", () => {
         rate: "0.15",
         validFrom: "2026-10-01",
         validTo: "2026-09-01",
+        organizationId: "org-1",
       }),
     ).rejects.toThrow("tidak boleh mendahului validFrom");
   });
@@ -111,7 +114,7 @@ describe("Commission Rules Query & Mutation", () => {
 
     vi.mocked(prisma.commissionRule.findMany).mockResolvedValue(mockRules as never);
 
-    const list = await listCommissionRules({ channel: "TIKET_COM" });
+    const list = await listCommissionRules({ channel: "TIKET_COM", organizationId: "org-1" });
     expect(list).toHaveLength(1);
     expect(list[0]?.channel).toBe("TIKET_COM");
     expect(list[0]?.listingName).toBe("Villa Hillside");

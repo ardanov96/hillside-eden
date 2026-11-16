@@ -50,7 +50,7 @@ export default async function CashPage({ searchParams }: CashPageProps) {
       from: gf.range?.start ?? undefined,
       to: gf.range?.end ?? undefined,
     }),
-    listCommissionRules(),
+    listCommissionRules({ organizationId }),
   ]);
 
   return (

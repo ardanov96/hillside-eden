@@ -134,6 +134,7 @@ model Organization {
   otherIncomes       OtherIncome[]
   periodLocks        PeriodLock[]
   auditLogs          AuditLog[]
+  commissionRules    CommissionRule[]
 }
 
 model User {
@@ -353,6 +354,7 @@ model IcalFeed {
 model CommissionRule {
   id          String      @id @default(cuid())
   listingId   String?
+  organizationId String
   channel     ChannelCode
   rate        Decimal     @db.Decimal(6, 4)
   collectType CollectType @default(UNKNOWN)
@@ -360,8 +362,10 @@ model CommissionRule {
   validTo     DateTime?   @db.Date
   notes       String?
   listing     Listing?    @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
 
-  @@index([channel, validFrom])
+  @@index([organizationId, channel, validFrom])
+  @@index([organizationId, channel, listingId])
 }
 
 model Payout {

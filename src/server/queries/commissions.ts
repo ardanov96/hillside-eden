@@ -41,7 +41,7 @@ export interface CreateCommissionRuleInput {
   validTo?: string | null;
   listingId?: string | null;
   notes?: string | null;
-  organizationId?: string;
+  organizationId: string;
   actorId?: string | null;
 }
 
@@ -53,7 +53,7 @@ export interface UpdateCommissionRuleInput {
   validTo?: string | null;
   listingId?: string | null;
   notes?: string | null;
-  organizationId?: string;
+  organizationId: string;
   actorId?: string | null;
 }
 
@@ -96,12 +96,19 @@ export interface CommissionReconciliationSummary {
 
 /**
  * Mengambil daftar aturan komisi yang terdaftar.
+ * Wajib tenant-scope: hanya aturan milik organisasi yang dipanggil.
  */
 export async function listCommissionRules(args?: {
+  organizationId: string;
   channel?: ChannelCode | null;
   listingId?: string | null;
 }): Promise<CommissionRuleDto[]> {
-  const where: Prisma.CommissionRuleWhereInput = {};
+  if (!args?.organizationId) {
+    throw new Error("organizationId wajib diisi untuk listCommissionRules.");
+  }
+  const where: Prisma.CommissionRuleWhereInput = {
+    organizationId: args.organizationId,
+  };
   if (args?.channel) where.channel = args.channel;
   if (args?.listingId) where.listingId = args.listingId;
 
@@ -138,10 +145,14 @@ export async function listCommissionRules(args?: {
 
 /**
  * Mengambil satu aturan komisi berdasarkan ID.
+ * Wajib tenant-scope: hanya aturan milik organisasi yang dipanggil.
  */
-export async function getCommissionRuleById(id: string): Promise<CommissionRuleDto | null> {
-  const r = await prisma.commissionRule.findUnique({
-    where: { id },
+export async function getCommissionRuleById(
+  id: string,
+  organizationId: string,
+): Promise<CommissionRuleDto | null> {
+  const r = await prisma.commissionRule.findFirst({
+    where: { id, organizationId },
     include: {
       listing: {
         include: { property: true },
@@ -172,6 +183,9 @@ export async function getCommissionRuleById(id: string): Promise<CommissionRuleD
 export async function createCommissionRule(
   input: CreateCommissionRuleInput,
 ): Promise<CommissionRuleDto> {
+  if (!input.organizationId) {
+    throw new Error("organizationId wajib diisi untuk createCommissionRule.");
+  }
   const rate = input.rate instanceof Decimal ? input.rate : new Decimal(input.rate);
   const validFrom = input.validFrom as StayDate;
   const validTo = input.validTo ? (input.validTo as StayDate) : null;
@@ -196,6 +210,7 @@ export async function createCommissionRule(
       validTo: validTo ? new Date(`${validTo}T00:00:00.000Z`) : null,
       listingId: input.listingId ?? null,
       notes: input.notes ?? null,
+      organizationId: input.organizationId,
     },
     include: {
       listing: {
@@ -243,7 +258,12 @@ export async function updateCommissionRule(
   id: string,
   input: UpdateCommissionRuleInput,
 ): Promise<CommissionRuleDto> {
-  const existing = await prisma.commissionRule.findUniqueOrThrow({ where: { id } });
+  if (!input.organizationId) {
+    throw new Error("organizationId wajib diisi untuk updateCommissionRule.");
+  }
+  const existing = await prisma.commissionRule.findFirstOrThrow({
+    where: { id, organizationId: input.organizationId },
+  });
 
   const rate = input.rate !== undefined ? new Decimal(input.rate) : existing.rate;
   const validFrom =
@@ -324,13 +344,19 @@ export async function updateCommissionRule(
 
 /**
  * Menghapus aturan komisi.
+ * Wajib tenant-scope: hanya aturan milik organisasi yang dipanggil.
  */
 export async function deleteCommissionRule(
   id: string,
-  organizationId?: string,
+  organizationId: string,
   actorId?: string | null,
 ): Promise<{ success: boolean }> {
-  const existing = await prisma.commissionRule.findUniqueOrThrow({ where: { id } });
+  if (!organizationId) {
+    throw new Error("organizationId wajib diisi untuk deleteCommissionRule.");
+  }
+  const existing = await prisma.commissionRule.findFirstOrThrow({
+    where: { id, organizationId },
+  });
 
   await prisma.commissionRule.delete({ where: { id } });
 
@@ -365,11 +391,22 @@ export async function estimateCommissionForBooking(bookingId: string): Promise<{
 }> {
   const booking = await prisma.booking.findUniqueOrThrow({
     where: { id: bookingId },
+    select: {
+      id: true,
+      checkIn: true,
+      grossAmount: true,
+      currency: true,
+      channel: true,
+      listingId: true,
+      organizationId: true,
+      collectType: true,
+    },
   });
 
   const stayDate = toStayDate(booking.checkIn);
   const rules = await prisma.commissionRule.findMany({
     where: {
+      organizationId: booking.organizationId,
       channel: booking.channel,
     },
   });
@@ -458,8 +495,10 @@ export async function getCommissionReconciliation(args: {
     orderBy: { checkIn: "desc" },
   });
 
-  // Ambil semua commission rules untuk fallback komisi estimasi
-  const rules = await prisma.commissionRule.findMany();
+  // Ambil semua commission rules untuk organisasi ini (fallback komisi estimasi)
+  const rules = await prisma.commissionRule.findMany({
+    where: { organizationId: args.organizationId },
+  });
   const ruleInputs: CommissionRuleInput[] = rules.map((r) => ({
     id: r.id,
     channel: r.channel,
