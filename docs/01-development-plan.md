@@ -183,7 +183,7 @@ keuangan dan kebocoran rahasia. Tiga tiket P0 dikerjakan berurutan, satu commit 
 | ID | Tugas | Ukuran | Status / selesai bila |
 |---|---|---|---|
 | P1-4 | Hapus `rawUrl` dari DTO iCal, pakai `maskedUrl`, rotasi token iCal OTA | S | Selesai (`ListingDetailItem` tidak lagi expose `rawUrl`; hanya `maskedUrl` yang dikirim ke UI; `ical-dialog.tsx` pakai `maskedUrl` sebagai nilai awal form; ADR-035) |
-| P1-5 | Tenant-scope `CommissionRule.organizationId` + migrasi/backfill + filter di 4 query | M | Dijadwalkan |
+| P1-5 | Tenant-scope `CommissionRule.organizationId` + migrasi/backfill + filter di 4 query | M | Selesai (`CommissionRule` punya `organizationId` + migrasi Prisma; `listCommissionRules`, `getCommissionRuleById`, `create/update/deleteCommissionRule` difilter tenant; `estimateCommissionForBooking` dan `getCommissionReconciliation` filter by `organizationId`; ADR-036) |
 | P1-6 | Tutup celah SSRF `redirect: "manual"`, validasi tiap hop, pin IP, batas ukuran streaming iCal | M | Dijadwalkan |
 
 ## 4. Spesifikasi data dummy (S1-06)
