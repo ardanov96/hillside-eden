@@ -86,7 +86,6 @@ export interface ListingDetailItem {
   icalFeed: {
     id: string;
     maskedUrl: string;
-    rawUrl: string;
     lastFetchedAt: Date | null;
     lastStatus: string | null;
   } | null;
@@ -119,10 +118,9 @@ export async function getListingsWithDetails(organizationId: string): Promise<Li
 
   return rows.map((r) => {
     const feed = r.icalFeeds[0] ?? null;
-    let rawUrl = "";
     let maskedUrl = "";
     if (feed) {
-      rawUrl = decryptText(feed.urlEncrypted);
+      const rawUrl = decryptText(feed.urlEncrypted);
       maskedUrl = maskIcalUrl(rawUrl);
     }
 
@@ -146,7 +144,6 @@ export async function getListingsWithDetails(organizationId: string): Promise<Li
         ? {
             id: feed.id,
             maskedUrl,
-            rawUrl,
             lastFetchedAt: feed.lastFetchedAt,
             lastStatus: feed.lastStatus,
           }

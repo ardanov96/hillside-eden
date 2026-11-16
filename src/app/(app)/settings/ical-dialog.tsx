@@ -37,7 +37,7 @@ interface IcalFormProps {
 }
 
 function IcalForm({ listing, onClose, onSuccess }: IcalFormProps) {
-  const [url, setUrl] = React.useState(listing.icalFeed?.rawUrl || "");
+  const [url, setUrl] = React.useState(listing.icalFeed?.maskedUrl || "");
   const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
 
