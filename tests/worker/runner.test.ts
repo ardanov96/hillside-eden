@@ -63,6 +63,8 @@ describe("runWorkerTick", () => {
     vi.mocked(sweepExpiredGuestData).mockResolvedValue({
       scannedCount: 0,
       anonymizedCount: 0,
+      payloadSweptCount: 0,
+      blobDeletedCount: 0,
       timestamp: new Date().toISOString(),
     });
 
@@ -115,6 +117,8 @@ describe("runWorkerTick", () => {
     vi.mocked(sweepExpiredGuestData).mockResolvedValue({
       scannedCount: 0,
       anonymizedCount: 0,
+      payloadSweptCount: 0,
+      blobDeletedCount: 0,
       timestamp: new Date().toISOString(),
     });
 
@@ -149,6 +153,8 @@ describe("runWorkerTick", () => {
     vi.mocked(sweepExpiredGuestData).mockResolvedValue({
       scannedCount: 0,
       anonymizedCount: 0,
+      payloadSweptCount: 0,
+      blobDeletedCount: 0,
       timestamp: new Date().toISOString(),
     });
 
@@ -191,6 +197,8 @@ describe("runWorkerTick", () => {
     vi.mocked(sweepExpiredGuestData).mockResolvedValue({
       scannedCount: 0,
       anonymizedCount: 0,
+      payloadSweptCount: 0,
+      blobDeletedCount: 0,
       timestamp: new Date().toISOString(),
     });
 
@@ -230,6 +238,8 @@ describe("runWorkerTick", () => {
     vi.mocked(sweepExpiredGuestData).mockResolvedValue({
       scannedCount: 5,
       anonymizedCount: 3,
+      payloadSweptCount: 0,
+      blobDeletedCount: 0,
       timestamp: new Date().toISOString(),
     });
 

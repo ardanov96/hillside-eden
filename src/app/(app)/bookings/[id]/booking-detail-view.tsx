@@ -406,6 +406,10 @@ export function BookingDetailView({ detail }: BookingDetailViewProps) {
               <summary className="cursor-pointer font-medium text-foreground">
                 Lihat data mentah dari sumber
               </summary>
+              <div className="mt-2 rounded bg-amber-50 border border-amber-200 p-2 text-[10px] text-amber-800">
+                Peringatan privasi: data mentah ini dapat berisi PII (nama, kontak tamu, dst.).
+                Jangan menyimpan atau membagikan berkas ini tanpa izin pemilik data.
+              </div>
               <pre className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
                 {truncateRawPayload(detail.rawPayload)}
               </pre>

@@ -71,6 +71,10 @@ export function PayloadDialog({ item, open, onOpenChange }: PayloadDialogProps) 
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto rounded-lg border border-border/80 bg-muted/40 p-3 font-mono text-[11px] text-foreground">
+          <div className="mb-2 rounded bg-amber-50 border border-amber-200 p-2 text-[10px] text-amber-800">
+            Peringatan privasi: data mentah ini dapat berisi PII (nama, kontak tamu, dst.). Jangan
+            menyimpan atau membagikan tanpa izin pemilik data.
+          </div>
           <pre className="whitespace-pre-wrap break-all">{jsonStr}</pre>
         </div>
       </DialogContent>

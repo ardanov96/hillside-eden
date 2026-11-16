@@ -9,6 +9,16 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
       update: vi.fn(),
     },
+    booking: {
+      updateMany: vi.fn(),
+    },
+    importBatch: {
+      findMany: vi.fn(),
+      update: vi.fn(),
+    },
+    importItem: {
+      updateMany: vi.fn(),
+    },
     auditLog: {
       create: vi.fn(),
     },
@@ -16,6 +26,9 @@ vi.mock("@/lib/prisma", () => ({
       callback({
         guest: {
           update: vi.fn(),
+        },
+        booking: {
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
         auditLog: {
           create: vi.fn(),
@@ -25,12 +38,28 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+vi.mock("@/ingest/storage", () => ({
+  createStorageProvider: vi.fn().mockReturnValue({
+    delete: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+vi.mock("@/ingest/pipeline/audit", () => ({
+  writeAudit: vi.fn().mockResolvedValue(undefined),
+  AUDIT_ACTIONS: {
+    guestAnonymized: "guest.anonymized",
+  },
+}));
+
 import { prisma } from "@/lib/prisma";
 import { sweepExpiredGuestData, ANONYMIZED_GUEST_NAME } from "@/server/retention/guest-retention";
 
 describe("sweepExpiredGuestData (UU PDP)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.importBatch.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.importItem.updateMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.booking.updateMany).mockResolvedValue({ count: 0 });
   });
 
   it("menganonimkan data tamu yang telah melewati batas retentionUntil", async () => {
