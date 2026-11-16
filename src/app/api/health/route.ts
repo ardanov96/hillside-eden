@@ -4,10 +4,12 @@
  * Mengikuti spesifikasi docs/08-quality-security-ops.md §9:
  * - GET /api/health         -> basic liveness cepat (200 OK)
  * - GET /api/health?deep=1  -> deep readiness: latensi DB, kesegaran data sumber OTA,
- *                              status heartbeat worker, dan hitungan item gagal ingest
+ *                              status heartbeat worker, dan hitungan item gagal ingest.
+ *                              Wajib terautentikasi (P2-9: deep=1 butuh token).
  * - POST /api/health        -> heartbeat ping dari background worker
  */
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getDetailedSystemHealth, recordWorkerHeartbeat } from "@/server/monitoring/health";
 
 export async function GET(request: Request) {
@@ -22,6 +24,16 @@ export async function GET(request: Request) {
       uptimeSeconds: Math.round(process.uptime()),
       env: process.env.NODE_ENV ?? "development",
     });
+  }
+
+  // P2-9: endpoint deep membutuhkan sesi valid (token) karena mengedorkan
+  // detail sistem internal (latensi DB, kesegaran OTA, hitungan ingest).
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json(
+      { ok: false, error: "Autentikasi wajib untuk health check mendalam." },
+      { status: 401 },
+    );
   }
 
   const health = await getDetailedSystemHealth();

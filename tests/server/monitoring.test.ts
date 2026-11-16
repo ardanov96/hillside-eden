@@ -16,6 +16,12 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+vi.mock("@/auth", () => ({
+  auth: vi.fn().mockResolvedValue({
+    user: { id: "user-1", organizationId: "org-1" },
+  }),
+}));
+
 import { prisma } from "@/lib/prisma";
 import {
   getDetailedSystemHealth,

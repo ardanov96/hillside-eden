@@ -1,3 +1,11 @@
+/**
+ * Root layout Hillside Eden (Server Component).
+ *
+ * P2-9: kebijakan CSP non-based (nonce) ditetapkan oleh middleware
+ * `src/proxy.ts` melalui header respons `Content-Security-Policy`. Layout
+ * ini tetap statis (bisa di-prerender) karena nonce diubah setiap request
+ * dan tidak dibaca di sini.
+ */
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
