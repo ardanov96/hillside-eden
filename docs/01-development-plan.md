@@ -178,6 +178,14 @@ keuangan dan kebocoran rahasia. Tiga tiket P0 dikerjakan berurutan, satu commit 
 | S12-05 | Pengisian secret aplikasi otomatis (nilai acak kuat, tanpa mencetak, tanpa menimpa secret lama) | S | Selesai (`pnpm secrets:generate` → `scripts/generate-secrets.ts`: mengisi `AUTH_SECRET`, `ENCRYPTION_KEY`, `DIRECT_BOOKING_WEBHOOK_SECRET`, `INBOUND_EMAIL_WEBHOOK_SECRET`, `OTA_VAULT_KEY` di berkas env; nilai placeholder digenerate ulang; nilai tidak dicetak kecuali `--show`; ADR-033) |
 | S12-06 | Pindahkan kredensial OTA plaintext (`akses_OTA.txt`) ke vault terenkripsi | S | Selesai (`pnpm secrets:vault` → `scripts/ota-vault.ts`: `encrypt` verifikasi dekripsi identik lalu hapus plaintext, `show` ringkasan tersamar/`--reveal`, `status` cek dekripsi; `secrets/` di-gitignore; `OTA_VAULT_KEY` di `.env`; plaintext dihapus setelah verifikasi; ADR-034) |
 
+### Sprint 13: Perbaikan Keamanan P1 (lanjutan P0)
+
+| ID | Tugas | Ukuran | Status / selesai bila |
+|---|---|---|---|
+| P1-4 | Hapus `rawUrl` dari DTO iCal, pakai `maskedUrl`, rotasi token iCal OTA | S | Selesai (`ListingDetailItem` tidak lagi expose `rawUrl`; hanya `maskedUrl` yang dikirim ke UI; `ical-dialog.tsx` pakai `maskedUrl` sebagai nilai awal form; ADR-035) |
+| P1-5 | Tenant-scope `CommissionRule.organizationId` + migrasi/backfill + filter di 4 query | M | Dijadwalkan |
+| P1-6 | Tutup celah SSRF `redirect: "manual"`, validasi tiap hop, pin IP, batas ukuran streaming iCal | M | Dijadwalkan |
+
 ## 4. Spesifikasi data dummy (S1-06)
 
 - 2 properti: satu dengan estate (4 unit: villa + 3 cottage, juga dijual sebagai paket), satu dengan 4 kamar di mana hanya 2 yang `isSellable`.
