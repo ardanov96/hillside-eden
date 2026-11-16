@@ -42,10 +42,12 @@ export async function GET(req: Request, { params }: Params) {
 
     const contentType = meta.contentType || "application/octet-stream";
 
+    // P2-7: paksa unduhan (attachment) agar berkas tidak ditampilkan langsung di browser
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": contentType,
         "Content-Length": buffer.length.toString(),
+        "Content-Disposition": "attachment",
         "Cache-Control": "private, max-age=86400",
       },
     });

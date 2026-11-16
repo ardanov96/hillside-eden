@@ -13,6 +13,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@/lib/decimal";
+import { validateUploadedFile, FileValidationError } from "@/lib/upload-validation";
 import { writeAudit, AUDIT_ACTIONS } from "@/ingest/pipeline/audit";
 import { createStorageProvider } from "@/ingest/storage";
 import type { ExpenseStatus, OtherIncomeCategory, RecurringFrequency } from "@prisma/client";
@@ -80,6 +81,33 @@ export async function createExpenseAction(
       return { success: false, message: "Tanggal pengeluaran wajib diisi." };
     }
 
+    // P2-7: validasi propertyId / categoryId milik organisasi (tenant scope)
+    const propertyId = propertyIdRaw && propertyIdRaw !== "SHARED" ? propertyIdRaw : null;
+
+    if (propertyId) {
+      const propertyExists = await prisma.property.findFirst({
+        where: { id: propertyId, organizationId },
+        select: { id: true },
+      });
+      if (!propertyExists) {
+        return {
+          success: false,
+          message: "Properti tidak ditemukan atau bukan milik organisasi Anda.",
+        };
+      }
+    }
+
+    const categoryExists = await prisma.expenseCategory.findFirst({
+      where: { id: categoryId, organizationId },
+      select: { id: true },
+    });
+    if (!categoryExists) {
+      return {
+        success: false,
+        message: "Kategori pengeluaran tidak ditemukan atau bukan milik organisasi Anda.",
+      };
+    }
+
     const incurredOn = new Date(`${incurredOnRaw}T00:00:00.000Z`);
     if (Number.isNaN(incurredOn.getTime())) {
       return { success: false, message: "Format tanggal pengeluaran tidak valid." };
@@ -95,7 +123,6 @@ export async function createExpenseAction(
     }
 
     const paidOn = paidOnRaw ? new Date(`${paidOnRaw}T00:00:00.000Z`) : null;
-    const propertyId = propertyIdRaw && propertyIdRaw !== "SHARED" ? propertyIdRaw : null;
     const amount = new Decimal(amountRaw);
     const status: ExpenseStatus = statusRaw === "VERIFIED" ? "VERIFIED" : "DRAFT";
 
@@ -103,17 +130,27 @@ export async function createExpenseAction(
     let receiptKey: string | null = null;
     const receiptFile = formData.get("receiptFile");
     if (receiptFile && receiptFile instanceof File && receiptFile.size > 0) {
-      // Validasi ukuran maks 10MB
-      if (receiptFile.size > 10 * 1024 * 1024) {
-        return { success: false, message: "Ukuran berkas struk maksimal 10 MB." };
+      const arrayBuffer = await receiptFile.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // P2-7: validasi MIME allowlist + magic bytes + nama berkas
+      let validated: { safeName: string; mimeType: string; size: number };
+      try {
+        validated = validateUploadedFile(receiptFile, buffer);
+      } catch (err) {
+        return {
+          success: false,
+          message:
+            err instanceof FileValidationError ? err.message : "Gagal memvalidasi berkas struk.",
+        };
       }
-      const safeFilename = receiptFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+      const storage = createStorageProvider();
+      const safeFilename = validated.safeName;
       receiptKey = `receipts/${organizationId}/${Date.now()}-${safeFilename}`;
 
-      const buffer = Buffer.from(await receiptFile.arrayBuffer());
-      const storage = createStorageProvider();
       await storage.put(receiptKey, buffer, {
-        contentType: receiptFile.type || "application/octet-stream",
+        contentType: validated.mimeType,
       });
     }
 

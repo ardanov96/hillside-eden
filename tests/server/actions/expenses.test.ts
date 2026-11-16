@@ -50,6 +50,10 @@ vi.mock("@/lib/prisma", () => {
     },
     property: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    expenseCategory: {
+      findFirst: vi.fn(),
     },
     otherIncome: {
       create: vi.fn(),
@@ -84,6 +88,13 @@ describe("Expense Server Actions (S3-01 s/d S3-07)", () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
+    // Default: property & kategori ditemukan milik organisasi (sukses)
+    vi.mocked(prisma.property.findFirst).mockResolvedValue({
+      id: "prop-1",
+    } as never);
+    vi.mocked(prisma.expenseCategory.findFirst).mockResolvedValue({
+      id: "cat-1",
+    } as never);
   });
 
   describe("createExpenseAction", () => {
@@ -112,6 +123,10 @@ describe("Expense Server Actions (S3-01 s/d S3-07)", () => {
 
     it("berhasil mencatat pengeluaran langsung ke properti tunggal", async () => {
       vi.mocked(prisma.periodLock.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.property.findFirst).mockResolvedValueOnce({ id: "prop-1" } as never);
+      vi.mocked(prisma.expenseCategory.findFirst).mockResolvedValueOnce({
+        id: "cat-1",
+      } as never);
       vi.mocked(prisma.expense.create).mockResolvedValueOnce({
         id: "exp-123",
         amount: new Decimal(1500000),
@@ -136,6 +151,9 @@ describe("Expense Server Actions (S3-01 s/d S3-07)", () => {
         { id: "prop-1" },
         { id: "prop-2" },
       ] as never);
+      vi.mocked(prisma.expenseCategory.findFirst).mockResolvedValueOnce({
+        id: "cat-1",
+      } as never);
       vi.mocked(prisma.expense.create).mockResolvedValueOnce({
         id: "exp-shared",
         amount: new Decimal(1000000),
@@ -150,6 +168,79 @@ describe("Expense Server Actions (S3-01 s/d S3-07)", () => {
       const res = await createExpenseAction(null, fd);
       expect(res.success).toBe(true);
       expect(prisma.expenseAllocation.create).toHaveBeenCalledTimes(2);
+    });
+
+    it("menolak receipt dengan ekstensi yang tidak diizinkan (P2-7)", async () => {
+      vi.mocked(prisma.periodLock.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.expenseCategory.findFirst).mockResolvedValueOnce({
+        id: "cat-1",
+      } as never);
+
+      const fd = new FormData();
+      fd.append("amount", "1000000");
+      fd.append("categoryId", "cat-1");
+      fd.append("incurredOn", "2026-10-20");
+      // File palsu dengan ekstensi .exe
+      const blob = new Blob(["not an image"], { type: "image/jpeg" });
+      const file = new File([blob], "struk.exe", { type: "image/jpeg" }) as unknown as File;
+      fd.append("receiptFile", file);
+
+      const res = await createExpenseAction(null, fd);
+      expect(res.success).toBe(false);
+      expect(res.message).toContain("Ekstensi berkas tidak diizinkan");
+      expect(prisma.expense.create).not.toHaveBeenCalled();
+    });
+
+    it("menolak receipt dengan magic bytes yang tidak valid (P2-7)", async () => {
+      vi.mocked(prisma.periodLock.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.expenseCategory.findFirst).mockResolvedValueOnce({
+        id: "cat-1",
+      } as never);
+
+      const fd = new FormData();
+      fd.append("amount", "1000000");
+      fd.append("categoryId", "cat-1");
+      fd.append("incurredOn", "2026-10-20");
+      const blob = new Blob(["ini bukan gambar asli"], { type: "image/jpeg" });
+      const file = new File([blob], "struk.jpg", { type: "image/jpeg" }) as unknown as File;
+      fd.append("receiptFile", file);
+
+      const res = await createExpenseAction(null, fd);
+      expect(res.success).toBe(false);
+      expect(res.message).toContain("tidak dikenali");
+      expect(prisma.expense.create).not.toHaveBeenCalled();
+    });
+
+    it("menolak propertyId yang bukan milik organisasi (P2-7)", async () => {
+      vi.mocked(prisma.periodLock.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.property.findFirst).mockResolvedValue(null);
+
+      const fd = new FormData();
+      fd.append("amount", "1000000");
+      fd.append("categoryId", "cat-1");
+      fd.append("propertyId", "prop-org-lain");
+      fd.append("incurredOn", "2026-10-20");
+
+      const res = await createExpenseAction(null, fd);
+      expect(res.success).toBe(false);
+      expect(res.message).toContain("bukan milik organisasi Anda");
+      expect(prisma.expense.create).not.toHaveBeenCalled();
+    });
+
+    it("menolak categoryId yang bukan milik organisasi (P2-7)", async () => {
+      vi.mocked(prisma.periodLock.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.expenseCategory.findFirst).mockResolvedValue(null);
+
+      const fd = new FormData();
+      fd.append("amount", "1000000");
+      fd.append("categoryId", "cat-org-lain");
+      fd.append("propertyId", "prop-1");
+      fd.append("incurredOn", "2026-10-20");
+
+      const res = await createExpenseAction(null, fd);
+      expect(res.success).toBe(false);
+      expect(res.message).toContain("bukan milik organisasi Anda");
+      expect(prisma.expense.create).not.toHaveBeenCalled();
     });
   });
 
